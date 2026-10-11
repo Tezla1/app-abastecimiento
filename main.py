@@ -1,4 +1,5 @@
 import tkinter as tk
+import database
 from tkinter import ttk
 
 from views.dashboard import DashboardTab
@@ -22,4 +23,5 @@ class App(tk.Tk):
 
 
 if __name__ == "__main__":
+    database.inicializar()
     App().mainloop()
