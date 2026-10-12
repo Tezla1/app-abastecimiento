@@ -11,7 +11,7 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Análisis de abastecimiento interno - Talleres textiles de Soacha")
-        self.geometry("1000x650")
+        self.geometry("1150x720")
         self.minsize(800, 500)
 
         notebook = ttk.Notebook(self)

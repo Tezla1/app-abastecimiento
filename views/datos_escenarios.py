@@ -10,11 +10,12 @@ from views.widgets import campo
 class PanelEscenarios(ttk.LabelFrame):
     """Formulario y tabla de escenarios de la empresa activa."""
 
-    def __init__(self, parent, on_cambio):
+    def __init__(self, parent, on_cambio, on_seleccion):
         super().__init__(parent, text="Escenarios de la empresa activa")
         self.on_cambio = on_cambio
         self.empresa_id = None
         self.columnconfigure(1, weight=1)
+        self.on_seleccion = on_seleccion
 
         self.v_nombre = campo(self, 0, "Nombre")
         ttk.Label(self, text="Tipo").grid(row=1, column=0, sticky="w", padx=4, pady=2)
@@ -41,6 +42,7 @@ class PanelEscenarios(ttk.LabelFrame):
             self.tabla.column(clave, width=ancho, anchor="w")
         self.tabla.grid(row=8, column=0, columnspan=2, sticky="nsew", padx=4, pady=4)
         self.rowconfigure(8, weight=1)
+        self.tabla.bind("<<TreeviewSelect>>", lambda e: self._notificar_seleccion())
         ttk.Button(self, text="Eliminar escenario seleccionado", command=self._eliminar).grid(
             row=9, column=1, sticky="e", padx=4, pady=(0, 4))
 
@@ -49,16 +51,25 @@ class PanelEscenarios(ttk.LabelFrame):
         self.empresa_id = empresa_id
         self._recargar()
 
-    def _recargar(self):
+    def _recargar(self, seleccionar_id=None):
         self.tabla.delete(*self.tabla.get_children())
-        if self.empresa_id is None:
-            return
-        for e in database.listar_escenarios(self.empresa_id):
-            t_obs = "" if e["tiempo_observacion_min"] is None else e["tiempo_observacion_min"]
-            self.tabla.insert(
-                "", "end", iid=str(e["id"]),
-                values=(e["nombre"], e["tipo"], e["num_recursos"], t_obs))
+        if self.empresa_id is not None:
+            for e in database.listar_escenarios(self.empresa_id):
+                t_obs = "" if e["tiempo_observacion_min"] is None else e["tiempo_observacion_min"]
+                self.tabla.insert(
+                    "", "end", iid=str(e["id"]),
+                    values=(e["nombre"], e["tipo"], e["num_recursos"], t_obs))
+            if seleccionar_id is not None and self.tabla.exists(str(seleccionar_id)):
+                self.tabla.selection_set(str(seleccionar_id))
+        self._notificar_seleccion()
 
+    def _notificar_seleccion(self):
+        seleccion = self.tabla.selection()
+        if seleccion:
+            nombre = str(self.tabla.item(seleccion[0], "values")[0])
+            self.on_seleccion(int(seleccion[0]), nombre)
+        else:
+            self.on_seleccion(None, None)
     def _guardar(self):
         if self.empresa_id is None:
             messagebox.showwarning("Sin empresa", "Primero crea o selecciona una empresa.")
@@ -71,7 +82,7 @@ class PanelEscenarios(ttk.LabelFrame):
             messagebox.showerror("Datos no válidos", "\n".join(errores))
             return
         try:
-            database.crear_escenario(self.empresa_id, **datos)
+            nuevo_id = database.crear_escenario(self.empresa_id, **datos)
         except sqlite3.IntegrityError:
             messagebox.showerror(
                 "Datos no válidos", "Ya existe un escenario con ese nombre en esta empresa.")
@@ -80,7 +91,7 @@ class PanelEscenarios(ttk.LabelFrame):
             var.set("")
         self.v_recursos.set("1")
         self.v_obstaculos.set(False)
-        self._recargar()
+        self._recargar(seleccionar_id=nuevo_id)
         self.on_cambio()
 
     def _eliminar(self):
