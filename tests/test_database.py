@@ -40,5 +40,14 @@ class TestDatabase(unittest.TestCase):
             database.crear_escenario(999, "X", "Base")
 
 
+    def test_contar_registros_de_la_empresa(self):
+        e = database.crear_empresa("Taller A")
+        s1 = database.crear_escenario(e, "Base A", "Base")
+        s2 = database.crear_escenario(e, "Móvil A", "Recurso móvil")
+        database.crear_registro(s1, "Almacén", "Corte", 10, 5, 2, 3, True)
+        database.crear_registro(s2, "Almacén", "Corte", 10, 5, 1, 2, True)
+        self.assertEqual(database.contar_registros_empresa(e), 2)
+
+
 if __name__ == "__main__":
     unittest.main()

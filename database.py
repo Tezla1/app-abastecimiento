@@ -127,3 +127,12 @@ def listar_registros(escenario_id):
 
 def eliminar_registro(registro_id):
     _ejecutar("DELETE FROM registro WHERE id = ?", (registro_id,))
+
+def contar_registros_empresa(empresa_id):
+    """Total de registros de todos los escenarios de una empresa."""
+    filas = _consultar(
+        "SELECT COUNT(*) AS n FROM registro r "
+        "JOIN escenario e ON e.id = r.escenario_id WHERE e.empresa_id = ?",
+        (empresa_id,),
+    )
+    return filas[0]["n"]
