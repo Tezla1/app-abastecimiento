@@ -1,7 +1,7 @@
 import tkinter as tk
-import database
 from tkinter import ttk
 
+import database
 from views.dashboard import DashboardTab
 from views.datos import DatosTab
 from views.resultados import ResultadosTab
@@ -14,12 +14,19 @@ class App(tk.Tk):
         self.geometry("1150x720")
         self.minsize(800, 500)
 
-        notebook = ttk.Notebook(self)
-        notebook.pack(fill="both", expand=True, padx=8, pady=8)
+        self.notebook = ttk.Notebook(self)
+        self.notebook.pack(fill="both", expand=True, padx=8, pady=8)
 
-        notebook.add(DashboardTab(notebook), text="Dashboard")
-        notebook.add(DatosTab(notebook), text="Ingresar datos")
-        notebook.add(ResultadosTab(notebook), text="Resultados")
+        self.notebook.add(DashboardTab(self.notebook), text="Dashboard")
+        self.notebook.add(DatosTab(self.notebook), text="Ingresar datos")
+        self.notebook.add(ResultadosTab(self.notebook), text="Resultados")
+        self.notebook.bind("<<NotebookTabChanged>>", self._al_cambiar_pestana)
+
+    def _al_cambiar_pestana(self, evento):
+        """Cada pestaña que tenga un método actualizar() se refresca al abrirse."""
+        pestana = self.nametowidget(self.notebook.select())
+        if hasattr(pestana, "actualizar"):
+            pestana.actualizar()
 
 
 if __name__ == "__main__":
