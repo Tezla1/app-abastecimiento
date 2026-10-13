@@ -29,8 +29,12 @@ class SelectorEscenarios(ttk.LabelFrame):
         self.cmb_alt.grid(row=2, column=1, sticky="ew", padx=4, pady=2)
         self.cmb_alt.bind("<<ComboboxSelected>>", lambda e: self.on_cambio())
 
-        def empresas(self):
-            """Devuelve la empresa seleccionada (diccionario) o None si no hay selección."""
+    def seleccion(self):
+        """Devuelve (escenario_base, escenario_alternativo); cada uno es un dict o None."""
+        return (self._escenario_en(self.cmb_base),
+                self._escenario_en(self.cmb_alt, desplazamiento=1))
+    def empresa(self):
+        """Empresa elegida (dict) o None."""
         indice = self.cmb_empresa.current()
         return self.empresas[indice] if 0 <= indice < len(self.empresas) else None
 

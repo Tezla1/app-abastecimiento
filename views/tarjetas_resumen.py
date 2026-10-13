@@ -1,16 +1,10 @@
 from tkinter import ttk
 
-from views.formato import SIN_DATOS, fmt, fmt_variacion
+from views.formato import INDICADORES, SIN_DATOS, fmt, fmt_variacion
 
 FUENTE_VALOR = ("Helvetica", 18, "bold")
 
-INDICADORES = (
-    ("tiempo_abastecimiento_prom", "Tiempo promedio (min)"),
-    ("distancia_total", "Distancia total (m)"),
-    ("espera_prom", "Espera promedio (min)"),
-    ("utilizacion_pct", "Utilización (%)"),
-    ("solicitudes_atendidas_pct", "Solicitudes atendidas (%)"),
-)
+
 
 
 class TarjetasResumen(ttk.Frame):
