@@ -1,7 +1,9 @@
+import sqlite3
 import tkinter as tk
-from tkinter import messagebox, ttk
+from tkinter import filedialog, messagebox, ttk
 
 import database
+import importacion
 import validaciones
 from views.widgets import campo
 
@@ -9,7 +11,7 @@ MENSAJE_SIN_ESCENARIO = "Selecciona un escenario en la tabla de la izquierda."
 
 
 class PanelRegistros(ttk.LabelFrame):
-    """Formulario y tabla de registros experimentales del escenario seleccionado."""
+    """Formulario, importación CSV y tabla de registros del escenario seleccionado."""
 
     def __init__(self, parent, on_cambio):
         super().__init__(parent, text="Registros experimentales")
@@ -48,8 +50,12 @@ class PanelRegistros(ttk.LabelFrame):
         self.tabla.grid(row=9, column=0, columnspan=2, sticky="nsew", padx=(4, 0), pady=4)
         barra.grid(row=9, column=2, sticky="ns", pady=4)
         self.rowconfigure(9, weight=1)
-        ttk.Button(self, text="Eliminar registro seleccionado", command=self._eliminar).grid(
-            row=10, column=1, sticky="e", padx=4, pady=(0, 4))
+
+        botones = ttk.Frame(self)
+        botones.grid(row=10, column=0, columnspan=3, sticky="ew", padx=4, pady=(0, 4))
+        ttk.Button(botones, text="Importar CSV…", command=self._importar_csv).pack(side="left")
+        ttk.Button(botones, text="Eliminar registro seleccionado",
+                   command=self._eliminar).pack(side="right")
 
     def mostrar_escenario(self, escenario_id, nombre):
         """Muestra los registros del escenario indicado (None = panel vacío)."""
@@ -91,6 +97,47 @@ class PanelRegistros(ttk.LabelFrame):
         self.v_atendida.set(True)
         self._recargar()
         self.on_cambio()
+
+    def _importar_csv(self):
+        if self.escenario_id is None:
+            messagebox.showwarning("Sin escenario", "Selecciona primero un escenario.")
+            return
+        ruta = filedialog.askopenfilename(
+            title="Importar registros desde CSV",
+            filetypes=[("Archivos CSV", "*.csv"), ("Todos los archivos", "*.*")])
+        if not ruta:  # el usuario canceló
+            return
+
+        registros, errores = importacion.leer_registros_csv(ruta)
+        if errores:
+            messagebox.showerror(
+                "CSV no válido: no se importó nada",
+                self._resumir_errores(errores) + "\n\nCorrige el archivo e inténtalo de nuevo.")
+            return
+
+        existentes = len(database.listar_registros(self.escenario_id))
+        if not messagebox.askyesno(
+                "Confirmar importación",
+                f"Se importarán {len(registros)} registros al escenario "
+                f"«{self.escenario_nombre}», que ya tiene {existentes}.\n¿Continuar?"):
+            return
+        try:
+            database.crear_registros(self.escenario_id, registros)
+        except sqlite3.Error as error:
+            messagebox.showerror(
+                "Error al importar", f"No se importó ningún registro: {error}")
+            return
+        messagebox.showinfo(
+            "Importación completa", f"Se importaron {len(registros)} registros.")
+        self._recargar()
+        self.on_cambio()
+
+    @staticmethod
+    def _resumir_errores(errores, maximo=10):
+        texto = "\n".join(errores[:maximo])
+        if len(errores) > maximo:
+            texto += f"\n… y {len(errores) - maximo} errores más."
+        return texto
 
     def _eliminar(self):
         seleccion = self.tabla.selection()

@@ -1,0 +1,5 @@
+origen,destino,distancia_m,carga_kg,tiempo_espera_min,tiempo_recorrido_min,atendida
+Almacén,Corte,10,5,2,3,Sí
+Almacén,Corte,20,10,4,5,Sí
+Almacén,Corte,30,8,6,7,Sí
+Almacén,Corte,15,4,1,2,No
