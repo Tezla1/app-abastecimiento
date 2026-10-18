@@ -1,4 +1,3 @@
-"""Capa de análisis: une la persistencia (database) y el cálculo (calculos) para las vistas."""
 import calculos
 import database
 
@@ -22,14 +21,21 @@ def _avisos_utilizacion(ind_base, ind_alt):
 def comparar_escenarios(base, alt=None):
     """Calcula los indicadores del escenario base y, si se da alt, su comparación.
 
+    Un escenario no se compara consigo mismo: se trata como 'sin alternativo' y se avisa.
+
     Devuelve un dict con: ind_base, ind_alt (None si no hay alternativo),
     filas (una por indicador, para tablas y tarjetas), comparable (bool)
     y avisos (lista de textos).
     """
+    avisos = []
+    if alt is not None and alt["id"] == base["id"]:
+        avisos.append("El escenario base y el alternativo son el mismo escenario: "
+                      "elige otro para poder compararlos.")
+        alt = None
+
     ind_base = _indicadores(base)
     ind_alt = _indicadores(alt) if alt is not None else None
 
-    avisos = []
     comparable = False
     if ind_alt is not None:
         comparable, problemas = calculos.verificar_comparable(ind_base, ind_alt)

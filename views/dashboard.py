@@ -17,10 +17,12 @@ class DashboardTab(ttk.Frame):
 
         self.tarjetas = TarjetasResumen(self)
         self.grafica = GraficaComparativa(self)
+        self.lbl_aviso = ttk.Label(self, text="", foreground="#b00020", wraplength=1000)
         self.selector = SelectorEscenarios(self, on_cambio=self._refrescar)
         self.selector.grid(row=0, column=0, sticky="ew", padx=8, pady=8)
         self.tarjetas.grid(row=1, column=0, sticky="ew", padx=8)
         self.grafica.grid(row=2, column=0, sticky="nsew", padx=8, pady=8)
+        self.lbl_aviso.grid(row=3, column=0, sticky="w", padx=8, pady=(0, 8))
 
         self.actualizar()
 
@@ -29,6 +31,7 @@ class DashboardTab(ttk.Frame):
         self.selector.actualizar()
 
     def _refrescar(self):
+        self.lbl_aviso.config(text="")
         empresa = self.selector.empresa()
         if empresa is None:
             self.tarjetas.mostrar(None, 0, 0)
@@ -44,6 +47,8 @@ class DashboardTab(ttk.Frame):
             return
 
         r = analisis.comparar_escenarios(base, alt)
+        hay_alt = r["ind_alt"] is not None
         self.tarjetas.mostrar(
-            empresa["nombre"], n_escenarios, n_registros, r["filas"], hay_alt=alt is not None)
-        self.grafica.mostrar(r["filas"], base["nombre"], alt["nombre"] if alt else None)
+            empresa["nombre"], n_escenarios, n_registros, r["filas"], hay_alt=hay_alt)
+        self.grafica.mostrar(r["filas"], base["nombre"], alt["nombre"] if hay_alt else None)
+        self.lbl_aviso.config(text="\n".join(r["avisos"]))
