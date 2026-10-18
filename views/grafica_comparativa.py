@@ -1,4 +1,4 @@
-from tkinter import ttk
+from tkinter import filedialog, messagebox, ttk
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
@@ -15,12 +15,16 @@ class GraficaComparativa(ttk.LabelFrame):
 
     def __init__(self, parent):
         super().__init__(parent, text="Comparación de indicadores")
+        self._hay_grafica = False
+        ttk.Button(self, text="Guardar gráfica como PNG…", command=self._guardar_png).pack(
+            side="bottom", anchor="e", padx=4, pady=(0, 4))
         self.figura = Figure(figsize=(10, 3.6), dpi=100)
         self.canvas = FigureCanvasTkAgg(self.figura, master=self)
         self.canvas.get_tk_widget().pack(fill="both", expand=True, padx=4, pady=4)
         self.mostrar_mensaje("Sin datos para graficar.")
 
     def mostrar_mensaje(self, texto):
+        self._hay_grafica = False
         self.figura.clear()
         self.figura.text(0.5, 0.5, texto, ha="center", va="center")
         self.canvas.draw_idle()
@@ -62,3 +66,24 @@ class GraficaComparativa(ttk.LabelFrame):
                            frameon=False, fontsize=9)
         self.figura.subplots_adjust(left=0.05, right=0.98, top=0.82, bottom=0.2, wspace=0.35)
         self.canvas.draw_idle()
+        self._hay_grafica = True
+
+    def _guardar_png(self):
+        if not self._hay_grafica:
+            messagebox.showwarning("Sin gráfica", "No hay una gráfica para guardar.")
+            return
+        ruta = filedialog.asksaveasfilename(
+            title="Guardar gráfica", defaultextension=".png",
+            initialfile="grafica_comparativa.png",
+            filetypes=[("Imagen PNG", "*.png")])
+        if not ruta:  # el usuario canceló
+            return
+        try:
+            self.figura.savefig(ruta, dpi=200, facecolor="white")
+        except OSError:
+            messagebox.showerror(
+                "No se pudo guardar",
+                "No se pudo guardar la imagen. Si hay un archivo con ese nombre abierto "
+                "en otro programa, ciérralo e inténtalo de nuevo.")
+            return
+        messagebox.showinfo("Gráfica guardada", f"Imagen guardada en:\n{ruta}")
