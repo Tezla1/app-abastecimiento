@@ -136,3 +136,23 @@ def contar_registros_empresa(empresa_id):
         (empresa_id,),
     )
     return filas[0]["n"]
+
+def crear_registros(escenario_id, registros):
+    """Inserta varios registros en una sola transacción: entran todos o ninguno."""
+    filas = [
+        (escenario_id, r["origen"], r["destino"], r["distancia_m"], r["carga_kg"],
+         r["tiempo_espera_min"], r["tiempo_recorrido_min"], int(r["atendida"]))
+        for r in registros
+    ]
+    conn = conectar()
+    try:
+        with conn:  # confirma si todo sale bien; revierte todo si hay una excepción
+            conn.executemany(
+                "INSERT INTO registro (escenario_id, origen, destino, distancia_m, carga_kg, "
+                "tiempo_espera_min, tiempo_recorrido_min, atendida) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                filas,
+            )
+        return len(filas)
+    finally:
+        conn.close()

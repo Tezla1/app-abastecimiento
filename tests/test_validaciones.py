@@ -121,6 +121,23 @@ class TestIntegracionConDatabase(unittest.TestCase):
         database.crear_registro(escenario_id, **reg)
         self.assertEqual(len(database.listar_registros(escenario_id)), 1)
 
+class TestBooleano(unittest.TestCase):
+    def test_acepta_si_no_y_variantes(self):
+        for texto in ("Sí", "si", "SI", "1", "true", "Verdadero"):
+            self.assertEqual(v.a_booleano(texto, "X"), (True, None))
+        for texto in ("No", "no", "0", "false", "FALSO"):
+            self.assertEqual(v.a_booleano(texto, "X"), (False, None))
+
+    def test_rechaza_otros_valores(self):
+        valor, error = v.a_booleano("quizás", "X")
+        self.assertIsNone(valor)
+        self.assertIn("Sí/No", error)
+
+    def test_vacio_es_obligatorio(self):
+        valor, error = v.a_booleano("  ", "X")
+        self.assertIsNone(valor)
+        self.assertIn("obligatorio", error)
+
 
 if __name__ == "__main__":
     unittest.main()

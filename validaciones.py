@@ -1,4 +1,5 @@
 import math
+import unicodedata
 
 TIPOS_ESCENARIO = ("Base", "Recurso móvil")
 
@@ -24,6 +25,26 @@ def a_numero(texto, campo, entero=False, minimo=0.0, estricto=False, obligatorio
             return None, f"{campo}: no puede ser negativo."
         return None, f"{campo}: debe ser mayor o igual a {minimo:g}."
     return (int(valor) if entero else valor), None
+
+_VERDADEROS = {"si", "s", "1", "true", "verdadero", "yes", "y"}
+_FALSOS = {"no", "n", "0", "false", "falso"}
+
+
+def _sin_tildes(texto):
+    return "".join(c for c in unicodedata.normalize("NFD", texto)
+                   if unicodedata.category(c) != "Mn")
+
+
+def a_booleano(texto, campo):
+    """Convierte Sí/No, 1/0 o true/false en booleano. Devuelve (valor, error)."""
+    if texto is None or str(texto).strip() == "":
+        return None, f"{campo}: campo obligatorio."
+    clave = _sin_tildes(str(texto).strip().lower())
+    if clave in _VERDADEROS:
+        return True, None
+    if clave in _FALSOS:
+        return False, None
+    return None, f"{campo}: debe ser Sí/No, 1/0 o true/false."
 
 
 def _tomar(errores, resultado):
