@@ -2,11 +2,12 @@ from typing import Optional, Sequence
 
 from PyQt6.QtCore import QCoreApplication, QEvent, Qt, pyqtSignal
 from PyQt6.QtWidgets import (QButtonGroup, QComboBox, QFrame, QHBoxLayout, QLabel, QMainWindow,
-                             QPushButton, QStackedWidget, QVBoxLayout, QWidget)
+                             QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget)
 
 from . import theme
 from ..version import NOMBRE, SUBTITULO, VERSION
 from PyQt6.QtCore import QSize
+from PyQt6.QtGui import QGuiApplication
 
 from .widgets.iconos import icono as icono_seccion
 from .widgets.logo import logo_icono, logo_pixmap
@@ -22,8 +23,20 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle(f"{NOMBRE} v{VERSION} · Optimización de procesos industriales e intralogística")
         self.setWindowIcon(logo_icono())
-        self.resize(1360, 840)
+        self.setMinimumSize(640, 420)
+        self._ajustar_a_pantalla()
         self.armar(paginas)
+
+    def _ajustar_a_pantalla(self) -> None:
+        """Tamaño inicial: el habitual, pero nunca mayor que el área útil de la pantalla; queda centrada."""
+        pantalla = QGuiApplication.primaryScreen()
+        if pantalla is None:
+            self.resize(1360, 840)
+            return
+        area = pantalla.availableGeometry()
+        w, h = min(1360, int(area.width() * 0.96)), min(840, int(area.height() * 0.94))
+        self.resize(max(w, 640), max(h, 420))
+        self.move(area.x() + (area.width() - self.width()) // 2, area.y() + (area.height() - self.height()) // 2)
 
     def armar(self, paginas: Sequence[tuple]) -> None:
         raiz = QWidget()
@@ -35,7 +48,7 @@ class MainWindow(QMainWindow):
 
         lateral = QFrame()
         lateral.setObjectName("sidebar")
-        lateral.setFixedWidth(256)
+        lateral.setMinimumWidth(240)
         ll = QVBoxLayout(lateral)
         ll.setContentsMargins(12, 16, 12, 12)
         cabecera = QHBoxLayout()
@@ -43,19 +56,21 @@ class MainWindow(QMainWindow):
         icono.setPixmap(logo_pixmap(44))
         cabecera.addWidget(icono)
         textos = QVBoxLayout()
-        marca = QLabel(NOMBRE)
+        marca = self._marca = QLabel(NOMBRE)
         marca.setStyleSheet("font-size: 20px; font-weight: 800; letter-spacing: 1px;")
-        sub = QLabel(f"{SUBTITULO}")
+        sub = self._sub = QLabel(f"{SUBTITULO}")
         sub.setObjectName("tenue")
         sub.setWordWrap(True)
         textos.addWidget(marca)
         textos.addWidget(sub)
         cabecera.addLayout(textos, 1)
         ll.addLayout(cabecera)
-        version = QLabel(f"Versión {VERSION}")
+        version = self._version = QLabel(f"Versión {VERSION}")
         version.setStyleSheet(f"color: {theme.TURQUESA}; font-weight: 700;")
         ll.addWidget(version)
         ll.addSpacing(10)
+        self._etiquetas = []
+        self._compacto = None
         self._grupo = QButtonGroup(self)
         self._grupo.setExclusive(True)
         self._pila = QStackedWidget()
@@ -69,14 +84,24 @@ class MainWindow(QMainWindow):
             b.setCursor(Qt.CursorShape.PointingHandCursor)
             b.setStyleSheet(f"QPushButton#nav {{ border-left: 4px solid {color}; }}"
                             f"QPushButton#nav:checked {{ background: {theme.PANEL_2}; border-left: 4px solid {color}; }}")
+            b.setToolTip(etiqueta)
+            self._etiquetas.append(etiqueta)
             self._grupo.addButton(b, i)
             ll.addWidget(b)
             self._pila.addWidget(widget)
         ll.addStretch(1)
-        pie = QLabel(f"{NOMBRE} v{VERSION}\nSimulación de procesos · calculos.py")
+        pie = self._pie = QLabel(f"{NOMBRE} v{VERSION}\nSimulación de procesos · calculos.py")
         pie.setObjectName("tenue")
         ll.addWidget(pie)
-        lay.addWidget(lateral)
+        lateral_scroll = QScrollArea()
+        lateral_scroll.setObjectName("lateral_scroll")
+        lateral_scroll.setWidgetResizable(True)
+        lateral_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        lateral_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._lateral_scroll = lateral_scroll
+        lateral_scroll.setFixedWidth(256)
+        lateral_scroll.setWidget(lateral)
+        lay.addWidget(lateral_scroll)
 
         der = QVBoxLayout()
         der.setContentsMargins(0, 0, 0, 0)
@@ -99,9 +124,12 @@ class MainWindow(QMainWindow):
         self.btn_tema.setStyleSheet(f"QPushButton {{ border: 1px solid {theme.BORDE}; border-radius: 12px; padding: 4px 12px; }}")
         self.btn_tema.clicked.connect(self.tema_solicitado.emit)
         cl.addWidget(self.btn_tema)
-        cl.addWidget(QLabel("   Taller activo:"))
+        self._lbl_taller = QLabel("   Taller activo:")
+        cl.addWidget(self._lbl_taller)
         self.combo_taller = QComboBox()
-        self.combo_taller.setMinimumWidth(320)
+        self.combo_taller.setMinimumWidth(150)
+        self.combo_taller.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        self.combo_taller.setMaximumWidth(420)
         cl.addWidget(self.combo_taller)
         self.estado = QLabel("● READY")
         self.estado.setStyleSheet(f"color: {theme.VERDE}; font-weight: 700; padding-left: 12px;")
@@ -110,16 +138,45 @@ class MainWindow(QMainWindow):
         der.addWidget(self._pila, 1)
         lay.addLayout(der, 1)
 
+        self._alertas_txt = None
+        self._compacto = None
+        self._aplicar_compacto(self.width() < 980)
         self._grupo.idClicked.connect(self._ir)
         self.combo_taller.activated.connect(lambda _: self.taller_elegido.emit(self.combo_taller.currentData()))
         self._grupo.button(0).setChecked(True)
+
+    def resizeEvent(self, ev) -> None:
+        super().resizeEvent(ev)
+        if hasattr(self, "_etiquetas"):
+            self._aplicar_compacto(self.width() < 980)
+
+    def _aplicar_compacto(self, compacto: bool) -> None:
+        """En ventanas angostas el menú lateral queda solo con iconos y la cabecera se abrevia."""
+        if compacto == self._compacto:
+            return
+        self._compacto = compacto
+        for i, b in enumerate(self._grupo.buttons()):
+            b.setText("" if compacto else f" {self._etiquetas[i]}")
+        for w in (self._marca, self._sub, self._version, self._pie):
+            w.setVisible(not compacto)
+        self._lateral_scroll.setFixedWidth(64 if compacto else 256)
+        self._lbl_taller.setVisible(not compacto)
+        self.btn_tema.setText("" if compacto else (" Tema oscuro" if theme.tema_actual() == "claro" else " Tema claro"))
+        self._pintar_alertas()
 
     def poner_pagina(self, i: int, widget: QWidget) -> None:
         """Sustituye el marcador de la página i por la vista real (construcción perezosa)."""
         marcador = self._pila.widget(i)
         actual = self._pila.currentIndex()
         self._pila.removeWidget(marcador)
-        self._pila.insertWidget(i, widget)
+        # cada página va dentro de un área desplazable: si la ventana es más chica que la página,
+        # aparecen barras de desplazamiento en vez de recortar el contenido
+        area = QScrollArea()
+        area.setObjectName("desplazable")
+        area.setWidgetResizable(True)
+        area.setFrameShape(QFrame.Shape.NoFrame)
+        area.setWidget(widget)
+        self._pila.insertWidget(i, area)
         self._pila.setCurrentIndex(actual)
         marcador.deleteLater()
 
@@ -159,8 +216,16 @@ class MainWindow(QMainWindow):
         self.combo_taller.blockSignals(False)
 
     def set_alertas(self, total: int, criticas: int, altas: int) -> None:
+        self._alertas_txt = (total, criticas, altas)
+        self._pintar_alertas()
+
+    def _pintar_alertas(self) -> None:
+        if not getattr(self, "_alertas_txt", None):
+            return
+        total, criticas, altas = self._alertas_txt
         color = theme.ROJO if criticas else theme.NARANJA if altas else theme.VERDE if total == 0 else theme.DORADO
         detalle = f"{criticas} críticas · {altas} altas" if total else "sin alertas"
-        self.insignia.setText(f"🔔 Alertas: {total}  ({detalle})")
+        self.insignia.setToolTip(f"Alertas: {total} ({detalle})")
+        self.insignia.setText(f"🔔 {total}" if self._compacto else f"🔔 Alertas: {total}  ({detalle})")
         self.insignia.setStyleSheet(f"QPushButton {{ border: 1px solid {color}; color: {color}; border-radius: 12px; "
                                     f"padding: 4px 12px; font-weight: 700; }}")

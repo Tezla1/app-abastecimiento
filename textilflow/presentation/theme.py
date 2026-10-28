@@ -79,6 +79,8 @@ QLabel#subtitulo, QLabel#tenue {{ color: {TENUE}; }}
 QLabel#estado {{ color: {TENUE}; padding: 4px 0; }}
 
 QFrame#sidebar {{ background: {PANEL}; border-right: 1px solid {BORDE}; }}
+QScrollArea#desplazable, QScrollArea#desplazable > QWidget > QWidget {{ background: {BG}; border: none; }}
+QScrollArea#lateral_scroll, QScrollArea#lateral_scroll > QWidget > QWidget {{ background: {PANEL}; border: none; }}
 QPushButton#nav {{ text-align: left; padding: 10px 8px; border: none; border-radius: 8px;
     background: transparent; color: {TEXTO}; }}
 QPushButton#nav:hover {{ background: {PANEL_2}; }}

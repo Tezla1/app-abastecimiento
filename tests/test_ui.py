@@ -167,6 +167,10 @@ def test_replicas_desde_la_interfaz(ui):
 
 def test_alertas_en_insignia(ui):
     con_demo(ui)
+    ui.ventana.show()
+    ui.ventana.resize(1400, 800)  # ventana ancha: la cabecera muestra el texto completo
+    QApplication.processEvents()
+    ui.ventana.set_alertas(*ui.ventana._alertas_txt)
     assert "Alertas:" in ui.ventana.insignia.text() and "críticas" in ui.ventana.insignia.text()
     ui.ventana.alertas_solicitadas.emit()
     assert ui.ventana.pagina_actual() == REQ
@@ -245,6 +249,8 @@ def test_cambio_de_tema_reconstruye_la_ventana(qapp):
     ap = Aplicacion(c, qapp)
     theme.aplicar("oscuro")
     ventana = ap.controlador.ventana
+    ventana.resize(1400, 800)
+    QApplication.processEvents()
     ap.alternar_tema()
     assert ap.controlador.ventana is ventana
     assert theme.tema_actual() == "claro" and theme.BG == "#F1F4FA"
@@ -281,3 +287,25 @@ def test_cambio_de_tema_conserva_taller_y_pagina_y_no_reconstruye_todo(qapp):
         theme.aplicar("oscuro")
         ap.controlador.ventana.close()
         c.db.close()
+
+
+def test_ventana_se_adapta_a_cualquier_tamano(ui):
+    from PyQt6.QtWidgets import QScrollArea
+    con_demo(ui)
+    v = ui.ventana
+    v.show()
+    # el mínimo que exige la ventana cabe en una pantalla de 800x600
+    assert v.minimumSizeHint().width() <= 800 and v.minimumSizeHint().height() <= 600
+    for ancho, alto in [(1920, 1080), (1366, 700), (1024, 640), (800, 520), (640, 420)]:
+        v.resize(ancho, alto)
+        QApplication.processEvents()
+        for i in range(len(ui.controladores)):
+            v.ir_a(i)
+        assert (v.width(), v.height()) == (ancho, alto)
+    # cada página vive dentro de un área desplazable (no se recorta: aparecen barras)
+    assert all(isinstance(v._pila.widget(i), QScrollArea) for i in range(len(ui.controladores)))
+    # en ventanas angostas el menú queda en modo compacto y vuelve a lo normal al ensanchar
+    v.resize(800, 520); QApplication.processEvents()
+    assert v._compacto is True
+    v.resize(1366, 760); QApplication.processEvents()
+    assert v._compacto is False and v._grupo.button(0).text().strip() == "Dashboard"
