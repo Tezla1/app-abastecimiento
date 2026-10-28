@@ -1,3 +1,15 @@
+# TextilFlow 4.0.7d · modo oscuro estilo Windows 11 (sobre la 4.0.7c)
+
+- **Paleta oscura nueva** (`theme.py`): grises neutros en lugar del azul marino anterior, como Windows 11:
+  fondo `#202020`, tarjetas `#2B2B2B`, encabezados y botones `#363636`, bordes `#404040`, texto `#F3F3F3`,
+  texto secundario `#9D9D9D`, lienzo de mapas `#1B1B1B`, enlaces `#60CDFF`.
+- El texto secundario (`TENUE`) ahora depende del tema; antes era un azul grisáceo fijo. Los 3 controladores que lo importaban
+  por nombre (y por eso no se actualizaba al cambiar de tema) ahora lo leen de `theme`.
+- Los colores de datos (verde, naranja, rojo, azul de botones, KPI, mapa de calor) **no cambian**: solo el fondo y las superficies.
+- El tema claro queda igual.
+
+---
+
 # TextilFlow 4.0.7c · cambios de idioma (sobre la 4.0.7b)
 
 - **Qt en español:** botones estándar («Sí», «No», «Cancelar», «Aceptar»), «Mostrar los detalles…» y demás textos de los

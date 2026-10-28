@@ -1,7 +1,8 @@
 from ... import registro
 from ...application.progreso import Cancelado
 from ...domain.entities import MOTIVOS_CIERRE, Cierre
-from ..theme import ROJO, TENUE, fmt
+from .. import theme
+from ..theme import ROJO, fmt
 from .base import Controlador, construir_red, etiqueta_estacion
 
 
@@ -31,7 +32,7 @@ class ContingenciasController(Controlador):
         self.vista.panel.set_filas(
             [[c.id, nombres.get(c.codigo, c.codigo), MOTIVOS_CIERRE.get(c.motivo, c.motivo), fmt(c.desde_min, 0),
               fmt(c.hasta_min, 0) if c.hasta_min else "no reabre", "CERRADA" if c.vigente else "reabierta"] for c in cs],
-            [c.id for c in cs], [ROJO if c.vigente else TENUE for c in cs])
+            [c.id for c in cs], [ROJO if c.vigente else theme.TENUE for c in cs])
         self.vista.set_escenarios([(e.id, e.nombre) for e in self._esc.listar(tid)])
         self._mostrar()
 

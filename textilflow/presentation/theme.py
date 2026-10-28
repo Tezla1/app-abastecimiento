@@ -1,14 +1,14 @@
 PALETAS = {
-    "oscuro": dict(BG="#0B1220", PANEL="#101A2E", PANEL_2="#15233D", BORDE="#22345A", TEXTO="#E6EDF7",
-                   LIENZO="#0A1426", TRAZO="#3A4C70", TRAZO_OFF="#2A3A5C", FILA_ALT="#0E1830", RESALTE="#FFD166",
-                   RUTA="#CBD5E6", DOC_TITULO="#E6EDF7", DOC_TEXTO="#CBD5E6", DOC_ENLACE="#8FB4FF", DOC_CODIGO="#FFD166",
-                   PELIGRO_BG="#5A2530", CUADRICULA="#10203A"),
+    # modo oscuro con tonos de Windows 11: grises neutros (no azulados), tarjetas ligeramente más claras que el fondo
+    "oscuro": dict(BG="#202020", PANEL="#2B2B2B", PANEL_2="#363636", BORDE="#404040", TEXTO="#F3F3F3",
+                   LIENZO="#1B1B1B", TRAZO="#7A7A7A", TRAZO_OFF="#4A4A4A", FILA_ALT="#262626", RESALTE="#FFD166",
+                   RUTA="#D0D0D0", DOC_TITULO="#F3F3F3", DOC_TEXTO="#D0D0D0", DOC_ENLACE="#60CDFF", DOC_CODIGO="#FFD166",
+                   PELIGRO_BG="#442726", CUADRICULA="#2E2E2E", TENUE="#9D9D9D"),
     "claro": dict(BG="#F1F4FA", PANEL="#FFFFFF", PANEL_2="#E6ECF6", BORDE="#C9D3E4", TEXTO="#1B2638",
                   LIENZO="#E9EEF7", TRAZO="#8C9BB8", TRAZO_OFF="#C3CDE0", FILA_ALT="#F6F8FC", RESALTE="#C27A00",
                   RUTA="#53627F", DOC_TITULO="#1B2638", DOC_TEXTO="#34425C", DOC_ENLACE="#1F55C4", DOC_CODIGO="#9A5B00",
-                  PELIGRO_BG="#F8DADD", CUADRICULA="#DCE3F0"),
+                  PELIGRO_BG="#F8DADD", CUADRICULA="#DCE3F0", TENUE="#6F809C"),
 }
-TENUE = "#6F809C"
 _actual = "oscuro"
 globals().update(PALETAS["oscuro"])
 

@@ -1,5 +1,6 @@
 from ...domain.normativa import CUMPLE, INCUMPLE
-from ..theme import COLOR_NIVEL, NARANJA, ROJO, TENUE, VERDE, fmt
+from .. import theme
+from ..theme import COLOR_NIVEL, NARANJA, ROJO, VERDE, fmt
 from .base import Controlador
 from .simulacion_controller import filas_alertas
 
@@ -32,7 +33,7 @@ class RequerimientosController(Controlador):
         self._lista = self._par.listar()
         self.vista.t_params.set_filas(
             [[p.clave, f"{p.valor:g}", p.unidad, p.descripcion, p.fuente, "Sí" if p.verificado else "No"] for p in self._lista],
-            colores=[None if p.verificado else TENUE for p in self._lista])
+            colores=[None if p.verificado else theme.TENUE for p in self._lista])
         self.vista.set_parametros([(p.clave, f"{p.clave} ({p.unidad})") for p in self._lista])
         self._parametro_elegido(self.vista.combo_param.currentData() or "")
 

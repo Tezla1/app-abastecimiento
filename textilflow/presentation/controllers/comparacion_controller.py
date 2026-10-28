@@ -1,5 +1,6 @@
 from ..textos import DECIMALES, FORMULA_VARIACION, MEJOR_SI_BAJA
-from ..theme import ROJO, TENUE, VERDE, fmt
+from .. import theme
+from ..theme import ROJO, VERDE, fmt
 from .base import Controlador
 
 
@@ -7,7 +8,7 @@ from .base import Controlador
 def color_variacion(clave: str, v) -> str:
     mejor_si_baja = MEJOR_SI_BAJA.get(clave)
     if v is None or mejor_si_baja is None or v == 0:
-        return TENUE
+        return theme.TENUE
     return VERDE if (v < 0) == mejor_si_baja else ROJO
 
 
