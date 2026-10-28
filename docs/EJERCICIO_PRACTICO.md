@@ -1,4 +1,4 @@
-# TextilFlow 4.0.4 · Ejercicio práctico
+# TextilFlow 4.0.5 · Ejercicio práctico
 
 Caso: **Confecciones Andina - Caso Experimental 01** (datos SINTÉTICOS, no son mediciones) · compilación 2026-10 · 30 réplicas por prueba · semillas 100–129.
 
