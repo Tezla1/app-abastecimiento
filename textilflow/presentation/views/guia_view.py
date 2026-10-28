@@ -1,0 +1,95 @@
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QTextBrowser, QVBoxLayout
+
+from .. import theme
+from ...version import FECHA, NOMBRE, SUBTITULO, VERSION
+from ..widgets.common import PageView
+from ..widgets.logo import logo_pixmap
+
+GUIA_HTML = f"""
+<style>
+ h2 {{ color:#E6EDF7; margin-top:18px; }} h3 {{ color:#8FB4FF; }} p, li {{ color:#CBD5E6; line-height:150%; }}
+ code {{ color:#FFD166; }} td, th {{ padding:4px 10px; color:#CBD5E6; }} th {{ color:#E6EDF7; text-align:left; }}
+</style>
+<h2>¿Para qué sirve TextilFlow?</h2>
+<p>Es una herramienta de <b>optimización de procesos industriales</b> para talleres de confección. Responde, con datos y
+simulación: ¿dónde se forman los cuellos de botella?, ¿cuántos equipos de transporte (operarios o robots AMR) hacen falta?,
+¿cuántos viajes y cuántos metros se recorren?, ¿se respeta la prioridad de los pedidos? y ¿qué ganaría un robot frente
+al transporte manual?</p>
+
+<h2>Cómo funciona (de punta a punta)</h2>
+<ol>
+ <li><b>Taller y layout.</b> Se definen las áreas: un <b>Almacén</b> (inicio de todo lote) y un <b>Despacho</b> (fin), más las áreas de proceso
+  (corte, costura, bordado, inspección, planchado, empaque…). Cada área tiene <i>minutos por unidad</i>, <i>puestos en paralelo</i> y, si hay
+  varias equivalentes, un <i>grupo</i> (ej. COSTURA = Costura 1 + Costura 2). Los pasillos son conexiones con distancia y ancho.</li>
+ <li><b>Prendas y rutas.</b> Cada tipo de prenda tiene peso, tamaño de lote y factor de dificultad. Cada prenda puede tener varias
+  <b>ramas</b>: por ejemplo, 55 % pasa por <code>A&gt;C&gt;@COSTURA&gt;I&gt;P&gt;E&gt;D</code> y 30 % añade bordado
+  <code>A&gt;C&gt;B&gt;@COSTURA&gt;…</code>. Así un mismo pedido se reparte entre varias áreas y todo llega a Despacho.</li>
+ <li><b>Pedidos.</b> Prenda, cantidad, <b>prioridad</b> (1 = urgente), hora de llegada y fecha límite. Se parten en lotes.</li>
+ <li><b>Escenarios y condiciones base.</b> Cuántos recursos, velocidad, capacidad por viaje, tiempos de carga/descarga, política
+  (prioridad o FIFO), balanceo de grupos, demanda (% de los pedidos) y variabilidad de tiempos.</li>
+ <li><b>Simulación de eventos discretos.</b> Los lotes avanzan por sus rutas; las áreas procesan en paralelo (hasta su número de puestos);
+  cuando un lote termina pide transporte y el recurso libre más cercano lo lleva. Las colas, esperas, viajes y metros salen del propio
+  comportamiento del sistema, no de promedios.</li>
+ <li><b>Modelo matemático (<code>calculos.py</code>).</b> Con los traslados simulados se calculan los indicadores del estudio
+  (tiempo de abastecimiento, distancia, espera, utilización, % atendidas) y la variación porcentual entre S0 y S1. Se complementa con la
+  <b>carga ofrecida ρ</b> de cada área (analítica) para detectar cuellos antes de simular.</li>
+</ol>
+
+<h2>Dónde ver cada cosa</h2>
+<table>
+ <tr><th>Pregunta</th><th>Página</th></tr>
+ <tr><td>¿Cuáles son los componentes críticos? ¿Qué distancias hay?</td><td><b>Requerimientos y normativas</b></td></tr>
+ <tr><td>¿Cuántos equipos y cuántos viajes, según normas?</td><td><b>Requerimientos y normativas → Equipos y viajes / Normativa</b></td></tr>
+ <tr><td>¿Qué ruta usará cada pedido? Pulse un área del mapa.</td><td><b>Mapa operativo</b></td></tr>
+ <tr><td>¿Dónde hay más tránsito? (mapa de calor que crece con el tiempo)</td><td><b>Mapa operativo</b> y Dashboard</td></tr>
+ <tr><td>¿Qué tan variable es el resultado? (N pruebas)</td><td><b>Escenarios y simulación → Réplicas</b></td></tr>
+ <tr><td>¿Mejora el robot frente al manual?</td><td><b>Comparación experimental</b></td></tr>
+ <tr><td>¿Qué falta o está mal?</td><td>Alertas (insignia superior) y <b>Validación integral</b></td></tr>
+</table>
+
+<h2>Ejercicio práctico sugerido</h2>
+<ol>
+ <li>Abra <b>Data Manager → Cargar ejemplo</b> (taller sintético «Confecciones Andina»).</li>
+ <li>En <b>Escenarios y simulación</b> simule S0 (2 operarios) y observe las alertas: Bordado (1 puesto) concentra la carga.</li>
+ <li>En <b>Mapa operativo</b> pulse «Simular y animar»: vea las colas crecer en Bordado y pulse esa área para ver sus rutas.</li>
+ <li>Cambie el escenario a <b>FIFO</b> y compare cuánto tarda el pedido urgente (prioridad 1) frente a la política por prioridad.</li>
+ <li>En <b>Requerimientos</b> pruebe flotas de 1 a 6 y vea que, tras 2 equipos, agregar más no acelera el cierre: el límite es Bordado, no el transporte.</li>
+ <li>En <b>Réplicas</b> use variabilidad 10 % y 30 réplicas para obtener media, desviación e IC 95 %.</li>
+</ol>
+
+<h2>Límites que conviene conocer</h2>
+<ul>
+ <li>Los datos del ejemplo son <b>sintéticos</b>: sirven para validar el software, no son mediciones del taller.</li>
+ <li>Las normas están en <b>Parámetros normativos</b> con su fuente y un indicador «verificado». Solo los valores marcados «Sí»
+  fueron contrastados con el texto; el resto son criterios de diseño o citas secundarias que debe confirmar antes de citarlos.</li>
+ <li>La factibilidad del robot por ancho es geométrica; no sustituye una evaluación de riesgos de seguridad.</li>
+ <li>El modelo no incluye averías, baterías ni cruces entre recursos en un pasillo (se pueden agregar como extensión).</li>
+</ul>
+"""
+
+
+class GuiaView(PageView):
+    def __init__(self):
+        super().__init__("Guía y acerca de TextilFlow",
+                         "Qué hace el programa, cómo se usa y qué límites tiene.", theme.TURQUESA)
+        cab = QFrame(); cab.setObjectName("tarjeta")
+        cl = QHBoxLayout(cab)
+        logo = QLabel()
+        logo.setPixmap(logo_pixmap(84))
+        cl.addWidget(logo)
+        txt = QVBoxLayout()
+        n = QLabel(f"{NOMBRE}  ·  versión {VERSION}")
+        n.setStyleSheet("font-size: 22px; font-weight: 800;")
+        txt.addWidget(n)
+        txt.addWidget(QLabel(f"{SUBTITULO}  ·  compilación {FECHA}"))
+        t2 = QLabel("Simulación de eventos discretos + modelo matemático (calculos.py) · PyQt6 · arquitectura limpia y MVC")
+        t2.setObjectName("tenue")
+        txt.addWidget(t2)
+        cl.addLayout(txt, 1)
+        self.cuerpo.addWidget(cab)
+        self.texto = QTextBrowser()
+        self.texto.setOpenExternalLinks(False)
+        self.texto.setHtml(GUIA_HTML)
+        self.texto.setStyleSheet(f"background: {theme.PANEL}; border: 1px solid {theme.BORDE}; border-radius: 10px; padding: 12px;")
+        self.cuerpo.addWidget(self.texto, 1)

@@ -1,0 +1,53 @@
+import csv
+
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Font, PatternFill
+
+from ...application.ports import ReportExporter
+
+
+def _celda_segura(v):
+    """Evita inyección de fórmulas al abrir el CSV/Excel en una hoja de cálculo."""
+    if isinstance(v, str) and v[:1] in ("=", "+", "-", "@"):
+        return "'" + v
+    return v
+
+
+class ArchivoReportExporter(ReportExporter):
+    def exportar_csv(self, ruta: str, filas: list[dict]) -> None:
+        if not filas:
+            raise ValueError("No hay filas para exportar.")
+        with open(ruta, "w", newline="", encoding="utf-8-sig") as f:  # utf-8-sig: Excel lee bien las tildes
+            w = csv.DictWriter(f, fieldnames=list(filas[0].keys()))
+            w.writeheader()
+            for fila in filas:
+                w.writerow({k: "" if v is None else _celda_segura(v) for k, v in fila.items()})
+
+    def exportar_xlsx(self, ruta: str, titulo: str, meta: list[tuple], filas: list[dict]) -> None:
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Comparación"
+        ws["A1"] = titulo
+        ws["A1"].font = Font(bold=True, size=14)
+        fila = 3
+        for k, v in meta:
+            ws.cell(fila, 1, k).font = Font(bold=True)
+            ws.cell(fila, 2, _celda_segura(v))
+            fila += 1
+        fila += 1
+        columnas = list(filas[0].keys()) if filas else []
+        for j, c in enumerate(columnas, 1):
+            celda = ws.cell(fila, j, c)
+            celda.font = Font(bold=True, color="FFFFFF")
+            celda.fill = PatternFill("solid", fgColor="1F3A68")
+            celda.alignment = Alignment(horizontal="center", wrap_text=True)
+        for i, datos in enumerate(filas, fila + 1):
+            for j, c in enumerate(columnas, 1):
+                v = datos[c]
+                celda = ws.cell(i, j, "n/d" if v is None else _celda_segura(v))
+                if isinstance(v, float):
+                    celda.number_format = "0.00"
+        ws.column_dimensions["A"].width = 42
+        for col in "BCD":
+            ws.column_dimensions[col].width = 28
+        wb.save(ruta)

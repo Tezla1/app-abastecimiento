@@ -1,0 +1,335 @@
+"""Casos de uso de punta a punta sobre SQLite en memoria."""
+import os
+import sqlite3
+import zipfile
+
+import pytest
+
+from textilflow.application.errors import ErrorDeNegocio
+from textilflow.container import construir
+from textilflow.domain.entities import (Conexion, Escenario, Estacion, Pedido, Robot, RutaProceso, Taller, TipoPrenda)
+from textilflow.infrastructure.persistence.database import Database
+
+
+def escenarios(app, taller):
+    return app.escenarios.listar(taller.id)
+
+
+def test_demo_carga_el_caso_experimental(demo):
+    app, t = demo
+    assert len(app.layout.listar_estaciones(t.id)) == 9
+    assert len(app.layout.listar_conexiones(t.id)) == 16
+    assert len(app.procesos.listar_tipos()) == 4 and len(app.procesos.listar_rutas(t.id)) == 8
+    assert len(app.procesos.listar_pedidos(t.id)) == 5
+    s0, s1 = escenarios(app, t)
+    assert app.indicadores.execute(s0.id).registros and app.indicadores.execute(s1.id).registros
+
+
+def test_simulacion_detecta_bordado_como_cuello_de_botella(demo):
+    app, t = demo
+    s0 = escenarios(app, t)[0]
+    r = app.simulacion.execute(s0.id, guardar=False)
+    peor = max(r.estados, key=lambda e: e.carga_ofrecida_pct or 0)
+    assert peor.codigo == "B" and peor.carga_ofrecida_pct > 85
+    assert any(a.codigo == "SIM-CUELLO" and a.elemento == "B" for a in r.alertas)
+    assert r.ind.lotes == r.ind.lotes_completados + r.ind.lotes_fallidos + sum(1 for l in r.proceso.lotes if l.estado == "en curso")
+
+
+def test_simulacion_es_determinista_y_reemplaza_registros(demo):
+    app, t = demo
+    s0 = escenarios(app, t)[0]
+    a = app.simulacion.execute(s0.id)
+    b = app.simulacion.execute(s0.id)
+    assert len(b.registros) == len(a.registros) == len(app.indicadores.execute(s0.id).registros)
+    assert a.indicadores == b.indicadores
+
+
+def test_prioridad_baja_el_lead_time_del_pedido_urgente(demo):
+    app, t = demo
+    s0 = escenarios(app, t)[0]
+    prio = app.simulacion.execute(s0.id, guardar=False)
+    s0.politica = "FIFO"
+    app.escenarios.guardar(s0)
+    fifo = app.simulacion.execute(s0.id, guardar=False)
+    assert prio.ind.lead_time_por_prioridad[1] < fifo.ind.lead_time_por_prioridad[1]
+
+
+def test_comparacion_usa_calculos_y_kpis_de_proceso(demo):
+    app, t = demo
+    s0, s1 = escenarios(app, t)
+    r = app.comparacion.execute(s0.id, s1.id)
+    assert r.comparable and len(r.filas) == 6 and len(r.filas_proceso) == 7
+    assert r.series_base["completados"][-1] > 0
+    with pytest.raises(ErrorDeNegocio):
+        app.comparacion.execute(s0.id, s0.id)
+
+
+def test_replicas_estadisticas(demo):
+    app, t = demo
+    s1 = escenarios(app, t)[1]
+    r0 = app.replicas.execute(s1.id, 5)
+    assert r0.nota and r0.resumen["makespan_min"].desv == pytest.approx(0)       # determinista sin variabilidad
+    s1.variabilidad_pct = 20
+    app.escenarios.guardar(s1)
+    r = app.replicas.execute(s1.id, 12)
+    assert not r.nota and r.resumen["makespan_min"].n == 12
+    assert r.resumen["makespan_min"].desv > 0 and r.resumen["makespan_min"].ic_inf < r.resumen["makespan_min"].ic_sup
+    assert sum(n for _, _, n in r.histogramas["makespan_min"]) == 12
+    assert [f["semilla"] for f in r.filas] == list(range(s1.semilla, s1.semilla + 12))
+    with pytest.raises(ErrorDeNegocio):
+        app.replicas.execute(s1.id, 1)
+
+
+def test_requerimientos(demo):
+    app, t = demo
+    s0 = escenarios(app, t)[0]
+    r = app.requerimientos.execute(s0.id, 5)
+    assert [f.recursos for f in r.barrido] == [1, 2, 3, 4, 5]
+    assert r.barrido[0].utilizacion_pct > r.barrido[-1].utilizacion_pct              # más equipos → menos utilización
+    assert r.recomendado == 2
+    assert any(c.tipo == "Cuello de botella" for c in r.criticos)
+    assert any(c.tipo == "Pasillo" and "CO–P" in c.elemento for c in r.criticos)
+    camisa = next(v for v in r.viajes_por_prenda if v["prenda"] == "Camisa")
+    assert camisa["unidades_por_viaje"] == 100 and camisa["viajes_por_traslado"] == 1   # 25 kg / 0,25 kg
+    assert all(x.alcanzable for x in r.ramas)
+    assert any(c.estado == "INCUMPLE" for c in r.cumplimientos)
+    assert r.recorridos["viajes"] > 0 and r.recorridos["distancia_total_m"] > 0
+
+
+def test_viajes_aumentan_si_el_equipo_carga_menos(demo):
+    app, t = demo
+    s0 = escenarios(app, t)[0]
+    base = {v["prenda"]: v for v in app.requerimientos.execute(s0.id, 2).viajes_por_prenda}
+    s0.capacidad_kg = 5.0
+    app.escenarios.guardar(s0)
+    chico = {v["prenda"]: v for v in app.requerimientos.execute(s0.id, 2).viajes_por_prenda}
+    assert chico["Chaqueta"]["viajes_por_traslado"] > base["Chaqueta"]["viajes_por_traslado"]
+
+
+def test_alertas_y_parametros_editables(demo):
+    app, t = demo
+    codigos = {a.codigo for a in app.alertas.execute(t.id)}
+    assert {"SIM-CUELLO", "SIM-WIP", "NOR-ancho_min_pasillo_m"} <= codigos
+    app.parametros.cambiar_valor("umbral_cuello_botella_pct", 99)
+    despues = {(a.codigo, a.elemento) for a in app.alertas.execute(t.id)}
+    assert ("SIM-CUELLO", "B") not in despues
+    with pytest.raises(ErrorDeNegocio):
+        app.parametros.cambiar_valor("no_existe", 1)
+    app.parametros.restaurar()
+    assert app.parametros.valores()["umbral_cuello_botella_pct"] == 85
+
+
+def test_rutas_por_nodo_segun_pedido(demo):
+    app, t = demo
+    r = app.simulacion.execute(escenarios(app, t)[0].id, guardar=False)
+    todas = app.rutas.execute(r, "B")
+    assert todas and all("B" in x["camino"] for x in todas)
+    peds = {x["pedido_id"] for x in todas}
+    uno = app.rutas.execute(r, "B", min(peds))
+    assert {x["pedido_id"] for x in uno} == {min(peds)}
+    assert not app.rutas.execute(r, "B", 999)
+
+
+# ------------------------------------------------------------------ layout y procesos
+def test_layout_no_rompe_relaciones(demo):
+    app, t = demo
+    est = {e.codigo: e for e in app.layout.listar_estaciones(t.id)}
+    with pytest.raises(ErrorDeNegocio):
+        app.layout.eliminar_estacion(est["B"].id)                      # lo usan conexiones y rutas
+    with pytest.raises(ErrorDeNegocio):
+        app.layout.guardar_estacion(Estacion(t.id, "A", "dup", "PROCESO", 0, 0, 1, 1))
+    with pytest.raises(ErrorDeNegocio):
+        app.layout.guardar_estacion(Estacion(t.id, "A2", "otro almacén", "ALMACEN", 0, 0))   # solo un almacén
+    est["B"].codigo = "BB"
+    with pytest.raises(ErrorDeNegocio):
+        app.layout.guardar_estacion(est["B"])
+    con = app.layout.guardar_conexion(Conexion(t.id, "A", "D", 0, 1.5))        # distancia por coordenadas
+    assert con.distancia_m == pytest.approx(30.02, abs=0.01)
+
+
+def test_procesos_validan_rutas_y_pedidos(demo):
+    app, t = demo
+    camisa = next(x for x in app.procesos.listar_tipos() if x.nombre == "Camisa")
+    with pytest.raises(ErrorDeNegocio):
+        app.procesos.guardar_ruta(RutaProceso(t.id, camisa.id, "mala", 100, "C>CO>D"))        # no empieza en el almacén
+    with pytest.raises(ErrorDeNegocio):
+        app.procesos.guardar_ruta(RutaProceso(t.id, camisa.id, "mala", 100, "A>ZZ>D"))
+    ok = app.procesos.guardar_ruta(RutaProceso(t.id, camisa.id, "directa", 5, " A > E > D "))
+    assert app.procesos.guardar_ruta(RutaProceso(t.id, camisa.id, "grupo", 5, "A>C>@costura>I>E>D")).secuencia == "A>C>@COSTURA>I>E>D"
+    assert ok.secuencia == "A>E>D"
+    with pytest.raises(ErrorDeNegocio):
+        app.procesos.guardar_pedido(Pedido(t.id, 9999, 10))
+    with pytest.raises(ErrorDeNegocio):
+        app.procesos.eliminar_tipo(camisa.id)                          # tiene rutas y pedidos
+    with pytest.raises(ErrorDeNegocio):
+        app.procesos.guardar_tipo(TipoPrenda("camisa", 1, 10))
+
+
+def test_escenario_amr_toma_parametros_del_robot(demo):
+    app, t = demo
+    robot = app.robots.listar()[0]
+    esc = app.escenarios.guardar(Escenario(t.id, "S1b", "AMR", 3, 480, 9.9, 999, 0, 0, "A", True, robot.id))
+    assert (esc.velocidad_ms, esc.capacidad_kg) == (robot.velocidad_ms, robot.capacidad_kg)
+
+
+def test_compatibilidad_robot_usa_holgura_y_prendas(demo):
+    app, t = demo
+    robot = app.robots.listar()[0]
+    c = app.robots.evaluar_compatibilidad(t.id, robot.id)
+    assert c.ancho_requerido_m == pytest.approx(1.30) and not c.compatible_ancho and c.compatible_carga
+    assert any("CO–P" in e for e in c.arcos_estrechos)
+    pesado = app.robots.guardar(Robot("Débil", 0.5, 0.7, 0.8))
+    assert not app.robots.evaluar_compatibilidad(t.id, pesado.id).compatible_carga
+
+
+def test_validacion_integral_del_demo(demo):
+    app, t = demo
+    h = {x.codigo: x for x in app.validacion.execute(t.id)}
+    assert h["LAY-02"].estado == "PASS" and h["PRO-02"].estado == "PASS" and h["PRO-05"].estado == "PASS"
+    assert h["ESC-03"].estado == "PASS" and h["PED-02"].estado == "WARNING" and h["ROB-02"].estado == "WARNING"
+
+
+def test_validacion_detecta_fallos(app):
+    t = app.talleres.guardar(Taller("vacío"))
+    h = {x.codigo: x for x in app.validacion.execute(t.id)}
+    assert h["LAY-01"].estado == "FAIL" and h["LAY-02"].estado == "FAIL" and h["PED-01"].estado == "FAIL"
+
+
+def test_simular_sin_datos_da_mensaje_claro(app):
+    t = app.talleres.guardar(Taller("t"))
+    app.layout.guardar_estacion(Estacion(t.id, "A", "", "ALMACEN", 0, 0))
+    app.layout.guardar_estacion(Estacion(t.id, "D", "", "DESPACHO", 5, 0))
+    e = app.escenarios.guardar(Escenario(t.id, "S0", "MANUAL", 1, 60, 1, 10, 0, 0, "A"))
+    with pytest.raises(ErrorDeNegocio, match="conexiones"):
+        app.simulacion.execute(e.id)
+
+
+def test_eliminar_taller_borra_en_cascada(demo):
+    app, t = demo
+    app.talleres.eliminar(t.id)
+    assert not app.layout.listar_estaciones(t.id) and not app.procesos.listar_rutas(t.id)
+    assert not app.procesos.listar_pedidos(t.id) and not app.escenarios.listar(t.id)
+    assert app.db.conn.execute("SELECT count(*) FROM registro").fetchone()[0] == 0
+
+
+# ------------------------------------------------------------------ archivos
+def test_excel_ida_y_vuelta(demo, tmp_path):
+    app, t = demo
+    ruta = str(tmp_path / "taller.xlsx")
+    app.datos.exportar_taller(t.id, ruta)
+    nuevo, resumen = app.datos.importar_taller(ruta)
+    assert "9 nodos" in resumen and "8 ramas" in resumen and "5 pedidos" in resumen
+    assert [(e.codigo, e.tiempo_proceso_min, e.capacidad, e.grupo) for e in app.layout.listar_estaciones(nuevo.id)] == \
+           [(e.codigo, e.tiempo_proceso_min, e.capacidad, e.grupo) for e in app.layout.listar_estaciones(t.id)]
+    assert len(app.procesos.listar_tipos()) == 4          # las prendas existentes se reutilizan
+    assert [r.secuencia for r in app.procesos.listar_rutas(nuevo.id)] == [r.secuencia for r in app.procesos.listar_rutas(t.id)]
+
+
+def test_plantilla_vacia_no_importa(app, tmp_path):
+    ruta = str(tmp_path / "p.xlsx")
+    app.datos.crear_plantilla(ruta)
+    with pytest.raises(ErrorDeNegocio, match="no tiene datos"):
+        app.datos.importar_taller(ruta)
+
+
+def test_importacion_atomica_con_errores(demo, tmp_path):
+    from openpyxl import load_workbook
+    app, t = demo
+    ruta = str(tmp_path / "t.xlsx")
+    app.datos.exportar_taller(t.id, ruta)
+    wb = load_workbook(ruta)
+    wb["Rutas"].append(["Camisa", "rota", 10, "A>NOEXISTE>D"])
+    wb["Pedidos"].append(["Fantasma", 10, 1, 0, 0, "SINTETICO"])
+    wb["Nodos"].append(["Z", "x", "PROCESO", 1, 1, 0.0, 1, ""])      # proceso sin tiempo
+    wb.save(ruta)
+    antes = len(app.talleres.listar())
+    with pytest.raises(ErrorDeNegocio) as e:
+        app.datos.importar_taller(ruta)
+    assert "NOEXISTE" in str(e.value) and "Fantasma" in str(e.value)
+    assert len(app.talleres.listar()) == antes
+
+
+def test_excel_invalido(app, tmp_path):
+    ruta = tmp_path / "x.xlsx"
+    ruta.write_text("no soy excel")
+    with pytest.raises(ErrorDeNegocio):
+        app.datos.importar_taller(str(ruta))
+
+
+def test_proyecto_rlr_ida_y_vuelta(demo, tmp_path):
+    app, t = demo
+    ruta = str(tmp_path / "p.rlr")
+    app.parametros.cambiar_valor("umbral_espera_cola_min", 12)
+    app.datos.exportar_proyecto(ruta)
+    otra = construir(":memory:")
+    otra.datos.restaurar_proyecto(ruta)
+    t2 = otra.talleres.listar()[0]
+    assert len(otra.procesos.listar_pedidos(t2.id)) == 5 and len(otra.escenarios.listar(t2.id)) == 2
+    assert otra.parametros.valores()["umbral_espera_cola_min"] == 12
+    a = app.simulacion.execute(escenarios(app, t)[0].id, guardar=False).indicadores
+    b = otra.simulacion.execute(otra.escenarios.listar(t2.id)[0].id, guardar=False).indicadores
+    assert a == b
+    otra.db.close()
+
+
+def test_restaurar_rechaza_archivos_malos(demo, tmp_path):
+    import json
+    app, t = demo
+    malo = tmp_path / "malo.rlr"
+    malo.write_text("no es zip")
+    with pytest.raises(ErrorDeNegocio):
+        app.datos.restaurar_proyecto(str(malo))
+    v1 = tmp_path / "v1.rlr"
+    with zipfile.ZipFile(v1, "w") as z:
+        z.writestr("proyecto.json", json.dumps({"formato": "TEXTILFLOW-RLR", "version": 1, "tablas": {}}))
+    with pytest.raises(ErrorDeNegocio, match="no soportada"):
+        app.datos.restaurar_proyecto(str(v1))
+    roto = tmp_path / "roto.rlr"
+    ruta_ok = str(tmp_path / "ok.rlr")
+    app.datos.exportar_proyecto(ruta_ok)
+    with zipfile.ZipFile(ruta_ok) as z:
+        datos = json.loads(z.read("proyecto.json"))
+    datos["tablas"]["pedido"][0]["tipo_prenda_id"] = 12345                 # referencia rota
+    with zipfile.ZipFile(roto, "w") as z:
+        z.writestr("proyecto.json", json.dumps(datos))
+    with pytest.raises(ErrorDeNegocio, match="No se modificó"):
+        app.datos.restaurar_proyecto(str(roto))
+    assert len(app.procesos.listar_pedidos(t.id)) == 5                     # nada cambió
+
+
+def test_exportar_reporte(demo, tmp_path):
+    from openpyxl import load_workbook
+    app, t = demo
+    s0, s1 = escenarios(app, t)
+    x, c = str(tmp_path / "r.xlsx"), str(tmp_path / "r.csv")
+    app.reporte.execute(s0.id, s1.id, x, "xlsx")
+    app.reporte.execute(s0.id, s1.id, c, "csv")
+    ws = load_workbook(x).active
+    assert ws.max_row >= 16 and "Lead time" in open(c, encoding="utf-8-sig").read()
+
+
+def test_base_v1_se_respalda_y_no_se_destruye(tmp_path):
+    ruta = str(tmp_path / "vieja.db")
+    con = sqlite3.connect(ruta)
+    con.executescript("CREATE TABLE solicitud(id INTEGER); INSERT INTO solicitud VALUES (1);")
+    con.commit(); con.close()
+    db = Database(ruta)
+    assert db.respaldo_v1 and os.path.exists(db.respaldo_v1)
+    assert sqlite3.connect(db.respaldo_v1).execute("SELECT count(*) FROM solicitud").fetchone()[0] == 1
+    assert db.conn.execute("PRAGMA user_version").fetchone()[0] == 2
+    db.close()
+    assert Database(ruta).respaldo_v1 == ""        # la base v2 se abre sin respaldar de nuevo
+
+
+@pytest.mark.parametrize("archivo", ["01_confeccion_andina.xlsx", "02_confeccion_transporte_critico.xlsx",
+                                     "03_DIFICIL_camiseria_14_areas.xlsx", "04_MUY_DIFICIL_denim_20_areas.xlsx",
+                                     "05_ULTRA_planta_3_naves_29_areas.xlsx"])
+def test_ejemplos_xlsx_se_importan_y_simulan(archivo):
+    from pathlib import Path
+    app = construir(":memory:")
+    ruta = Path(__file__).resolve().parents[1] / "ejemplos" / archivo
+    t, _ = app.datos.importar_taller(str(ruta))
+    assert app.demo.preparar_escenario_base(t) is True
+    assert app.demo.preparar_escenario_base(t) is False
+    s0 = app.escenarios.listar(t.id)[0]
+    assert app.indicadores.execute(s0.id).registros

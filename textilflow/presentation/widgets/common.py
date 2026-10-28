@@ -1,0 +1,133 @@
+"""Widgets reutilizables: tarjeta KPI, tabla de datos, encabezado de página."""
+from typing import Optional, Sequence
+
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QColor
+from PyQt6.QtWidgets import (QAbstractItemView, QFrame, QHeaderView, QLabel, QMessageBox,
+                             QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
+
+from .. import theme
+
+
+def _es_numero(valor) -> bool:
+    try:
+        float(str(valor).replace(",", "").rstrip("%"))
+        return True
+    except ValueError:
+        return False
+
+
+class KpiCard(QFrame):
+    def __init__(self, titulo: str, color: str, parent=None):
+        super().__init__(parent)
+        self.setObjectName("tarjeta")
+        self.setStyleSheet(f"QFrame#tarjeta {{ background: {color}; border: none; border-radius: 10px; }}")
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(14, 10, 14, 10)
+        lay.setSpacing(2)
+        self._titulo = QLabel(titulo)
+        self._titulo.setStyleSheet("font-weight: 600; color: rgba(255,255,255,0.85);")
+        self._valor = QLabel("—")
+        self._valor.setStyleSheet("font-size: 24px; font-weight: 700;")
+        self._nota = QLabel("")
+        self._nota.setStyleSheet("color: rgba(255,255,255,0.7); font-size: 11px;")
+        for w in (self._titulo, self._valor, self._nota):
+            lay.addWidget(w)
+
+    def set_valor(self, valor: str, nota: str = "") -> None:
+        self._valor.setText(valor)
+        self._nota.setText(nota)
+
+
+class DataTable(QTableWidget):
+    """Tabla de solo lectura; guarda el id de cada fila para que el controlador lo recupere."""
+    fila_seleccionada = pyqtSignal(object)
+
+    def __init__(self, encabezados: Sequence[str], parent=None, estirar: Optional[int] = None):
+        super().__init__(0, len(encabezados), parent)
+        self.setHorizontalHeaderLabels(list(encabezados))
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.setAlternatingRowColors(True)
+        self.setShowGrid(False)
+        self.verticalHeader().setVisible(False)
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        self.horizontalHeader().setStretchLastSection(estirar is None)
+        if estirar is not None:
+            self.horizontalHeader().setSectionResizeMode(estirar, QHeaderView.ResizeMode.Stretch)
+        self.itemSelectionChanged.connect(self._emitir)
+
+    def set_filas(self, filas: Sequence[Sequence], ids: Optional[Sequence] = None,
+                  colores: Optional[Sequence[Optional[str]]] = None) -> None:
+        self.blockSignals(True)
+        self.setRowCount(len(filas))
+        for i, fila in enumerate(filas):
+            for j, valor in enumerate(fila):
+                item = QTableWidgetItem("" if valor is None else str(valor))
+                numerico = j > 0 and _es_numero(valor)
+                if numerico:
+                    item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                if j == 0 and ids is not None:
+                    item.setData(Qt.ItemDataRole.UserRole, ids[i])
+                if colores and colores[i] and j == 0:
+                    item.setForeground(QColor(colores[i]))
+                self.setItem(i, j, item)
+        self.blockSignals(False)
+        self.clearSelection()
+
+    def id_seleccionado(self):
+        filas = self.selectionModel().selectedRows()
+        if not filas:
+            return None
+        return self.item(filas[0].row(), 0).data(Qt.ItemDataRole.UserRole)
+
+    def seleccionar_id(self, id_) -> None:
+        for i in range(self.rowCount()):
+            if self.item(i, 0).data(Qt.ItemDataRole.UserRole) == id_:
+                self.selectRow(i)
+                return
+
+    def _emitir(self) -> None:
+        self.fila_seleccionada.emit(self.id_seleccionado())
+
+
+class PageView(QWidget):
+    """Página con título, subtítulo y color de acento propios."""
+
+    def __init__(self, titulo: str, subtitulo: str, acento: str, parent=None):
+        super().__init__(parent)
+        self.setObjectName("pagina")
+        self.acento = acento
+        self._raiz = QVBoxLayout(self)
+        self._raiz.setContentsMargins(24, 18, 24, 18)
+        self._raiz.setSpacing(10)
+        t = QLabel(titulo)
+        t.setObjectName("titulo")
+        s = QLabel(subtitulo)
+        s.setObjectName("subtitulo")
+        s.setWordWrap(True)
+        linea = QFrame()
+        linea.setFixedHeight(2)
+        linea.setStyleSheet(f"background: {acento};")
+        for w in (t, s, linea):
+            self._raiz.addWidget(w)
+        self.estado = QLabel("")
+        self.estado.setObjectName("estado")
+        self.estado.setWordWrap(True)
+
+    @property
+    def cuerpo(self) -> QVBoxLayout:
+        return self._raiz
+
+    def error(self, mensaje: str) -> None:
+        QMessageBox.warning(self, "TextilFlow", mensaje)
+
+    def info(self, mensaje: str) -> None:
+        self.estado.setText(mensaje)
+
+    def confirmar(self, mensaje: str) -> bool:
+        r = QMessageBox.question(self, "TextilFlow", mensaje,
+                                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                 QMessageBox.StandardButton.No)
+        return r == QMessageBox.StandardButton.Yes

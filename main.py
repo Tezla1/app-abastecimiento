@@ -1,68 +1,51 @@
-import logging
-import tkinter as tk
+"""Punto de entrada de TextilFlow.
+
+Uso:  python main.py            (guarda los datos en ~/.textilflow/textilflow.db)
+      python main.py --db ruta.db
+"""
+import argparse
+import sys
 from pathlib import Path
-from tkinter import messagebox, ttk
 
-import database
-from views.dashboard import DashboardTab
-from views.datos import DatosTab
-from views.resultados import ResultadosTab
+from PyQt6.QtWidgets import QApplication
 
-RUTA_LOG = Path(__file__).parent / "data" / "errores.log"
-
-
-def configurar_log():
-    RUTA_LOG.parent.mkdir(exist_ok=True)
-    logging.basicConfig(
-        filename=RUTA_LOG, level=logging.ERROR, encoding="utf-8",
-        format="%(asctime)s %(levelname)s %(message)s")
+from textilflow.container import construir
+from textilflow.presentation import theme
+from textilflow.presentation.widgets.logo import logo_icono
+from textilflow.version import NOMBRE, VERSION
+from textilflow.presentation.app import AplicacionController
 
 
-class App(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        self.title("Análisis de abastecimiento interno - Talleres textiles de Soacha")
-        self.geometry("1150x720")
-        self.minsize(800, 500)
+def main() -> int:
+    parser = argparse.ArgumentParser(description="TextilFlow · intralogística, optimización y simulación")
+    parser.add_argument("--db", default=str(Path.home() / ".textilflow" / "textilflow.db"),
+                        help="ruta del archivo SQLite (use :memory: para una sesión sin guardar)")
+    args = parser.parse_args()
+    if args.db != ":memory:":
+        Path(args.db).parent.mkdir(parents=True, exist_ok=True)
+        antigua = Path.home() / ".intrabot" / "intrabot.db"      # datos de la versión anterior (INTRABOT)
+        if not Path(args.db).exists() and antigua.exists():
+            import shutil
+            shutil.copy2(antigua, args.db)
 
-        self.notebook = ttk.Notebook(self)
-        self.notebook.pack(fill="both", expand=True, padx=8, pady=8)
+    contenedor = construir(args.db)
+    if contenedor.db.respaldo_v1:
+        print(f"Aviso: la base de datos de la versión 1 era incompatible y se conservó en {contenedor.db.respaldo_v1}")
+    if not contenedor.talleres.listar():  # primera ejecución: caso experimental de ejemplo
+        contenedor.demo.execute()
 
-        self.notebook.add(DashboardTab(self.notebook), text="Dashboard")
-        self.notebook.add(DatosTab(self.notebook), text="Ingresar datos")
-        self.notebook.add(ResultadosTab(self.notebook), text="Resultados")
-        self.notebook.bind("<<NotebookTabChanged>>", self._al_cambiar_pestana)
-
-    def _al_cambiar_pestana(self, evento):
-        """Cada pestaña que tenga un método actualizar() se refresca al abrirse."""
-        pestana = self.nametowidget(self.notebook.select())
-        if hasattr(pestana, "actualizar"):
-            pestana.actualizar()
-
-    def report_callback_exception(self, exc_type, exc_value, exc_traceback):
-        """Errores inesperados de la interfaz: se registran y se avisa sin cerrar la app."""
-        logging.error("Error inesperado en la interfaz",
-                      exc_info=(exc_type, exc_value, exc_traceback))
-        messagebox.showerror(
-            "Error inesperado",
-            "Ocurrió un error inesperado, pero la aplicación sigue abierta.\n"
-            f"Detalle: {exc_type.__name__}: {exc_value}\n\n"
-            "El error quedó registrado en data/errores.log.")
-
-
-def _error_fatal(mensaje):
-    raiz = tk.Tk()
-    raiz.withdraw()
-    messagebox.showerror("No se pudo iniciar la aplicación", mensaje)
-    raiz.destroy()
+    app = QApplication(sys.argv)
+    app.setApplicationName(NOMBRE)
+    app.setApplicationVersion(VERSION)
+    app.setWindowIcon(logo_icono())
+    app.setStyleSheet(theme.hoja_de_estilo())
+    controlador = AplicacionController(contenedor)
+    controlador.iniciar()
+    controlador.ventana.show()
+    codigo = app.exec()
+    contenedor.db.close()
+    return codigo
 
 
 if __name__ == "__main__":
-    configurar_log()
-    try:
-        database.inicializar()
-    except Exception as error:
-        logging.exception("No se pudo inicializar la base de datos")
-        _error_fatal(f"No se pudo abrir la base de datos.\n\nDetalle: {error}")
-        raise SystemExit(1)
-    App().mainloop()
+    sys.exit(main())

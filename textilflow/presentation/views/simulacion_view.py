@@ -1,0 +1,165 @@
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import (QComboBox, QFrame, QHBoxLayout, QLabel, QPushButton, QSpinBox, QTabWidget,
+                             QVBoxLayout, QWidget)
+
+from .. import theme
+from ..viewmodels import CampoSpec
+from ..widgets.common import DataTable, KpiCard, PageView
+from ..widgets.crud_panel import CrudPanel
+from ..widgets.histograma import Histograma
+from ..widgets.line_chart import LineChart
+
+
+class SimulacionView(PageView):
+    ejecutar_solicitado = pyqtSignal(int)
+    replicas_solicitadas = pyqtSignal(int, int)    # escenario, n
+    metrica_cambiada = pyqtSignal()
+
+    def __init__(self, tipos: list[tuple], politicas: list[tuple]):
+        super().__init__("Escenarios y simulación",
+                         "Condiciones base y simulación de eventos discretos del proceso completo: cada lote recorre su ruta "
+                         "(Almacén → áreas en paralelo → Despacho), con colas, prioridades y transporte por recursos.",
+                         theme.VERDE)
+        self.tabs = QTabWidget()
+        campos = [
+            CampoSpec("nombre", "Nombre *", placeholder="Ej.: S1 · AMR (2 robots)"),
+            CampoSpec("tipo", "Tipo", "combo"),
+            CampoSpec("robot_id", "Perfil de robot", "combo"),
+            CampoSpec("num_recursos", "N.º de recursos", "int", 1, 1000, defecto=1),
+            CampoSpec("tiempo_observacion_min", "Turno / observación (min)", "float", 1, 100_000, 0, 480.0),
+            CampoSpec("velocidad_ms", "Velocidad (m/s)", "float", 0.01, 100, 3, 1.0),
+            CampoSpec("capacidad_kg", "Capacidad por viaje (kg)", "float", 0.1, 100_000, 1, 25.0),
+            CampoSpec("t_carga_s", "Carga (s)", "float", 0, 10_000, 1, 30.0),
+            CampoSpec("t_descarga_s", "Descarga (s)", "float", 0, 10_000, 1, 30.0),
+            CampoSpec("nodo_inicial", "Nodo inicial del recurso", "combo"),
+            CampoSpec("reposicionamiento", "Reposicionamiento vacío", "check", defecto=True),
+            CampoSpec("politica", "Política de despacho", "combo"),
+            CampoSpec("balanceo", "Balancear grupos de áreas", "check", defecto=True),
+            CampoSpec("factor_demanda_pct", "Demanda (% de los pedidos)", "float", 1, 1000, 0, 100.0),
+            CampoSpec("variabilidad_pct", "Variabilidad de tiempos ± %", "float", 0, 99, 0, 0.0),
+            CampoSpec("semilla", "Semilla aleatoria", "int", 0, 999_999, defecto=1),
+        ]
+        self.panel = CrudPanel("Escenario · condiciones base", "Escenarios del taller activo", campos,
+                               ["ID", "Nombre", "Tipo", "Recursos", "Política", "Demanda %", "Registros"],
+                               theme.VERDE, ancho_form=390, estirar=1)
+        self.panel.set_opciones("tipo", tipos)
+        self.panel.set_opciones("politica", politicas)
+        self.btn_simular = QPushButton("Guardar y simular el turno")
+        self.btn_simular.setObjectName("primario")
+        self.panel.insertar_bajo_formulario(self.btn_simular)
+        self.tabs.addTab(self.panel, "Escenarios · condiciones base")
+
+        # ---- resultados ----
+        res = QWidget()
+        rl = QVBoxLayout(res)
+        rl.setContentsMargins(0, 0, 0, 0)
+        self.resumen = QLabel("Ejecute una simulación para ver sus resultados.")
+        self.resumen.setWordWrap(True)
+        rl.addWidget(self.resumen)
+        fila = QHBoxLayout()
+        colores = ["#1B7A57", "#1F4E9E", "#6B43A8", "#B8701A", "#8C3A44", "#187A7E"]
+        nombres = ["Lotes completados", "Cierre última entrega", "Lead time medio", "Pedidos a tiempo",
+                   "Espera por transporte", "Utilización flota"]
+        self.kpis = [KpiCard(n, c) for n, c in zip(nombres, colores)]
+        for k in self.kpis:
+            fila.addWidget(k)
+        rl.addLayout(fila)
+        graficos = QHBoxLayout()
+        self.g_wip = LineChart("Lotes en el sistema y completados", "min")
+        self.g_cola = LineChart("Lotes esperando en cada área", "min")
+        for g in (self.g_wip, self.g_cola):
+            caja = QFrame(); caja.setObjectName("tarjeta")
+            cl = QVBoxLayout(caja); cl.addWidget(g)
+            graficos.addWidget(caja)
+        rl.addLayout(graficos, 2)
+        sub = QLabel("Estado de las áreas · utilización simulada vs. carga ofrecida (modelo analítico ρ)")
+        sub.setStyleSheet("font-size: 13px; font-weight: 700;")
+        rl.addWidget(sub)
+        self.tabla = DataTable(["Área", "Puestos", "Utilización %", "Carga ofrecida ρ %", "Espera media min",
+                                "Espera máx. min", "Cola máx.", "Lotes", "Unidades"], estirar=0)
+        rl.addWidget(self.tabla, 2)
+        sub2 = QLabel("Alertas del escenario")
+        sub2.setStyleSheet("font-size: 13px; font-weight: 700;")
+        rl.addWidget(sub2)
+        self.tabla_alertas = DataTable(["Nivel", "Código", "Alerta", "Detalle"], estirar=3)
+        rl.addWidget(self.tabla_alertas, 2)
+        self.tabs.addTab(res, "Resultados")
+
+        # ---- réplicas ----
+        rep = QWidget()
+        pl = QVBoxLayout(rep)
+        pl.setContentsMargins(0, 0, 0, 0)
+        barra = QFrame(); barra.setObjectName("tarjeta")
+        bl = QHBoxLayout(barra)
+        bl.addWidget(QLabel("Escenario:"))
+        self.combo_rep = QComboBox()
+        bl.addWidget(self.combo_rep, 1)
+        bl.addWidget(QLabel("N.º de réplicas:"))
+        self.n_rep = QSpinBox(); self.n_rep.setRange(2, 500); self.n_rep.setValue(30)
+        bl.addWidget(self.n_rep)
+        self.btn_rep = QPushButton("Ejecutar réplicas")
+        self.btn_rep.setObjectName("primario")
+        bl.addWidget(self.btn_rep)
+        pl.addWidget(barra)
+        self.nota_rep = QLabel("Cada réplica usa una semilla distinta y varía los tiempos de proceso en ± la variabilidad "
+                               "del escenario. Con 0 % de variabilidad el modelo es determinista.")
+        self.nota_rep.setWordWrap(True)
+        self.nota_rep.setObjectName("tenue")
+        pl.addWidget(self.nota_rep)
+        cuerpo = QHBoxLayout()
+        izq = QVBoxLayout()
+        self.tabla_stats = DataTable(["Métrica", "n", "Media", "Desv.", "Mín.", "Máx.", "IC 95 % inf.", "IC 95 % sup."],
+                                     estirar=0)
+        izq.addWidget(self.tabla_stats, 1)
+        self.tabla_runs = DataTable(["Semilla", "Cierre min", "Lead time", "Completados %", "A tiempo %",
+                                     "Espera transp.", "Flota %", "Cola máx."], estirar=None)
+        izq.addWidget(self.tabla_runs, 1)
+        cuerpo.addLayout(izq, 3)
+        der = QFrame(); der.setObjectName("tarjeta")
+        dl = QVBoxLayout(der)
+        self.combo_metrica = QComboBox()
+        dl.addWidget(self.combo_metrica)
+        self.histo = Histograma("Distribución")
+        dl.addWidget(self.histo, 1)
+        cuerpo.addWidget(der, 2)
+        pl.addLayout(cuerpo, 1)
+        self.tabs.addTab(rep, "Réplicas")
+
+        self.cuerpo.addWidget(self.tabs, 1)
+        self.cuerpo.addWidget(self.estado)
+        self.btn_simular.clicked.connect(lambda: self.ejecutar_solicitado.emit(0))
+        self.btn_rep.clicked.connect(lambda: self.replicas_solicitadas.emit(
+            int(self.combo_rep.currentData() or 0), self.n_rep.value()))
+        self.combo_metrica.currentIndexChanged.connect(lambda _: self.metrica_cambiada.emit())
+
+    # ---- API ----
+    def set_escenarios_replicas(self, opciones: list[tuple]) -> None:
+        previo = self.combo_rep.currentData()
+        self.combo_rep.clear()
+        for i, n in opciones:
+            self.combo_rep.addItem(n, i)
+        self.combo_rep.setCurrentIndex(max(self.combo_rep.findData(previo), 0))
+
+    def set_metricas(self, opciones: list[tuple]) -> None:
+        previo = self.combo_metrica.currentData()
+        self.combo_metrica.blockSignals(True)
+        self.combo_metrica.clear()
+        for k, n in opciones:
+            self.combo_metrica.addItem(n, k)
+        self.combo_metrica.setCurrentIndex(max(self.combo_metrica.findData(previo), 0))
+        self.combo_metrica.blockSignals(False)
+
+    def mostrar_resultados(self, resumen, kpis, graf_wip, graf_cola, filas_areas, colores_areas, filas_alertas, colores_alertas):
+        self.resumen.setText(resumen)
+        for card, (valor, nota) in zip(self.kpis, kpis):
+            card.set_valor(valor, nota)
+        self.g_wip.set_datos(*graf_wip)
+        self.g_cola.set_datos(*graf_cola)
+        self.tabla.set_filas(filas_areas, colores=colores_areas)
+        self.tabla_alertas.set_filas(filas_alertas, colores=colores_alertas)
+        self.tabs.setCurrentIndex(1)
+
+    def mostrar_replicas(self, nota, filas_stats, filas_runs):
+        self.nota_rep.setText(nota)
+        self.tabla_stats.set_filas(filas_stats)
+        self.tabla_runs.set_filas(filas_runs)
