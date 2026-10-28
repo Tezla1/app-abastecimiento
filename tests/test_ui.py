@@ -10,7 +10,7 @@ from textilflow.presentation.app import AplicacionController
 from textilflow.presentation.widgets.logo import logo_pixmap
 from textilflow.version import VERSION
 
-(DASH, TALLER, LAYOUT, MODELO, ROBOT, SIM, MAPA, REQ, CMP, RES, VAL, DATOS, GUIA) = range(13)
+(DASH, TALLER, LAYOUT, MODELO, ROBOT, SIM, MAPA, REQ, CMP, RES, CONT, VAL, DATOS, GUIA) = range(14)
 
 
 @pytest.fixture(scope="module")
@@ -203,3 +203,52 @@ def test_rutas_en_vista_2d(ui):
     assert "A → C" in lc.vista.ruta_resumen.text() or "A → C" in lc.vista.ruta_tramos.item(0, 1).text()
     lc._calcular_ruta("A", "E", 5.0)
     assert "Sin ruta factible" in lc.vista.ruta_resumen.text()
+
+
+def test_contingencias_cerrar_recalcula_y_genera_informe(ui):
+    con_demo(ui)
+    c = ui.controladores[CONT]
+    ui.ventana.ir_a(CONT)
+    p = c.vista.panel
+    i = p.widget("codigo").findData("CO")
+    p.widget("codigo").setCurrentIndex(i)
+    p.widget("detalle").setPlainText("Falla del motor principal")
+    p.btn_guardar.click()
+    assert not ui.errores
+    assert p.tabla.rowCount() == 1
+    assert "IMPACTO" in c.vista.navegador.toPlainText()
+    assert "CO" in ui.ctx.cerrados()
+    nodos, _ = __import__("textilflow.presentation.controllers.base", fromlist=["x"]).construir_red(
+        ui.c.layout, ui.ctx.taller_id, cerrados=ui.ctx.cerrados())
+    assert [n.cerrado for n in nodos if n.codigo == "CO"] == [True]
+    ui.ventana.ir_a(MAPA)
+    ui.ventana.ir_a(DASH)
+
+
+def test_contingencias_reabrir_y_eliminar(ui):
+    con_demo(ui)
+    c = ui.controladores[CONT]
+    p = c.vista.panel
+    p.widget("codigo").setCurrentIndex(p.widget("codigo").findData("CO"))
+    p.btn_guardar.click()
+    p.widget("vigente").setChecked(False)
+    p.btn_guardar.click()
+    assert ui.ctx.cerrados() == frozenset()
+    p.btn_eliminar.click()
+    assert p.tabla.rowCount() == 0
+
+
+def test_cambio_de_tema_reconstruye_la_ventana(qapp):
+    from textilflow.presentation.app import Aplicacion
+    c = construir(":memory:")
+    c.demo.execute()
+    ap = Aplicacion(c, qapp)
+    theme.aplicar("oscuro")
+    ap.alternar_tema()
+    assert theme.tema_actual() == "claro" and theme.BG == "#F1F4FA"
+    assert ap.controlador.ventana.btn_tema.text().strip() == "Tema oscuro"
+    ap.alternar_tema()
+    assert theme.tema_actual() == "oscuro"
+    ap.controlador.ventana.close()
+    theme.aplicar("oscuro")
+    c.db.close()

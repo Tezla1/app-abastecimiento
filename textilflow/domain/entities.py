@@ -298,3 +298,41 @@ class Parametro:
 
     def validar(self) -> list[str]:
         return [] if self.valor >= 0 else ["El valor del parámetro no puede ser negativo."]
+
+
+MOTIVOS_CIERRE = {
+    "FALLA_MAQUINARIA": "Falla de maquinaria",
+    "MANTENIMIENTO": "Mantenimiento programado",
+    "FALTA_PERSONAL": "Falta de personal",
+    "SEGURIDAD": "Riesgo o inspección de seguridad",
+    "FALTA_INSUMOS": "Falta de insumos",
+    "OTRO": "Otro motivo",
+}
+
+
+@dataclass
+class Cierre:
+    taller_id: int
+    codigo: str
+    motivo: str = "FALLA_MAQUINARIA"
+    detalle: str = ""
+    desde_min: float = 0.0
+    hasta_min: float = 0.0
+    bloquea_paso: bool = True
+    vigente: bool = True
+    registrado: str = ""
+    id: Optional[int] = None
+
+    def validar(self) -> list[str]:
+        e = []
+        if not self.codigo.strip():
+            e.append("Elija el área que se va a cerrar.")
+        if self.motivo not in MOTIVOS_CIERRE:
+            e.append("Motivo de cierre no válido.")
+        if self.desde_min < 0:
+            e.append("El minuto de inicio no puede ser negativo.")
+        if self.hasta_min < 0:
+            e.append("El minuto de reapertura no puede ser negativo.")
+        if self.hasta_min and self.hasta_min <= self.desde_min:
+            e.append("La reapertura debe ser posterior al inicio del cierre (use 0 si no se reabre en el turno).")
+        return e

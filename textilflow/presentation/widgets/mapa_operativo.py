@@ -61,7 +61,7 @@ class MapaOperativo(QGraphicsView):
         self._escena = QGraphicsScene(self)
         self.setScene(self._escena)
         self.setRenderHints(QPainter.RenderHint.Antialiasing | QPainter.RenderHint.TextAntialiasing)
-        self.setBackgroundBrush(QBrush(QColor("#0A1426")))
+        self.setBackgroundBrush(QBrush(QColor(theme.LIENZO)))
         self.setFrameShape(QGraphicsView.Shape.NoFrame)
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
@@ -107,7 +107,7 @@ class MapaOperativo(QGraphicsView):
             if a.origen not in self._pos or a.destino not in self._pos:
                 continue
             p1, p2 = self._pos[a.origen], self._pos[a.destino]
-            it = self._escena.addLine(p1.x(), p1.y(), p2.x(), p2.y(), QPen(QColor("#3A4C70"), 2))
+            it = self._escena.addLine(p1.x(), p1.y(), p2.x(), p2.y(), QPen(QColor(theme.TRAZO), 2))
             it.setZValue(1)
             k = frozenset((a.origen, a.destino))
             self._arcos[k] = it
@@ -128,6 +128,14 @@ class MapaOperativo(QGraphicsView):
             c.setData(0, n.codigo)
             c.setToolTip(f"{n.codigo} · {n.nombre}\nClic: rutas que pasan por aquí")
             self._circulos[n.codigo] = c
+            if n.cerrado:
+                x = self._escena.addSimpleText("✕")
+                xf = QFont("Segoe UI", 20); xf.setBold(True)
+                x.setFont(xf); x.setBrush(QBrush(QColor(theme.ROJO)))
+                x.setPos(p.x() - x.boundingRect().width() / 2, p.y() - x.boundingRect().height() / 2 - 1)
+                x.setZValue(8)
+                x.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
+                c.setToolTip(f"{n.codigo} · {n.nombre}\nCERRADA: no se procesa ni se pasa por aquí")
             cod = self._escena.addSimpleText(n.codigo)
             f = QFont("Segoe UI", 10); f.setBold(True)
             cod.setFont(f); cod.setBrush(QBrush(QColor("white")))
@@ -140,7 +148,7 @@ class MapaOperativo(QGraphicsView):
             nom.setZValue(6)
             nom.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
             b = self._escena.addSimpleText("")
-            b.setFont(QFont("Segoe UI", 8)); b.setBrush(QBrush(QColor("#FFD166")))
+            b.setFont(QFont("Segoe UI", 8)); b.setBrush(QBrush(QColor(theme.RESALTE)))
             b.setPos(p.x() - RADIO, p.y() - RADIO - 38)
             b.setZValue(7)
             b.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
@@ -200,7 +208,7 @@ class MapaOperativo(QGraphicsView):
                 lab.setFont(QFont("Segoe UI", 8, QFont.Weight.Bold)); lab.setBrush(QBrush(QColor("#0B1220")))
                 lab.setPos(-lab.boundingRect().width() / 2, -lab.boundingRect().height() / 2)
                 kg = QGraphicsSimpleTextItem("", it)
-                kg.setFont(QFont("Segoe UI", 8)); kg.setBrush(QBrush(QColor("#FFD166"))); kg.setPos(10, -18)
+                kg.setFont(QFont("Segoe UI", 8)); kg.setBrush(QBrush(QColor(theme.RESALTE))); kg.setPos(10, -18)
                 self._escena.addItem(it)
                 self._recursos_items.append((it, kg, r))
         self._actualizar()
@@ -259,7 +267,7 @@ class MapaOperativo(QGraphicsView):
         self._seleccion = nodo
         for i, camino in enumerate(caminos):
             es_principal = i == principal
-            pen = QPen(QColor("#FFD166" if es_principal else "#FF9F6B"), 5 if es_principal else 3)
+            pen = QPen(QColor(theme.RESALTE if es_principal else "#FF9F6B"), 5 if es_principal else 3)
             pen.setStyle(Qt.PenStyle.SolidLine if es_principal else Qt.PenStyle.DashLine)
             pen.setCapStyle(Qt.PenCapStyle.RoundCap)
             for a, b in zip(camino, camino[1:]):
@@ -289,9 +297,9 @@ class MapaOperativo(QGraphicsView):
             else:
                 x = None
             if x is None:
-                it.setPen(QPen(QColor("#3A4C70"), 2))
+                it.setPen(QPen(QColor(theme.TRAZO), 2))
             else:
-                it.setPen(QPen(QColor(theme.color_calor(x) if x > 0 else "#2A3A5C"), 2 + 7 * x, Qt.PenStyle.SolidLine,
+                it.setPen(QPen(QColor(theme.color_calor(x) if x > 0 else theme.TRAZO_OFF), 2 + 7 * x, Qt.PenStyle.SolidLine,
                                Qt.PenCapStyle.RoundCap))
         ocup, cola = {}, {}
         if a:
@@ -312,9 +320,11 @@ class MapaOperativo(QGraphicsView):
                     relleno = QColor(theme.color_calor(min(cola.get(cod, 0) / 6.0, 1.0))).darker(115)
                 if ocup.get(cod, 0):
                     borde = QColor(theme.VERDE)
+            if n.cerrado:
+                relleno, borde = QColor(theme.TRAZO_OFF), QColor(theme.ROJO)
             seleccionado = cod == self._seleccion
             c.setBrush(QBrush(relleno))
-            c.setPen(QPen(QColor("#FFD166") if seleccionado else borde, 4 if seleccionado else 3))
+            c.setPen(QPen(QColor(theme.RESALTE) if seleccionado else borde, 4 if seleccionado else 3))
             q, o = cola.get(cod, 0), ocup.get(cod, 0)
             self._badges[cod].setText((f"cola {q}" if q else "") + (" · " if q and o else "") + (f"▶{o}/{cap}" if o and cap else ""))
         for it, kg, r in self._recursos_items:

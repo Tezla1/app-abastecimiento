@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from .application.use_cases.alertas import ObtenerAlertas
 from .application.use_cases.analisis import (CalcularIndicadores, CompararEscenarios, EjecutarReplicas,
                                              EjecutarSimulacion, ExportarReporte)
+from .application.use_cases.cierres import GestionarCierres, InformeCierres
 from .application.use_cases.contexto import CargadorContexto
 from .application.use_cases.dashboard import ObtenerDashboard
 from .application.use_cases.datos import GestionarDatos
@@ -44,6 +45,8 @@ class Container:
     dashboard: ObtenerDashboard
     datos: GestionarDatos
     demo: CargarDatosDemo
+    cierres: GestionarCierres
+    informe_cierres: InformeCierres
 
 
 def construir(ruta_db: str = ":memory:") -> Container:
@@ -51,9 +54,9 @@ def construir(ruta_db: str = ":memory:") -> Container:
     r_taller, r_est, r_con = R.SqliteTallerRepository(db), R.SqliteEstacionRepository(db), R.SqliteConexionRepository(db)
     r_tip, r_rut, r_ped = R.SqliteTipoPrendaRepository(db), R.SqliteRutaProcesoRepository(db), R.SqlitePedidoRepository(db)
     r_rob, r_esc, r_reg = R.SqliteRobotRepository(db), R.SqliteEscenarioRepository(db), R.SqliteRegistroRepository(db)
-    r_par = R.SqliteParametroRepository(db)
+    r_par, r_cie = R.SqliteParametroRepository(db), R.SqliteCierreRepository(db)
 
-    ctx = CargadorContexto(r_taller, r_est, r_con, r_tip, r_rut, r_ped, r_rob, r_par)
+    ctx = CargadorContexto(r_taller, r_est, r_con, r_tip, r_rut, r_ped, r_rob, r_par, r_cie)
     talleres = GestionarTalleres(r_taller)
     layout = GestionarLayout(r_est, r_con, r_rut)
     procesos = GestionarProcesos(r_tip, r_rut, r_ped, r_est)
@@ -73,4 +76,5 @@ def construir(ruta_db: str = ":memory:") -> Container:
         dashboard=ObtenerDashboard(r_taller, r_est, r_con, r_tip, r_rut, r_ped, r_esc, r_reg, alertas, ctx),
         datos=GestionarDatos(talleres, layout, procesos, OpenpyxlGateway(), R.SqliteSnapshotRepository(db), RlrArchive()),
         demo=CargarDatosDemo(talleres, layout, procesos, robots, escenarios, simulacion, parametros),
+        cierres=GestionarCierres(r_cie, r_est), informe_cierres=InformeCierres(r_esc, ctx),
     )

@@ -16,6 +16,7 @@ class MainWindow(QMainWindow):
     pagina_cambiada = pyqtSignal(int)
     taller_elegido = pyqtSignal(object)
     alertas_solicitadas = pyqtSignal()
+    tema_solicitado = pyqtSignal()
 
     def __init__(self, paginas: Sequence[tuple]):
         super().__init__()
@@ -87,6 +88,14 @@ class MainWindow(QMainWindow):
                                     f"font-weight: 700; }}")
         self.insignia.clicked.connect(self.alertas_solicitadas.emit)
         cl.addWidget(self.insignia)
+        claro = theme.tema_actual() == "claro"
+        self.btn_tema = QPushButton(" Tema oscuro" if claro else " Tema claro")
+        self.btn_tema.setIcon(icono_seccion("Luna" if claro else "Sol", theme.TEXTO, 16))
+        self.btn_tema.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_tema.setToolTip("Cambiar entre tema claro y oscuro")
+        self.btn_tema.setStyleSheet(f"QPushButton {{ border: 1px solid {theme.BORDE}; border-radius: 12px; padding: 4px 12px; }}")
+        self.btn_tema.clicked.connect(self.tema_solicitado.emit)
+        cl.addWidget(self.btn_tema)
         cl.addWidget(QLabel("   Taller activo:"))
         self.combo_taller = QComboBox()
         self.combo_taller.setMinimumWidth(320)

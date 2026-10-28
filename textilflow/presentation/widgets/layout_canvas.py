@@ -18,7 +18,7 @@ class LayoutCanvas(QGraphicsView):
         self._escena = QGraphicsScene(self)
         self.setScene(self._escena)
         self.setRenderHints(QPainter.RenderHint.Antialiasing | QPainter.RenderHint.TextAntialiasing)
-        self.setBackgroundBrush(QBrush(QColor("#0A1426")))
+        self.setBackgroundBrush(QBrush(QColor(theme.LIENZO)))
         self.setFrameShape(QGraphicsView.Shape.NoFrame)
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
@@ -38,14 +38,14 @@ class LayoutCanvas(QGraphicsView):
             if a.origen not in pos or a.destino not in pos:
                 continue
             p1, p2 = pos[a.origen], pos[a.destino]
-            color = QColor("#FFD166") if a.resaltado else QColor("#CBD5E6")
+            color = QColor(theme.RESALTE) if a.resaltado else QColor(theme.RUTA)
             self._escena.addLine(p1.x(), p1.y(), p2.x(), p2.y(), QPen(color, 3.5 if a.resaltado else 1.6)).setZValue(1)
             medio = (p1 + p2) / 2
             etiqueta = self._texto(f"{a.distancia_m:g} m", 9, color)
             etiqueta.setPos(medio.x() - etiqueta.boundingRect().width() / 2, medio.y() - 17)
             fondo = self._escena.addRect(etiqueta.pos().x(), etiqueta.pos().y() + 2,
                                          etiqueta.boundingRect().width(), etiqueta.boundingRect().height() - 5,
-                                         QPen(Qt.PenStyle.NoPen), QBrush(QColor("#0A1426")))
+                                         QPen(Qt.PenStyle.NoPen), QBrush(QColor(theme.LIENZO)))
             fondo.setZValue(2)
             etiqueta.setZValue(3)
 
@@ -56,6 +56,10 @@ class LayoutCanvas(QGraphicsView):
                                            QPen(color.lighter(135), 2.5), QBrush(color.darker(180)))
             circ.setZValue(4)
             circ.setToolTip(f"{n.codigo} · {n.nombre}\n({n.x:g}, {n.y:g}) m")
+            if n.cerrado:
+                circ.setBrush(QBrush(QColor(theme.TRAZO_OFF)))
+                circ.setPen(QPen(QColor(theme.ROJO), 3.5))
+                circ.setToolTip(f"{n.codigo} · {n.nombre}\nCERRADA")
             cod = self._texto(n.codigo, 10, QColor("white"), negrita=True)
             cod.setPos(p.x() - cod.boundingRect().width() / 2, p.y() - cod.boundingRect().height() / 2)
             cod.setZValue(5)
@@ -75,7 +79,7 @@ class LayoutCanvas(QGraphicsView):
         ys = [p.y() for p in puntos]
         x0, x1 = int(min(xs)) - 100, int(max(xs)) + 100
         y0, y1 = int(min(ys)) - 100, int(max(ys)) + 100
-        pen = QPen(QColor("#10203A"), 1)
+        pen = QPen(QColor(theme.CUADRICULA), 1)
         paso = int(5 * ESCALA)
         for x in range(x0 - x0 % paso, x1, paso):
             self._escena.addLine(x, y0, x, y1, pen).setZValue(0)

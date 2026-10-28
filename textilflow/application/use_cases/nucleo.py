@@ -1,11 +1,12 @@
+import math
 from dataclasses import dataclass, field, replace
 from typing import Optional
 
 from ...domain import analisis, calculos, normativa
-from ...domain.alertas import alertas_escenario, ordenar
-from ...domain.entities import (Conexion, Escenario, Estacion, Parametro, Pedido, Registro, Robot,
+from ...domain.alertas import alertas_cierres, alertas_escenario, ordenar
+from ...domain.entities import (MOTIVOS_CIERRE, Conexion, Escenario, Estacion, Parametro, Pedido, Registro, Robot,
                                 RutaProceso, Taller, TipoPrenda)
-from ...domain.simulacion import ParametrosSimulacion, simular
+from ...domain.simulacion import CierreSim, ParametrosSimulacion, simular
 from ..dto import ResultadoSimulacion
 from ..errors import ErrorDeNegocio
 
@@ -20,6 +21,23 @@ class Contexto:
     pedidos: list = field(default_factory=list)
     robots: list = field(default_factory=list)
     par: dict = field(default_factory=dict)
+    cierres: list = field(default_factory=list)
+
+    def vigentes(self) -> list:
+        return [c for c in self.cierres if c.vigente]
+
+    def cerrados(self) -> frozenset:
+        return frozenset(c.codigo for c in self.vigentes())
+
+    def sin_paso(self) -> frozenset:
+        return frozenset(c.codigo for c in self.vigentes() if c.bloquea_paso)
+
+    def sin_cierres(self) -> "Contexto":
+        return replace(self, cierres=[])
+
+    def estaciones_efectivas(self) -> list:
+        fijos = {c.codigo for c in self.vigentes() if c.desde_min <= 0 and not c.hasta_min}
+        return [replace(e, grupo="") if e.codigo in fijos else e for e in self.estaciones]
 
     def robot_de(self, esc: Escenario) -> Optional[Robot]:
         return next((r for r in self.robots if r.id == esc.robot_id), None) if esc.robot_id else None
@@ -39,7 +57,9 @@ def parametros_simulacion(ctx: Contexto, esc: Escenario, semilla: Optional[int] 
         nodo_inicial=esc.nodo_inicial, reposicionamiento=esc.reposicionamiento,
         ancho_requerido_m=ancho, tiempo_observacion_min=esc.tiempo_observacion_min,
         politica=esc.politica, balanceo=esc.balanceo, factor_demanda_pct=esc.factor_demanda_pct,
-        variabilidad_pct=esc.variabilidad_pct, semilla=esc.semilla if semilla is None else semilla)
+        variabilidad_pct=esc.variabilidad_pct, semilla=esc.semilla if semilla is None else semilla,
+        cierres=tuple(CierreSim(c.codigo, c.desde_min, c.hasta_min if c.hasta_min else math.inf, c.bloquea_paso,
+                                MOTIVOS_CIERRE.get(c.motivo, c.motivo)) for c in ctx.vigentes()))
 
 
 def exigir_simulable(ctx: Contexto) -> None:
@@ -73,12 +93,13 @@ def calc_de(esc: Escenario, registros: list, num_recursos: Optional[int] = None)
 def analizar(ctx: Contexto, esc: Escenario, res) -> ResultadoSimulacion:
     registros = registros_de(esc.id, res)
     calc = calc_de(esc, registros)
-    carga = analisis.carga_ofrecida(ctx.estaciones, ctx.tipos, ctx.rutas, ctx.pedidos,
+    carga = analisis.carga_ofrecida(ctx.estaciones_efectivas(), ctx.tipos, ctx.rutas, ctx.pedidos,
                                     esc.tiempo_observacion_min, esc.factor_demanda_pct)
     estados = analisis.analizar_estaciones(res, ctx.estaciones, carga)
     ind = analisis.indicadores_proceso(res, ctx.pedidos)
     prendas = ctx.prendas_por_pedido()
-    alertas = ordenar(alertas_escenario(ctx.par, esc, res, estados, ind, calc, ctx.pedidos, prendas))
+    alertas = ordenar(alertas_cierres(ctx.cierres, ctx.estaciones)
+                      + alertas_escenario(ctx.par, esc, res, estados, ind, calc, ctx.pedidos, prendas))
     return ResultadoSimulacion(
         esc, res, registros, calc, ind, estados, carga, analisis.trafico(res),
         analisis.series_tiempo(res, ctx.estaciones), alertas,

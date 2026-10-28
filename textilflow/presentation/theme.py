@@ -1,9 +1,16 @@
-BG = "#0B1220"
-PANEL = "#101A2E"
-PANEL_2 = "#15233D"
-BORDE = "#22345A"
-TEXTO = "#E6EDF7"
-TENUE = "#8FA0BC"
+PALETAS = {
+    "oscuro": dict(BG="#0B1220", PANEL="#101A2E", PANEL_2="#15233D", BORDE="#22345A", TEXTO="#E6EDF7",
+                   LIENZO="#0A1426", TRAZO="#3A4C70", TRAZO_OFF="#2A3A5C", FILA_ALT="#0E1830", RESALTE="#FFD166",
+                   RUTA="#CBD5E6", DOC_TITULO="#E6EDF7", DOC_TEXTO="#CBD5E6", DOC_ENLACE="#8FB4FF", DOC_CODIGO="#FFD166",
+                   PELIGRO_BG="#5A2530", CUADRICULA="#10203A"),
+    "claro": dict(BG="#F1F4FA", PANEL="#FFFFFF", PANEL_2="#E6ECF6", BORDE="#C9D3E4", TEXTO="#1B2638",
+                  LIENZO="#E9EEF7", TRAZO="#8C9BB8", TRAZO_OFF="#C3CDE0", FILA_ALT="#F6F8FC", RESALTE="#C27A00",
+                  RUTA="#53627F", DOC_TITULO="#1B2638", DOC_TEXTO="#34425C", DOC_ENLACE="#1F55C4", DOC_CODIGO="#9A5B00",
+                  PELIGRO_BG="#F8DADD", CUADRICULA="#DCE3F0"),
+}
+TENUE = "#6F809C"
+_actual = "oscuro"
+globals().update(PALETAS["oscuro"])
 
 AZUL = "#2F6BDE"
 VERDE = "#1FA971"
@@ -26,6 +33,19 @@ COLOR_NIVEL = {"CRÍTICA": ROJO, "ALTA": NARANJA, "MEDIA": DORADO, "INFO": TENUE
 COLOR_RECURSOS = ["#5CC8FF", "#FF7AC6", "#B6F36A", "#FFD166", "#C49BFF", "#FF9F6B", "#6BE3B2", "#F2F2F2"]
 
 ESCALA_CALOR = [(0.0, "#2F6BDE"), (0.35, "#1BA39C"), (0.6, "#E8D21F"), (0.8, "#F29A1F"), (1.0, "#E5484D")]
+
+
+def aplicar(nombre: str) -> None:
+    global _actual
+    if nombre not in PALETAS:
+        nombre = "oscuro"
+    _actual = nombre
+    globals().update(PALETAS[nombre])
+    COLOR_NIVEL["INFO"] = TENUE
+
+
+def tema_actual() -> str:
+    return _actual
 
 
 def color_calor(x: float) -> str:
@@ -80,11 +100,11 @@ QCheckBox {{ spacing: 8px; }}
 QPushButton {{ background: {PANEL_2}; border: 1px solid {BORDE}; border-radius: 6px; padding: 7px 14px; }}
 QPushButton:hover {{ border-color: {acento}; }}
 QPushButton:disabled {{ color: {TENUE}; }}
-QPushButton#primario {{ background: {acento}; border-color: {acento}; font-weight: 600; }}
+QPushButton#primario {{ background: {acento}; border-color: {acento}; font-weight: 600; color: white; }}
 QPushButton#primario:hover {{ opacity: 0.9; }}
-QPushButton#peligro {{ background: #5A2530; border-color: {ROJO}; }}
+QPushButton#peligro {{ background: {PELIGRO_BG}; border-color: {ROJO}; }}
 
-QTableWidget {{ background: {BG}; alternate-background-color: #0E1830; border: 1px solid {BORDE};
+QTableWidget {{ background: {BG}; alternate-background-color: {FILA_ALT}; border: 1px solid {BORDE};
     border-radius: 8px; gridline-color: transparent; selection-background-color: {AZUL}; }}
 QTableWidget::item {{ padding: 4px 8px; }}
 QHeaderView::section {{ background: {PANEL_2}; border: none; border-bottom: 1px solid {BORDE};

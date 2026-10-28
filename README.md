@@ -1,4 +1,4 @@
-# TextilFlow 3.0 · optimización de procesos industriales e intralogística (PyQt6)
+# TextilFlow 4.0 · optimización de procesos industriales e intralogística (PyQt6)
 
 ![Mapa operativo](docs/img/02_mapa_operativo_nodo_B.png)
 
@@ -13,13 +13,25 @@ organizada en **MVC + arquitectura limpia**.
 pip install -r requirements.txt
 python main.py                      # datos en ~/.textilflow/textilflow.db (1.ª vez carga el caso de ejemplo)
 python main.py --db :memory:        # sesión sin guardar
-python -m pytest                    # 63 pruebas
+python -m pytest                    # 75 pruebas
 python tools/ejercicio_practico.py  # ejercicio práctico con N réplicas → docs/EJERCICIO_PRACTICO.md
 ```
 
 Si existe una base de datos de la versión 1, se **conserva** como `*.v1.bak` y se crea una nueva (el modelo cambió).
 
-## Qué hay de nuevo en 2.0
+## Qué hay de nuevo en 4.0
+
+| Necesidad | Dónde |
+|---|---|
+| **Cerrar un área** (falla de maquinaria, mantenimiento, falta de personal…) con motivo, hora de inicio y de reapertura | **Contingencias y cierres** |
+| Recalcular rutas y volver a simular todos los escenarios al instante | automático al guardar el cierre |
+| **Informe** de por qué se cerró y qué cambió (impacto, rutas nuevas, trabajo sin terminar, recomendaciones), exportable a HTML | **Contingencias y cierres** |
+| Áreas cerradas con ✕ roja | Mapa operativo, Dashboard, Layout |
+| **Tema claro / oscuro** | botón en la barra superior |
+
+![Contingencias](docs/img/12_contingencias_informe.png)
+
+## Qué había de nuevo en 2.0
 
 | Necesidad | Dónde |
 |---|---|

@@ -6,10 +6,11 @@ from ...version import FECHA, NOMBRE, SUBTITULO, VERSION
 from ..widgets.common import PageView
 from ..widgets.logo import logo_pixmap
 
-GUIA_HTML = f"""
+def guia_html() -> str:
+    return f"""
 <style>
- h2 {{ color:#E6EDF7; margin-top:18px; }} h3 {{ color:#8FB4FF; }} p, li {{ color:#CBD5E6; line-height:150%; }}
- code {{ color:#FFD166; }} td, th {{ padding:4px 10px; color:#CBD5E6; }} th {{ color:#E6EDF7; text-align:left; }}
+ h2 {{ color:{theme.DOC_TITULO}; margin-top:18px; }} h3 {{ color:{theme.DOC_ENLACE}; }} p, li {{ color:{theme.DOC_TEXTO}; line-height:150%; }}
+ code {{ color:{theme.DOC_CODIGO}; }} td, th {{ padding:4px 10px; color:{theme.DOC_TEXTO}; }} th {{ color:{theme.DOC_TITULO}; text-align:left; }}
 </style>
 <h2>¿Para qué sirve TextilFlow?</h2>
 <p>Es una herramienta de <b>optimización de procesos industriales</b> para talleres de confección. Responde, con datos y
@@ -45,8 +46,20 @@ al transporte manual?</p>
  <tr><td>¿Dónde hay más tránsito? (mapa de calor que crece con el tiempo)</td><td><b>Mapa operativo</b> y Dashboard</td></tr>
  <tr><td>¿Qué tan variable es el resultado? (N pruebas)</td><td><b>Escenarios y simulación → Réplicas</b></td></tr>
  <tr><td>¿Mejora el robot frente al manual?</td><td><b>Comparación experimental</b></td></tr>
+ <tr><td>¿Se dañó una máquina o hay que cerrar un área? ¿Cómo se reorganiza todo?</td><td><b>Contingencias y cierres</b></td></tr>
  <tr><td>¿Qué falta o está mal?</td><td>Alertas (insignia superior) y <b>Validación integral</b></td></tr>
 </table>
+
+<h2>Cierre de áreas (contingencias)</h2>
+<p>En <b>Contingencias y cierres</b> elija un área (por ejemplo <code>Costura 1</code>), el motivo y, si lo sabe, desde qué minuto
+y hasta cuándo. Al guardar, TextilFlow <b>recalcula solo</b> las rutas y vuelve a simular todos los escenarios del taller:
+el trabajo pasa a las áreas equivalentes abiertas, los pasillos por áreas cerradas se evitan y, si un paso queda sin ninguna
+área disponible, esos lotes se marcan como no terminados con su motivo. El <b>informe</b> compara «sin cierre» contra
+«con cierre», explica qué cambió y recomienda qué hacer; se puede guardar como página web. Las áreas cerradas se ven con
+una ✕ roja en el mapa y el dashboard.</p>
+
+<h2>Tema claro y oscuro</h2>
+<p>El botón de la barra superior cambia entre tema claro y oscuro; la preferencia se recuerda.</p>
 
 <h2>Ejercicio práctico sugerido</h2>
 <ol>
@@ -64,7 +77,8 @@ al transporte manual?</p>
  <li>Las normas están en <b>Parámetros normativos</b> con su fuente y un indicador «verificado». Solo los valores marcados «Sí»
   fueron contrastados con el texto; el resto son criterios de diseño o citas secundarias que debe confirmar antes de citarlos.</li>
  <li>La factibilidad del robot por ancho es geométrica; no sustituye una evaluación de riesgos de seguridad.</li>
- <li>El modelo no incluye averías, baterías ni cruces entre recursos en un pasillo (se pueden agregar como extensión).</li>
+ <li>Los cierres son decisiones suyas (no averías aleatorias). Los lotes que ya estaban en la cola de un área cuando se cierra se quedan esperando a que reabra.</li>
+ <li>El modelo no incluye baterías ni cruces entre recursos en un pasillo (se pueden agregar como extensión).</li>
 </ul>
 """
 
@@ -90,6 +104,6 @@ class GuiaView(PageView):
         self.cuerpo.addWidget(cab)
         self.texto = QTextBrowser()
         self.texto.setOpenExternalLinks(False)
-        self.texto.setHtml(GUIA_HTML)
+        self.texto.setHtml(guia_html())
         self.texto.setStyleSheet(f"background: {theme.PANEL}; border: 1px solid {theme.BORDE}; border-radius: 10px; padding: 12px;")
         self.cuerpo.addWidget(self.texto, 1)

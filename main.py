@@ -5,10 +5,9 @@ from pathlib import Path
 from PyQt6.QtWidgets import QApplication
 
 from textilflow.container import construir
-from textilflow.presentation import theme
 from textilflow.presentation.widgets.logo import logo_icono
 from textilflow.version import NOMBRE, VERSION
-from textilflow.presentation.app import AplicacionController
+from textilflow.presentation.app import Aplicacion
 
 
 def main() -> int:
@@ -34,10 +33,7 @@ def main() -> int:
     app.setApplicationName(NOMBRE)
     app.setApplicationVersion(VERSION)
     app.setWindowIcon(logo_icono())
-    app.setStyleSheet(theme.hoja_de_estilo())
-    controlador = AplicacionController(contenedor)
-    controlador.iniciar()
-    controlador.ventana.show()
+    aplicacion = Aplicacion(contenedor, app)
     codigo = app.exec()
     contenedor.db.close()
     return codigo

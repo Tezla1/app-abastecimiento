@@ -326,3 +326,86 @@ def test_ejemplo_xlsx_se_importa_y_simula():
     assert app.demo.preparar_escenario_base(t) is False
     s0 = app.escenarios.listar(t.id)[0]
     assert app.indicadores.execute(s0.id).registros
+
+
+def _cerrar(app, taller, codigo, **kw):
+    from textilflow.domain.entities import Cierre
+    return app.cierres.guardar(Cierre(taller.id, codigo, **kw))
+
+
+def _esc0(app, taller):
+    return app.escenarios.listar(taller.id)[0]
+
+
+def test_cierre_desvia_el_trabajo_al_area_gemela(demo):
+    app, taller = demo
+    esc = _esc0(app, taller)
+    antes = app.simulacion.execute(esc.id, False)
+    _cerrar(app, taller, "CO", desde_min=0, hasta_min=0)
+    despues = app.simulacion.execute(esc.id, False)
+    visitas = lambda r, a: sum(1 for v in r.proceso.visitas if v.estacion == a and v.inicio_min is not None)
+    assert visitas(antes, "CO") > 0
+    assert visitas(despues, "CO") == 0 and visitas(despues, "CO2") > visitas(antes, "CO2")
+    assert despues.ind.lotes_fallidos == 0
+
+
+def test_cierre_de_area_unica_falla_los_lotes_con_motivo(demo):
+    app, taller = demo
+    esc = _esc0(app, taller)
+    _cerrar(app, taller, "B", motivo="MANTENIMIENTO")
+    r = app.simulacion.execute(esc.id, False)
+    fallidos = [l for l in r.proceso.lotes if l.estado == "fallido"]
+    assert fallidos and all("Bordado" in l.motivo or "«B»" in l.motivo for l in fallidos)
+
+
+def test_reapertura_reanuda_el_proceso(demo):
+    app, taller = demo
+    esc = _esc0(app, taller)
+    _cerrar(app, taller, "B", desde_min=0, hasta_min=120)
+    r = app.simulacion.execute(esc.id, False)
+    inicios = [v.inicio_min for v in r.proceso.visitas if v.estacion == "B" and v.inicio_min is not None]
+    assert inicios and min(inicios) >= 120 - 1e-6
+
+
+def test_no_se_puede_cerrar_almacen_ni_despacho(demo):
+    from textilflow.application.errors import ErrorDeNegocio
+    app, taller = demo
+    for cod in ("A", "D"):
+        with pytest.raises(ErrorDeNegocio):
+            _cerrar(app, taller, cod)
+
+
+def test_informe_de_cierre(demo):
+    from textilflow.application.errors import ErrorDeNegocio
+    from textilflow.application.informe_html import informe_a_html
+    app, taller = demo
+    esc = _esc0(app, taller)
+    with pytest.raises(ErrorDeNegocio):
+        app.informe_cierres.execute(esc.id)
+    _cerrar(app, taller, "CO", motivo="FALLA_MAQUINARIA", detalle="Se quemó el motor", desde_min=60)
+    inf = app.informe_cierres.execute(esc.id)
+    assert inf.nivel in ("ALTO", "MEDIO", "BAJO") and inf.rutas and inf.recomendaciones
+    assert any(r[0] == "COSTURA" for r in inf.reasignaciones)
+    html = informe_a_html(inf)
+    assert "Falla de maquinaria" in html and "Se quemó el motor" in html and "CO2" in html
+
+
+def test_cierres_viajan_en_el_proyecto(demo, tmp_path):
+    app, taller = demo
+    _cerrar(app, taller, "CO", detalle="x")
+    ruta = str(tmp_path / "p.rlr")
+    app.datos.exportar_proyecto(ruta)
+    otra = construir(":memory:")
+    otra.datos.restaurar_proyecto(ruta)
+    t2 = otra.talleres.listar()[0]
+    assert otra.cierres.cerrados(t2.id) == frozenset({"CO"})
+    otra.db.close()
+
+
+def test_requerimientos_respetan_el_cierre(demo):
+    app, taller = demo
+    esc = _esc0(app, taller)
+    antes = app.requerimientos.execute(esc.id)
+    _cerrar(app, taller, "CO")
+    despues = app.requerimientos.execute(esc.id)
+    assert antes is not None and despues is not None

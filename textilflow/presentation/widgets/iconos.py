@@ -17,6 +17,9 @@ _ICONOS = {
     "comparacion": '<path d="M4 20V11M10 20V4M16 20V9M22 20V14"/><path d="M2 20.5h21"/>',
     "reportes": '<path d="M6 3h8l5 5v13H6z"/><path d="M14 3v5h5M9 13h7M9 17h7M9 9h2"/>',
     "validacion": '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+    "contingencias": '<path d="M12 3l10 18H2z"/><path d="M12 10v5"/><circle cx="12" cy="18" r="0.7"/>',
+    "sol": '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    "luna": '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z"/>',
     "datos": '<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>',
     "guia": '<circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7.5" r="0.6"/>',
 }
@@ -24,7 +27,7 @@ _ICONOS = {
 _POR_ETIQUETA = [
     ("Dashboard", "dashboard"), ("Caracterización", "taller"), ("Layout", "layout"), ("Modelo", "modelo"),
     ("Diseño conceptual", "robot"), ("Escenarios", "escenarios"), ("Mapa", "mapa"), ("Requerimientos", "requisitos"),
-    ("Comparación", "comparacion"), ("Resultados", "reportes"), ("Validación", "validacion"),
+    ("Comparación", "comparacion"), ("Resultados", "reportes"), ("Contingencias", "contingencias"), ("Sol", "sol"), ("Luna", "luna"), ("Validación", "validacion"),
     ("Data", "datos"), ("Guía", "guia"),
 ]
 

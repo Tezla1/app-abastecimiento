@@ -37,10 +37,10 @@ def etiqueta_estacion(e) -> str:
 
 
 # devuelve datos planos para que la vista no toque entidades
-def construir_red(layout, taller_id: Optional[int], resaltar=frozenset()):
+def construir_red(layout, taller_id: Optional[int], resaltar=frozenset(), cerrados=frozenset()):
     if taller_id is None:
         return [], []
-    nodos = [NodoVM(e.codigo, e.nombre, e.funcion, e.x, e.y) for e in layout.listar_estaciones(taller_id)]
+    nodos = [NodoVM(e.codigo, e.nombre, e.funcion, e.x, e.y, e.codigo in cerrados) for e in layout.listar_estaciones(taller_id)]
     arcos = [ArcoVM(c.origen, c.destino, c.distancia_m, frozenset((c.origen, c.destino)) in resaltar)
              for c in layout.listar_conexiones(taller_id)]
     return nodos, arcos

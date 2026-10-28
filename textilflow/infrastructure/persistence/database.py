@@ -61,6 +61,13 @@ CREATE TABLE IF NOT EXISTS registro(
     distancia_m REAL NOT NULL DEFAULT 0, inicio_min REAL NOT NULL DEFAULT 0,
     fin_min REAL NOT NULL DEFAULT 0, recurso INTEGER NOT NULL DEFAULT 0,
     viajes INTEGER NOT NULL DEFAULT 1, detalle TEXT NOT NULL DEFAULT '');
+CREATE TABLE IF NOT EXISTS cierre(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    taller_id INTEGER NOT NULL REFERENCES taller(id) ON DELETE CASCADE,
+    codigo TEXT NOT NULL, motivo TEXT NOT NULL DEFAULT 'OTRO', detalle TEXT NOT NULL DEFAULT '',
+    desde_min REAL NOT NULL DEFAULT 0, hasta_min REAL NOT NULL DEFAULT 0,
+    bloquea_paso INTEGER NOT NULL DEFAULT 1, vigente INTEGER NOT NULL DEFAULT 1,
+    registrado TEXT NOT NULL DEFAULT '');
 CREATE TABLE IF NOT EXISTS parametro(
     id INTEGER PRIMARY KEY AUTOINCREMENT, clave TEXT NOT NULL UNIQUE, valor REAL NOT NULL,
     unidad TEXT NOT NULL DEFAULT '', descripcion TEXT NOT NULL DEFAULT '',
@@ -68,7 +75,7 @@ CREATE TABLE IF NOT EXISTS parametro(
 """
 
 TABLAS = ("taller", "robot", "tipo_prenda", "estacion", "conexion", "ruta_proceso", "pedido",
-          "escenario", "registro", "parametro")
+          "escenario", "registro", "cierre", "parametro")
 
 
 def _es_esquema_antiguo(ruta: str) -> bool:

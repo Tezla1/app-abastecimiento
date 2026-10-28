@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Iterable, Optional
 
 from .analisis import EstadoEstacion, IndicadoresProceso, carga_de, cuello_de_botella
-from .entities import (PREFIJO_GRUPO, Escenario, Estacion, Pedido, RutaProceso, TipoPrenda)
+from .entities import (MOTIVOS_CIERRE, PREFIJO_GRUPO, Cierre, Escenario, Estacion, Pedido, RutaProceso, TipoPrenda)
 from .normativa import ADVERTENCIA, INCUMPLE, Cumplimiento
 from .simulacion import ResultadoProceso
 
@@ -73,6 +73,21 @@ def alertas_estaticas(estaciones: list[Estacion], tipos: list[TipoPrenda], rutas
             out.append(Alerta("ALTA", "NOR-" + c.clave, "Incumple normativa", f"{c.regla}. {c.detalle}"))
         elif c.estado == ADVERTENCIA:
             out.append(Alerta("MEDIA", "NOR-" + c.clave, "Advertencia de normativa / diseño", f"{c.regla}. {c.detalle}"))
+    return out
+
+
+def alertas_cierres(cierres: Iterable[Cierre], estaciones: list[Estacion]) -> list[Alerta]:
+    nombres = {e.codigo: e.nombre or e.codigo for e in estaciones}
+    out = []
+    for c in cierres:
+        if not c.vigente:
+            continue
+        ventana = "todo el turno" if not c.desde_min and not c.hasta_min else (
+            f"desde el min {c.desde_min:g}" + (f" hasta el min {c.hasta_min:g}" if c.hasta_min else " sin reapertura"))
+        paso = "también cierra el paso" if c.bloquea_paso else "el paso sigue abierto"
+        out.append(Alerta("ALTA", "CIERRE", f"Área cerrada: {nombres.get(c.codigo, c.codigo)}",
+                          f"{MOTIVOS_CIERRE.get(c.motivo, c.motivo)} · {ventana} · {paso}."
+                          + (f" {c.detalle}" if c.detalle else ""), c.codigo))
     return out
 
 

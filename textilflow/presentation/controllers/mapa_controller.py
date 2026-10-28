@@ -40,7 +40,7 @@ class MapaController(Controlador):
             self._resultado = self._anim = None
             self.vista.mapa.cargar_animacion(None)
         if self._resultado is None:
-            self.vista.mapa.dibujar(*construir_red(self._layout, tid))
+            self.vista.mapa.dibujar(*construir_red(self._layout, tid, cerrados=self.ctx.cerrados()))
 
     def _simular(self, escenario_id: int) -> None:
         if not escenario_id:
@@ -52,7 +52,7 @@ class MapaController(Controlador):
         self._resultado = r
         self._anim = construir_animacion(r, self._estaciones)
         m = self.vista.mapa
-        m.dibujar(*construir_red(self._layout, self.ctx.taller_id))
+        m.dibujar(*construir_red(self._layout, self.ctx.taller_id, cerrados=self.ctx.cerrados()))
         m.cargar_animacion(self._anim)
         s = r.series
         self.vista.grafico.set_datos(s["t"], [("En el sistema", "#5CC8FF", s["wip"]), ("Completados", "#6BE3B2", s["completados"]),

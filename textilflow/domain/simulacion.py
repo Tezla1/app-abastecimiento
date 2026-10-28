@@ -10,6 +10,15 @@ from .routing import Ruta, ruta_mas_corta
 
 
 @dataclass(frozen=True)
+class CierreSim:
+    codigo: str
+    desde_min: float = 0.0
+    hasta_min: float = math.inf
+    bloquea_paso: bool = True
+    motivo: str = ""
+
+
+@dataclass(frozen=True)
 class ParametrosSimulacion:
     num_recursos: int
     velocidad_ms: float
@@ -25,6 +34,7 @@ class ParametrosSimulacion:
     factor_demanda_pct: float = 100.0
     variabilidad_pct: float = 0.0
     semilla: int = 1
+    cierres: tuple = ()
 
 
 @dataclass
@@ -186,15 +196,34 @@ class _Motor:
         self.seq = itertools.count()
         self.ids = itertools.count(1)
         self.rr: dict[str, int] = {}
+        self.ahora = 0.0
+        self.cierres: dict[str, list] = {}
+        for c in p.cierres:
+            self.cierres.setdefault(c.codigo, []).append(c)
         self.rng = random.Random(p.semilla)
         self.cache: dict = {}
+        self.motivo_cierre = ""
         self.res = ResultadoProceso(p)
 
+    def cierre_activo(self, code: str, t: float) -> Optional[CierreSim]:
+        return next((c for c in self.cierres.get(code, []) if c.desde_min <= t < c.hasta_min), None)
+
+    def cerrado(self, code: str, t: float) -> bool:
+        return self.cierre_activo(code, t) is not None
+
+    def sin_paso(self, t: float) -> frozenset:
+        if not self.cierres:
+            return frozenset()
+        return frozenset(c for c in self.cierres if any(
+            x.bloquea_paso and x.desde_min <= t < x.hasta_min for x in self.cierres[c]))
+
     def ruta(self, a: str, b: str) -> Optional[Ruta]:
+        excluir = self.sin_paso(self.ahora)
+        clave = (a, b, excluir)
         # las mismas rutas se piden muchas veces, mejor guardarlas
-        if (a, b) not in self.cache:
-            self.cache[(a, b)] = ruta_mas_corta(self.con, a, b, self.p.ancho_requerido_m)
-        return self.cache[(a, b)]
+        if clave not in self.cache:
+            self.cache[clave] = ruta_mas_corta(self.con, a, b, self.p.ancho_requerido_m, excluir)
+        return self.cache[clave]
 
     def push(self, t: float, tipo: str, *datos) -> None:
         heapq.heappush(self.heap, (t, next(self.seq), tipo, datos))
@@ -210,8 +239,13 @@ class _Motor:
     def correr(self) -> ResultadoProceso:
         for lote in self.lotes:
             self.push(lote.llegada_min, "llega", lote)
+        for code, lista in self.cierres.items():
+            for c in lista:
+                if c.hasta_min < self.p.tiempo_observacion_min:
+                    self.push(c.hasta_min, "reabre", code)
         while self.heap:
             t, _, tipo, datos = heapq.heappop(self.heap)
+            self.ahora = t
             self.res.t_fin_min = max(self.res.t_fin_min, t)
             if tipo == "llega":
                 lote = datos[0]
@@ -221,6 +255,8 @@ class _Motor:
                 rec.libre = True
                 rec.pos = tarea.hacia
                 self.llegada(tarea.lote, tarea.hacia, t)
+            elif tipo == "reabre":
+                self.iniciar_procesos(datos[0], t)
             elif tipo == "fin_proceso":
                 code, lote = datos
                 st = self.estado[code]
@@ -244,10 +280,24 @@ class _Motor:
 
     def resolver(self, token: str, lote: Lote, t: float, es_inicio: bool = False) -> Optional[str]:
         if not token.startswith(PREFIJO_GRUPO):
-            return token if token in self.est else None
+            if token not in self.est:
+                return None
+            c = self.cierre_activo(token, t)
+            if c and math.isinf(c.hasta_min):
+                self.motivo_cierre = f"Área «{token}» cerrada: {c.motivo or 'sin motivo registrado'}."
+                return None
+            return token
         miembros = self.grupos.get(token[1:], [])
         if not miembros:
             return None
+        abiertos = [m for m in miembros if not self.cerrado(m, t)]
+        if not abiertos:
+            esperan = [m for m in miembros if not math.isinf(self.cierre_activo(m, t).hasta_min)]
+            if not esperan:
+                self.motivo_cierre = f"Todas las áreas del grupo «{token}» están cerradas."
+                return None
+            abiertos = esperan
+        miembros = abiertos
         if len(miembros) == 1:
             return miembros[0]
         # sin balanceo (o al arrancar) se reparte por turnos
@@ -271,9 +321,11 @@ class _Motor:
         if lote.paso >= len(lote.pasos) - 1:
             self.completar(lote, t)
             return
+        self.motivo_cierre = ""
         destino = self.resolver(lote.pasos[lote.paso + 1], lote, t)
         if destino is None:
-            self.fallar_lote(lote, f"El paso «{lote.pasos[lote.paso + 1]}» no existe o su grupo está vacío.")
+            self.fallar_lote(lote, self.motivo_cierre or
+                             f"El paso «{lote.pasos[lote.paso + 1]}» no existe o su grupo está vacío.")
             return
         e = self.est[destino]
         if e.tiempo_proceso_min > 0 and lote.paso + 1 < len(lote.pasos) - 1:
@@ -312,6 +364,8 @@ class _Motor:
 
     def iniciar_procesos(self, code: str, t: float) -> None:
         st = self.estado[code]
+        if self.cerrado(code, t):
+            return
         while st.libres > 0 and st.cola and t < self.p.tiempo_observacion_min:
             st.cola.sort(key=lambda i: self.clave(i.lote.prioridad, i.visita.llegada_min, i.lote.id))
             item = st.cola.pop(0)
@@ -400,10 +454,12 @@ class _Motor:
                                          detalle="No se inició antes del cierre del turno."))
             if tarea.lote.estado == "en curso":
                 tarea.lote.motivo = "Traslado sin atender al cierre del turno."
-        for st in self.estado.values():
+        for code, st in self.estado.items():
+            c = self.cierre_activo(code, self.p.tiempo_observacion_min - 1e-9)
             for item in st.cola:
                 if item.lote.estado == "en curso":
-                    item.lote.motivo = "En cola de proceso al cierre del turno."
+                    item.lote.motivo = (f"En cola de «{code}», cerrada: {c.motivo}." if c
+                                        else "En cola de proceso al cierre del turno.")
         for lote in self.lotes:
             if lote.estado == "en curso" and not lote.motivo:
                 lote.motivo = "En proceso al cierre del turno."

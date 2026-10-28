@@ -8,6 +8,7 @@ class NodoVM:
     funcion: str
     x: float
     y: float
+    cerrado: bool = False
 
 
 @dataclass(frozen=True)

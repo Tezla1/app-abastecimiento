@@ -80,7 +80,7 @@ class LineChart(QWidget):
             p.drawPath(ruta)
         if self._marca is not None and x0 <= self._marca <= x1:
             xp = zona.left() + (self._marca - x0) / (x1 - x0) * zona.width()
-            p.setPen(QPen(QColor("#FFD166"), 1.5, Qt.PenStyle.DashLine))
+            p.setPen(QPen(QColor(theme.RESALTE), 1.5, Qt.PenStyle.DashLine))
             p.drawLine(QPointF(xp, zona.top()), QPointF(xp, zona.bottom()))
         x = zona.right()
         for nombre, color, _ in reversed(self._series):

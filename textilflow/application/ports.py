@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Generic, Optional, TypeVar
 
-from ..domain.entities import (Conexion, Escenario, Estacion, Parametro, Pedido, Registro,
+from ..domain.entities import (Cierre, Conexion, Escenario, Estacion, Parametro, Pedido, Registro,
                                Robot, RutaProceso, Taller, TipoPrenda)
 
 T = TypeVar("T")
@@ -41,6 +41,11 @@ class EstacionRepository(Repository[Estacion], ABC):
 class ConexionRepository(Repository[Conexion], ABC):
     @abstractmethod
     def list_by_taller(self, taller_id: int) -> list[Conexion]: ...
+
+
+class CierreRepository(Repository[Cierre], ABC):
+    @abstractmethod
+    def list_by_taller(self, taller_id: int) -> list[Cierre]: ...
 
 
 class TipoPrendaRepository(Repository[TipoPrenda], ABC):

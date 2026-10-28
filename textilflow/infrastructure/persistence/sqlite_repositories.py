@@ -3,7 +3,7 @@ from dataclasses import fields
 from typing import Generic, Optional, TypeVar
 
 from ...application import ports
-from ...domain.entities import (Conexion, Escenario, Estacion, Parametro, Pedido, Registro,
+from ...domain.entities import (Cierre, Conexion, Escenario, Estacion, Parametro, Pedido, Registro,
                                 Robot, RutaProceso, Taller, TipoPrenda)
 from .database import TABLAS, Database
 
@@ -80,6 +80,13 @@ class SqliteConexionRepository(_SqliteRepo[Conexion], ports.ConexionRepository):
     tabla, entidad = "conexion", Conexion
 
     def list_by_taller(self, taller_id: int) -> list[Conexion]:
+        return self._list_where("taller_id", taller_id)
+
+
+class SqliteCierreRepository(_SqliteRepo[Cierre], ports.CierreRepository):
+    tabla, entidad = "cierre", Cierre
+
+    def list_by_taller(self, taller_id: int) -> list[Cierre]:
         return self._list_where("taller_id", taller_id)
 
 

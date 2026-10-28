@@ -58,7 +58,7 @@ class LayoutController(Controlador):
         self.vista.conexiones.set_filas(
             [[c.id, c.origen, c.destino, fmt(c.distancia_m), fmt(c.ancho_m), "↔" if c.bidireccional else "→"]
              for c in con], [c.id for c in con])
-        self.vista.dibujar_red(*construir_red(self._layout, tid, self._resaltar))
+        self.vista.dibujar_red(*construir_red(self._layout, tid, self._resaltar, self.ctx.cerrados()))
 
     def _tras_cambio(self, panel, mensaje: str) -> None:
         self.refrescar()
@@ -167,9 +167,9 @@ class LayoutController(Controlador):
                 f" · Ancho mínimo: {fmt(ruta.ancho_min_m)} m",
                 [[i, f"{t.origen} → {t.destino}", fmt(t.distancia_m), fmt(t.ancho_m)]
                  for i, t in enumerate(ruta.tramos, 1)])
-        self.vista.dibujar_red(*construir_red(self._layout, tid, self._resaltar))
+        self.vista.dibujar_red(*construir_red(self._layout, tid, self._resaltar, self.ctx.cerrados()))
 
     def _limpiar_ruta(self) -> None:
         self._resaltar = frozenset()
         self.vista.mostrar_ruta("Sin ruta activa.", [])
-        self.vista.dibujar_red(*construir_red(self._layout, self.ctx.taller_id))
+        self.vista.dibujar_red(*construir_red(self._layout, self.ctx.taller_id, cerrados=self.ctx.cerrados()))

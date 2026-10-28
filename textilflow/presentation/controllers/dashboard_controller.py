@@ -26,4 +26,4 @@ class DashboardController(Controlador):
                 top.append(a)
         top = top[:7]
         self.vista.tabla_alertas.set_filas([[a.nivel, a.titulo] for a in top], colores=[COLOR_NIVEL.get(a.nivel) for a in top])
-        self.vista.dibujar_red(*construir_red(self._layout, self.ctx.taller_id), r.trafico_arcos)
+        self.vista.dibujar_red(*construir_red(self._layout, self.ctx.taller_id, cerrados=self.ctx.cerrados()), r.trafico_arcos)

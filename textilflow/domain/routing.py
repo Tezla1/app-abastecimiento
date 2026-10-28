@@ -39,7 +39,7 @@ def _adyacencia(conexiones: Iterable[Conexion], ancho_min_m: float) -> dict:
 
 
 def ruta_mas_corta(conexiones: Iterable[Conexion], origen: str, destino: str,
-                   ancho_min_m: float = 0.0) -> Optional[Ruta]:
+                   ancho_min_m: float = 0.0, excluir: frozenset = frozenset()) -> Optional[Ruta]:
     if origen == destino:
         return Ruta((origen,), ())
     adj = _adyacencia(conexiones, ancho_min_m)
@@ -54,6 +54,8 @@ def ruta_mas_corta(conexiones: Iterable[Conexion], origen: str, destino: str,
         if d > dist.get(nodo, float("inf")):
             continue
         for t in adj.get(nodo, []):
+            if t.destino in excluir and t.destino != destino:
+                continue
             nd = d + t.distancia_m
             if nd < dist.get(t.destino, float("inf")):
                 dist[t.destino] = nd

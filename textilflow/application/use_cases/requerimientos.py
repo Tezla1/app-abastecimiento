@@ -59,7 +59,7 @@ class AnalizarRequerimientos:
         robot = ctx.robot_de(esc)
         ancho = normativa.ancho_requerido_robot(robot, par) if robot else 0.0
         ramas = analisis.distancias_ramas(ctx.estaciones, ctx.conexiones, ctx.tipos, ctx.rutas,
-                                          esc.velocidad_ms, ancho)
+                                          esc.velocidad_ms, ancho, ctx.cerrados(), ctx.sin_paso())
         barrido = self._barrido(ctx, esc, max(1, min(max_recursos, 12)))
         objetivo = par["utilizacion_objetivo_flota_pct"]
         mejor_cierre = min((f.makespan_min for f in barrido), default=0)

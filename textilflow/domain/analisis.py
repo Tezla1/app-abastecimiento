@@ -209,14 +209,15 @@ class RamaDistancia:
 
 
 def distancias_ramas(estaciones: Iterable[Estacion], conexiones: Iterable[Conexion], tipos: Iterable[TipoPrenda],
-                     rutas: Iterable[RutaProceso], velocidad_ms: float, ancho_requerido_m: float = 0.0) -> list:
+                     rutas: Iterable[RutaProceso], velocidad_ms: float, ancho_requerido_m: float = 0.0,
+                     cerrados: frozenset = frozenset(), sin_paso: frozenset = frozenset()) -> list:
     estaciones, conexiones = list(estaciones), list(conexiones)
     tipos = {t.id: t for t in tipos}
     out = []
     for r in rutas:
         pos, total, ok, expandidos = None, 0.0, True, []
         for token in r.pasos():
-            ms = _miembros(estaciones, token)
+            ms = [e for e in _miembros(estaciones, token) if e.codigo not in cerrados]
             if not ms:
                 ok = False
                 expandidos.append(token)
@@ -226,7 +227,7 @@ def distancias_ramas(estaciones: Iterable[Estacion], conexiones: Iterable[Conexi
             else:
                 cand = []
                 for e in ms:
-                    rt = ruta_mas_corta(conexiones, pos, e.codigo, ancho_requerido_m) if pos != e.codigo else None
+                    rt = ruta_mas_corta(conexiones, pos, e.codigo, ancho_requerido_m, sin_paso) if pos != e.codigo else None
                     cand.append((0.0 if pos == e.codigo else (rt.distancia_m if rt else float("inf")), e.codigo))
                 d, elegido = min(cand)
                 if math.isinf(d):
