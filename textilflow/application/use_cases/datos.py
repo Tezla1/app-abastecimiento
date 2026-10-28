@@ -1,4 +1,3 @@
-"""Importación / exportación de datos y respaldo del proyecto (.rlr)."""
 from datetime import datetime
 
 from ...domain.entities import Taller
@@ -22,7 +21,6 @@ class GestionarDatos:
         self._snapshot = snapshot
         self._archivo = archivo
 
-    # ---- Excel ----
     def crear_plantilla(self, ruta: str) -> None:
         self._excel.crear_plantilla(ruta)
 
@@ -40,7 +38,6 @@ class GestionarDatos:
         )
 
     def importar_taller(self, ruta: str) -> tuple[Taller, str]:
-        """Valida el Excel completo y, solo si no hay errores, crea un taller nuevo."""
         datos = self._excel.leer_taller(ruta)
         errores = list(datos.errores)
         if datos.taller is None and not errores:
@@ -110,7 +107,6 @@ class GestionarDatos:
                    f"{len(datos.conexiones)} conexiones, {len(datos.rutas)} ramas, {len(datos.pedidos)} pedidos.")
         return taller, resumen
 
-    # ---- Proyecto restaurable ----
     def exportar_proyecto(self, ruta: str) -> None:
         self._archivo.escribir(ruta, {
             "formato": "TEXTILFLOW-RLR",
@@ -121,7 +117,8 @@ class GestionarDatos:
 
     def restaurar_proyecto(self, ruta: str) -> None:
         datos = self._archivo.leer(ruta)
-        formatos_validos = ("TEXTILFLOW-RLR", "INTRABOT-RLR")      # acepta también respaldos de la versión anterior
+        # los respaldos de cuando se llamaba INTRABOT siguen sirviendo
+        formatos_validos = ("TEXTILFLOW-RLR", "INTRABOT-RLR")
         if datos.get("formato") not in formatos_validos or "tablas" not in datos:
             raise ErrorDeNegocio("El archivo no es un respaldo de proyecto TextilFlow válido.")
         if datos.get("version") != VERSION_FORMATO:

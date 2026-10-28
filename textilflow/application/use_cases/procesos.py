@@ -1,4 +1,3 @@
-"""Tipos de prenda, rutas de proceso (ramas) y pedidos."""
 from ...domain.alertas import validar_rutas
 from ...domain.entities import Pedido, RutaProceso, TipoPrenda
 from ..errors import ErrorDeNegocio
@@ -11,7 +10,6 @@ class GestionarProcesos:
                  pedidos: PedidoRepository, estaciones: EstacionRepository):
         self._tipos, self._rutas, self._pedidos, self._est = tipos, rutas, pedidos, estaciones
 
-    # ---- prendas ----
     def listar_tipos(self) -> list[TipoPrenda]:
         return sorted(self._tipos.list_all(), key=lambda t: t.id or 0)
 
@@ -29,7 +27,6 @@ class GestionarProcesos:
             raise ErrorDeNegocio("La prenda tiene rutas o pedidos asociados: elimínelos primero.")
         self._tipos.delete(tipo_id)
 
-    # ---- rutas ----
     def listar_rutas(self, taller_id: int) -> list[RutaProceso]:
         return self._rutas.list_by_taller(taller_id)
 
@@ -37,7 +34,7 @@ class GestionarProcesos:
         exigir_valido(r)
         if self._tipos.get(r.tipo_prenda_id) is None:
             raise ErrorDeNegocio("Seleccione una prenda válida.")
-        r.secuencia = ">".join(r.pasos())   # normaliza espacios y mayúsculas
+        r.secuencia = ">".join(r.pasos())
         errores = validar_rutas([r], self._est.list_by_taller(r.taller_id))
         if errores:
             raise ErrorDeNegocio(" ".join(errores))
@@ -46,7 +43,6 @@ class GestionarProcesos:
     def eliminar_ruta(self, ruta_id: int) -> None:
         self._rutas.delete(ruta_id)
 
-    # ---- pedidos ----
     def listar_pedidos(self, taller_id: int) -> list[Pedido]:
         return self._pedidos.list_by_taller(taller_id)
 

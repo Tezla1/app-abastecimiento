@@ -9,7 +9,6 @@ ETIQUETAS = {
     "solicitudes_atendidas_pct": "Solicitudes atendidas (%)",
 }
 
-# Sin estos indicadores no tiene sentido comparar dos escenarios
 CLAVES_REQUERIDAS = (
     "tiempo_abastecimiento_prom",
     "distancia_total",
@@ -19,12 +18,6 @@ CLAVES_REQUERIDAS = (
 
 
 def calcular_indicadores(escenario, registros):
-    """Calcula los indicadores de un escenario.
-
-    escenario: dict con num_recursos y tiempo_observacion_min.
-    registros: lista de dicts (filas de la tabla registro).
-    Devuelve un dict; un indicador es None si no hay datos suficientes.
-    """
     ind = {clave: None for clave in ETIQUETAS}
     ind["n_registros"] = len(registros)
     ind["n_atendidas"] = 0
@@ -56,14 +49,12 @@ def calcular_indicadores(escenario, registros):
 
 
 def variacion_pct(base, alternativo):
-    """V = ((Xalt - Xbase) / Xbase) * 100. None si no se puede calcular."""
     if base is None or alternativo is None or base == 0:
         return None
     return (alternativo - base) / base * 100
 
 
 def verificar_comparable(ind_base, ind_alt):
-    """Devuelve (es_comparable, lista_de_problemas)."""
     problemas = []
     for nombre, ind in (("base", ind_base), ("alternativo", ind_alt)):
         faltan = [ETIQUETAS[k] for k in CLAVES_REQUERIDAS if ind.get(k) is None]
@@ -75,7 +66,6 @@ def verificar_comparable(ind_base, ind_alt):
 
 
 def comparar(ind_base, ind_alt):
-    """Tabla de comparación: una fila por indicador con su variación porcentual."""
     return [
         {
             "clave": clave,

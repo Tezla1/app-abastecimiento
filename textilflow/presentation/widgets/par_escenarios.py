@@ -5,7 +5,6 @@ from PyQt6.QtWidgets import QComboBox, QFrame, QGridLayout, QLabel, QPushButton
 
 
 class ParEscenariosBar(QFrame):
-    """Dos combos (base / alternativo) y un botón de acción."""
     ejecutar = pyqtSignal(int, int)
 
     def __init__(self, texto_boton: str, parent=None):
@@ -26,7 +25,6 @@ class ParEscenariosBar(QFrame):
         self.boton.clicked.connect(self._emitir)
 
     def set_escenarios(self, opciones: Sequence[tuple]) -> None:
-        """opciones: [(id, etiqueta)]. Conserva la selección; por defecto base=1º, alt=2º."""
         previos = (self.base.currentData(), self.alt.currentData())
         for combo, previo, defecto in ((self.base, previos[0], 0), (self.alt, previos[1], 1)):
             combo.blockSignals(True)

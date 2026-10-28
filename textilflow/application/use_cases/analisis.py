@@ -1,4 +1,3 @@
-"""Simulación, réplicas, indicadores y comparación. Aquí se usa el modelo de calculos.py."""
 from dataclasses import replace
 
 from ...domain import calculos, estadistica
@@ -9,7 +8,7 @@ from ..ports import EscenarioRepository, RegistroRepository, ReportExporter
 from .contexto import CargadorContexto
 from .nucleo import analizar, calc_de, correr, exigir_simulable, simular_completo
 
-METRICAS = {   # clave -> (etiqueta, decimales)
+METRICAS = {
     "makespan_min": ("Cierre de la última entrega (min)", 1),
     "lead_time_min": ("Lead time medio por lote (min)", 1),
     "completados_pct": ("Lotes completados (%)", 1),
@@ -49,7 +48,6 @@ class CalcularIndicadores:
 
 
 class EjecutarReplicas:
-    """N corridas con semillas distintas: el resultado se resume con media, desviación e IC 95 %."""
 
     def __init__(self, escenarios: EscenarioRepository, ctx: CargadorContexto):
         self._esc, self._ctx = escenarios, ctx
@@ -76,12 +74,11 @@ class EjecutarReplicas:
                 "espera_traslado_min": calc.get("espera_prom"), "utilizacion_flota_pct": calc.get("utilizacion_pct"),
                 "cola_max": max((e.cola_max for e in estados), default=0)})
         resumen = {k: estadistica.resumir([f[k] for f in filas]) for k in METRICAS}
-        histos = {k: estadistica.histograma([f[k] for f in filas if f[k] is not None], 8) for k in METRICAS}
         nota = ""
         if esc.variabilidad_pct <= 0:
             nota = ("La variabilidad del escenario es 0 %: todas las réplicas son idénticas (modelo determinista). "
                     "Defina una variabilidad > 0 % en «Condiciones base» para estimar la dispersión.")
-        return ResultadoReplicas(esc, n, filas, resumen, histos, nota)
+        return ResultadoReplicas(esc, n, filas, resumen, nota)
 
 
 def _a_registro(t):
@@ -107,7 +104,7 @@ class CompararEscenarios:
         comparable, problemas = calculos.verificar_comparable(ind_b, ind_a)
         filas = calculos.comparar(ind_b, ind_a)
         proceso, sb, sa = [], {}, {}
-        try:   # KPIs de proceso: se recalculan de forma determinista con los mismos datos
+        try:
             ctx = self._ctx.cargar(base.taller_id)
             exigir_simulable(ctx)
             rb, ra = simular_completo(ctx, base), simular_completo(ctx, alt)

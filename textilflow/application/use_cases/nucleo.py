@@ -1,4 +1,3 @@
-"""Piezas compartidas por los casos de uso de simulación (contexto + ejecución en memoria)."""
 from dataclasses import dataclass, field, replace
 from typing import Optional
 

@@ -1,4 +1,3 @@
-"""Archivo de proyecto restaurable (.rlr): un zip con un único `proyecto.json`."""
 import json
 import zipfile
 
@@ -6,7 +5,7 @@ from ...application.errors import ErrorDeNegocio
 from ...application.ports import ProyectoArchive
 
 NOMBRE_INTERNO = "proyecto.json"
-LIMITE_BYTES = 200 * 1024 * 1024  # evita zip-bombs al restaurar
+LIMITE_BYTES = 200 * 1024 * 1024
 
 
 class RlrArchive(ProyectoArchive):

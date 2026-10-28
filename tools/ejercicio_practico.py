@@ -1,10 +1,3 @@
-"""Ejercicio práctico de TextilFlow: N pruebas sobre el caso experimental sintético.
-
-Uso:  python tools/ejercicio_practico.py [--replicas 30] [--salida docs]
-
-Genera `EJERCICIO_PRACTICO.md`, `ejercicio_resultados.csv` y gráficos PNG (si hay matplotlib).
-Todo es reproducible: las semillas son fijas.
-"""
 import argparse
 import csv
 import os
@@ -14,9 +7,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from textilflow.container import construir                      # noqa: E402
-from textilflow.domain import estadistica                       # noqa: E402
-from textilflow.version import FECHA, VERSION                   # noqa: E402
+from textilflow.container import construir
+from textilflow.domain import estadistica
+from textilflow.version import FECHA, VERSION
 
 
 def f(x, d=1):
@@ -41,14 +34,13 @@ class Ejercicio:
         self.csv: list[dict] = []
         self.figuras: dict = {}
 
-    # ---- utilidades
     def correr(self, esc, **cambios):
         e = replace(esc, **cambios)
         self.app.escenarios.guardar(e)
         try:
             return self.app.simulacion.execute(e.id, guardar=False)
         finally:
-            self.app.escenarios.guardar(esc)      # restaura el escenario original
+            self.app.escenarios.guardar(esc)
 
     def replicas(self, esc, n=None, **cambios):
         vals = {"makespan": [], "lead": [], "lead1": [], "ok": [], "tiempo": [], "tarde1": []}
@@ -71,7 +63,6 @@ class Ejercicio:
             self.md.append("| " + " | ".join(str(c) for c in fila) + " |")
         self.md.append("")
 
-    # ---- pruebas
     def p1_base(self):
         self.h("## Prueba 1 · Un turno base (S0 manual vs S1 AMR)")
         filas = []
@@ -183,7 +174,6 @@ class Ejercicio:
         bordado.capacidad = 1
         self.app.layout.guardar_estacion(bordado)
 
-    # ---- salida
     def escribir(self, salida: Path):
         salida.mkdir(parents=True, exist_ok=True)
         cab = [f"# TextilFlow {VERSION} · Ejercicio práctico", "",

@@ -1,4 +1,3 @@
-"""Logo de TextilFlow (un hilo que atraviesa las áreas, con su aguja) dibujado en SVG (sin archivos externos)."""
 from PyQt6.QtCore import QByteArray, Qt
 from PyQt6.QtGui import QIcon, QImage, QPainter, QPixmap
 from PyQt6.QtSvg import QSvgRenderer

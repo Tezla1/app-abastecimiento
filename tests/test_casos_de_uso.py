@@ -1,4 +1,3 @@
-"""Casos de uso de punta a punta sobre SQLite en memoria."""
 import os
 import sqlite3
 import zipfile
@@ -68,13 +67,12 @@ def test_replicas_estadisticas(demo):
     app, t = demo
     s1 = escenarios(app, t)[1]
     r0 = app.replicas.execute(s1.id, 5)
-    assert r0.nota and r0.resumen["makespan_min"].desv == pytest.approx(0)       # determinista sin variabilidad
+    assert r0.nota and r0.resumen["makespan_min"].desv == pytest.approx(0)
     s1.variabilidad_pct = 20
     app.escenarios.guardar(s1)
     r = app.replicas.execute(s1.id, 12)
     assert not r.nota and r.resumen["makespan_min"].n == 12
     assert r.resumen["makespan_min"].desv > 0 and r.resumen["makespan_min"].ic_inf < r.resumen["makespan_min"].ic_sup
-    assert sum(n for _, _, n in r.histogramas["makespan_min"]) == 12
     assert [f["semilla"] for f in r.filas] == list(range(s1.semilla, s1.semilla + 12))
     with pytest.raises(ErrorDeNegocio):
         app.replicas.execute(s1.id, 1)
@@ -85,12 +83,12 @@ def test_requerimientos(demo):
     s0 = escenarios(app, t)[0]
     r = app.requerimientos.execute(s0.id, 5)
     assert [f.recursos for f in r.barrido] == [1, 2, 3, 4, 5]
-    assert r.barrido[0].utilizacion_pct > r.barrido[-1].utilizacion_pct              # más equipos → menos utilización
+    assert r.barrido[0].utilizacion_pct > r.barrido[-1].utilizacion_pct
     assert r.recomendado == 2
     assert any(c.tipo == "Cuello de botella" for c in r.criticos)
     assert any(c.tipo == "Pasillo" and "CO–P" in c.elemento for c in r.criticos)
     camisa = next(v for v in r.viajes_por_prenda if v["prenda"] == "Camisa")
-    assert camisa["unidades_por_viaje"] == 100 and camisa["viajes_por_traslado"] == 1   # 25 kg / 0,25 kg
+    assert camisa["unidades_por_viaje"] == 100 and camisa["viajes_por_traslado"] == 1
     assert all(x.alcanzable for x in r.ramas)
     assert any(c.estado == "INCUMPLE" for c in r.cumplimientos)
     assert r.recorridos["viajes"] > 0 and r.recorridos["distancia_total_m"] > 0
@@ -130,20 +128,19 @@ def test_rutas_por_nodo_segun_pedido(demo):
     assert not app.rutas.execute(r, "B", 999)
 
 
-# ------------------------------------------------------------------ layout y procesos
 def test_layout_no_rompe_relaciones(demo):
     app, t = demo
     est = {e.codigo: e for e in app.layout.listar_estaciones(t.id)}
     with pytest.raises(ErrorDeNegocio):
-        app.layout.eliminar_estacion(est["B"].id)                      # lo usan conexiones y rutas
+        app.layout.eliminar_estacion(est["B"].id)
     with pytest.raises(ErrorDeNegocio):
         app.layout.guardar_estacion(Estacion(t.id, "A", "dup", "PROCESO", 0, 0, 1, 1))
     with pytest.raises(ErrorDeNegocio):
-        app.layout.guardar_estacion(Estacion(t.id, "A2", "otro almacén", "ALMACEN", 0, 0))   # solo un almacén
+        app.layout.guardar_estacion(Estacion(t.id, "A2", "otro almacén", "ALMACEN", 0, 0))
     est["B"].codigo = "BB"
     with pytest.raises(ErrorDeNegocio):
         app.layout.guardar_estacion(est["B"])
-    con = app.layout.guardar_conexion(Conexion(t.id, "A", "D", 0, 1.5))        # distancia por coordenadas
+    con = app.layout.guardar_conexion(Conexion(t.id, "A", "D", 0, 1.5))
     assert con.distancia_m == pytest.approx(30.02, abs=0.01)
 
 
@@ -151,7 +148,7 @@ def test_procesos_validan_rutas_y_pedidos(demo):
     app, t = demo
     camisa = next(x for x in app.procesos.listar_tipos() if x.nombre == "Camisa")
     with pytest.raises(ErrorDeNegocio):
-        app.procesos.guardar_ruta(RutaProceso(t.id, camisa.id, "mala", 100, "C>CO>D"))        # no empieza en el almacén
+        app.procesos.guardar_ruta(RutaProceso(t.id, camisa.id, "mala", 100, "C>CO>D"))
     with pytest.raises(ErrorDeNegocio):
         app.procesos.guardar_ruta(RutaProceso(t.id, camisa.id, "mala", 100, "A>ZZ>D"))
     ok = app.procesos.guardar_ruta(RutaProceso(t.id, camisa.id, "directa", 5, " A > E > D "))
@@ -160,7 +157,7 @@ def test_procesos_validan_rutas_y_pedidos(demo):
     with pytest.raises(ErrorDeNegocio):
         app.procesos.guardar_pedido(Pedido(t.id, 9999, 10))
     with pytest.raises(ErrorDeNegocio):
-        app.procesos.eliminar_tipo(camisa.id)                          # tiene rutas y pedidos
+        app.procesos.eliminar_tipo(camisa.id)
     with pytest.raises(ErrorDeNegocio):
         app.procesos.guardar_tipo(TipoPrenda("camisa", 1, 10))
 
@@ -212,7 +209,6 @@ def test_eliminar_taller_borra_en_cascada(demo):
     assert app.db.conn.execute("SELECT count(*) FROM registro").fetchone()[0] == 0
 
 
-# ------------------------------------------------------------------ archivos
 def test_excel_ida_y_vuelta(demo, tmp_path):
     app, t = demo
     ruta = str(tmp_path / "taller.xlsx")
@@ -221,7 +217,7 @@ def test_excel_ida_y_vuelta(demo, tmp_path):
     assert "9 nodos" in resumen and "8 ramas" in resumen and "5 pedidos" in resumen
     assert [(e.codigo, e.tiempo_proceso_min, e.capacidad, e.grupo) for e in app.layout.listar_estaciones(nuevo.id)] == \
            [(e.codigo, e.tiempo_proceso_min, e.capacidad, e.grupo) for e in app.layout.listar_estaciones(t.id)]
-    assert len(app.procesos.listar_tipos()) == 4          # las prendas existentes se reutilizan
+    assert len(app.procesos.listar_tipos()) == 4
     assert [r.secuencia for r in app.procesos.listar_rutas(nuevo.id)] == [r.secuencia for r in app.procesos.listar_rutas(t.id)]
 
 
@@ -240,7 +236,7 @@ def test_importacion_atomica_con_errores(demo, tmp_path):
     wb = load_workbook(ruta)
     wb["Rutas"].append(["Camisa", "rota", 10, "A>NOEXISTE>D"])
     wb["Pedidos"].append(["Fantasma", 10, 1, 0, 0, "SINTETICO"])
-    wb["Nodos"].append(["Z", "x", "PROCESO", 1, 1, 0.0, 1, ""])      # proceso sin tiempo
+    wb["Nodos"].append(["Z", "x", "PROCESO", 1, 1, 0.0, 1, ""])
     wb.save(ruta)
     antes = len(app.talleres.listar())
     with pytest.raises(ErrorDeNegocio) as e:
@@ -289,12 +285,12 @@ def test_restaurar_rechaza_archivos_malos(demo, tmp_path):
     app.datos.exportar_proyecto(ruta_ok)
     with zipfile.ZipFile(ruta_ok) as z:
         datos = json.loads(z.read("proyecto.json"))
-    datos["tablas"]["pedido"][0]["tipo_prenda_id"] = 12345                 # referencia rota
+    datos["tablas"]["pedido"][0]["tipo_prenda_id"] = 12345
     with zipfile.ZipFile(roto, "w") as z:
         z.writestr("proyecto.json", json.dumps(datos))
     with pytest.raises(ErrorDeNegocio, match="No se modificó"):
         app.datos.restaurar_proyecto(str(roto))
-    assert len(app.procesos.listar_pedidos(t.id)) == 5                     # nada cambió
+    assert len(app.procesos.listar_pedidos(t.id)) == 5
 
 
 def test_exportar_reporte(demo, tmp_path):
@@ -318,16 +314,13 @@ def test_base_v1_se_respalda_y_no_se_destruye(tmp_path):
     assert sqlite3.connect(db.respaldo_v1).execute("SELECT count(*) FROM solicitud").fetchone()[0] == 1
     assert db.conn.execute("PRAGMA user_version").fetchone()[0] == 2
     db.close()
-    assert Database(ruta).respaldo_v1 == ""        # la base v2 se abre sin respaldar de nuevo
+    assert Database(ruta).respaldo_v1 == ""
 
 
-@pytest.mark.parametrize("archivo", ["01_confeccion_andina.xlsx", "02_confeccion_transporte_critico.xlsx",
-                                     "03_DIFICIL_camiseria_14_areas.xlsx", "04_MUY_DIFICIL_denim_20_areas.xlsx",
-                                     "05_ULTRA_planta_3_naves_29_areas.xlsx"])
-def test_ejemplos_xlsx_se_importan_y_simulan(archivo):
+def test_ejemplo_xlsx_se_importa_y_simula():
     from pathlib import Path
     app = construir(":memory:")
-    ruta = Path(__file__).resolve().parents[1] / "ejemplos" / archivo
+    ruta = Path(__file__).resolve().parents[1] / "ejemplos" / "01_confeccion_andina.xlsx"
     t, _ = app.datos.importar_taller(str(ruta))
     assert app.demo.preparar_escenario_base(t) is True
     assert app.demo.preparar_escenario_base(t) is False

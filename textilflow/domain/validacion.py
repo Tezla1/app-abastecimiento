@@ -1,4 +1,3 @@
-"""Reglas de validación integral del proyecto (PASS / WARNING / FAIL)."""
 import math
 from dataclasses import dataclass, field
 from typing import Optional
@@ -31,7 +30,7 @@ class ContextoValidacion:
     pedidos: list = field(default_factory=list)
     robots: list = field(default_factory=list)
     escenarios: list = field(default_factory=list)
-    registros: dict = field(default_factory=dict)  # escenario_id -> [Registro]
+    registros: dict = field(default_factory=dict)
     holgura_robot_m: float = 0.0
 
 
@@ -47,12 +46,10 @@ def validar(ctx: ContextoValidacion) -> list[Hallazgo]:
     por_codigo = {e.codigo: e for e in ctx.estaciones}
     funciones = [e.funcion for e in ctx.estaciones]
 
-    # --- Taller ---
     add(t.area_m2 > 0 and t.operadores > 0, "TAL-01", "Taller",
         "Datos básicos del taller completos.",
         "Área u operadores sin registrar (valen 0).", "Caracterización del taller", WARNING)
 
-    # --- Layout ---
     add(len(ctx.estaciones) >= 2, "LAY-01", "Layout",
         f"{len(ctx.estaciones)} estaciones registradas.",
         "Se necesitan al menos 2 estaciones.", "Layout y movimientos")
@@ -83,7 +80,6 @@ def validar(ctx: ContextoValidacion) -> list[Hallazgo]:
         "Áreas de proceso sin tiempo (no generan cola ni demora): " + ", ".join(sin_tiempo) + ".",
         "Layout y movimientos", WARNING)
 
-    # --- Prendas, rutas y pedidos ---
     add(len(ctx.tipos) >= 1, "PRO-01", "Procesos", f"{len(ctx.tipos)} tipo(s) de prenda.",
         "No hay tipos de prenda registrados.", "Layout y movimientos")
     errores_ruta = validar_rutas(ctx.rutas, ctx.estaciones)
@@ -114,7 +110,6 @@ def validar(ctx: ContextoValidacion) -> list[Hallazgo]:
         f"{sinteticos} pedido(s) sintéticos: sirven para validar el software, no son evidencia empírica.",
         "Layout y movimientos", WARNING)
 
-    # --- Robots ---
     ancho_red = min((c.ancho_m for c in ctx.conexiones), default=None)
     peso_max = max((x.peso_unidad_kg for x in ctx.tipos), default=0.0)
     for esc in ctx.escenarios:
@@ -137,7 +132,6 @@ def validar(ctx: ContextoValidacion) -> list[Hallazgo]:
             f"«{robot.nombre}» ({robot.capacidad_kg:g} kg) no carga una unidad de {peso_max:g} kg.",
             "Diseño conceptual del robot")
 
-    # --- Escenarios y comparabilidad ---
     base = next((e for e in ctx.escenarios if e.tipo == "MANUAL"), None)
     alt = next((e for e in ctx.escenarios if e.tipo == "AMR"), None)
     add(base is not None and alt is not None, "ESC-01", "Escenarios",

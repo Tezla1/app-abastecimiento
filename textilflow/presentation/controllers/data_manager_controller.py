@@ -20,7 +20,7 @@ class DataManagerController(Controlador):
     def _hacer(self, accion, mensaje: str) -> bool:
         try:
             accion()
-        except Exception as e:  # el error de archivo (permisos, disco) tampoco debe tumbar la app
+        except Exception as e:
             from ...application.errors import ErrorDeNegocio
             texto = str(e) if isinstance(e, ErrorDeNegocio) else f"No se pudo completar la operación: {e}"
             self.vista.info(f"[{datetime.now():%H:%M:%S}] ✖ {texto}")

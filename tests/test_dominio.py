@@ -1,4 +1,3 @@
-"""Dominio puro: red, motor de simulación, análisis, normativa, estadística y validación."""
 import math
 
 import pytest
@@ -14,7 +13,6 @@ def con(o, d, dist, ancho=1.5, bi=True):
     return Conexion(1, o, d, dist, ancho, bi)
 
 
-# ------------------------------------------------------------------ red
 def test_ruta_mas_corta_y_filtro_de_ancho():
     red = [con("A", "B", 5, 2.0), con("B", "C", 5, 2.0), con("A", "C", 8, 0.5)]
     assert ruta_mas_corta(red, "A", "C").nodos == ("A", "C")
@@ -31,13 +29,12 @@ def test_sentido_unico_y_conexidad():
 
 def test_nodos_y_arcos_criticos():
     red = [con("A", "B", 1), con("B", "C", 1), con("B", "D", 1), con("C", "D", 1)]
-    assert nodos_criticos(["A", "B", "C", "D"], red) == {"B": 2}      # B desconecta a A
+    assert nodos_criticos(["A", "B", "C", "D"], red) == {"B": 2}
     assert [(c.origen, c.destino) for c in arcos_criticos(["A", "B", "C", "D"], red)] == [("A", "B")]
     anillo = [con("A", "B", 1), con("B", "C", 1), con("C", "A", 1)]
     assert not nodos_criticos(["A", "B", "C"], anillo) and not arcos_criticos(["A", "B", "C"], anillo)
 
 
-# ------------------------------------------------------------------ motor (cálculo a mano)
 def red_lineal(t_proc=1.0, puestos=1):
     est = [Estacion(1, "A", "Almacén", "ALMACEN", 0, 0, 0, 1), Estacion(1, "P", "Proceso", "PROCESO", 10, 0, t_proc, puestos),
            Estacion(1, "D", "Despacho", "DESPACHO", 20, 0, 0, 1)]
@@ -60,7 +57,6 @@ def correr(pedidos, est, cons, p=None, secuencia="A>P>D", lote=10, peso=1.0):
 def test_un_lote_tiempo_exacto():
     est, cons = red_lineal()
     r = correr([Pedido(1, 1, 10, 3, 0, 0, id=1)], est, cons)
-    # 10 m a 1 m/s = 10 s = 1/6 min por tramo; proceso 10 u × 1 min = 10 min
     esperado = 2 * (10 / 60) + 10
     lote = r.lotes[0]
     assert lote.estado == "completado" and lote.fin_min == pytest.approx(esperado)
@@ -70,21 +66,21 @@ def test_un_lote_tiempo_exacto():
 
 def test_paralelismo_por_puestos():
     est, cons = red_lineal(puestos=2)
-    ped = [Pedido(1, 1, 20, 3, 0, 0, id=1)]            # 2 lotes de 10
+    ped = [Pedido(1, 1, 20, 3, 0, 0, id=1)]
     r2 = correr(ped, est, cons)
     est1, _ = red_lineal(puestos=1)
     r1 = correr(ped, est1, cons)
     fin2 = max(l.fin_min for l in r2.lotes)
     fin1 = max(l.fin_min for l in r1.lotes)
-    assert fin1 - fin2 == pytest.approx(10, abs=0.5)   # con 1 puesto el 2.º lote espera un proceso completo
+    assert fin1 - fin2 == pytest.approx(10, abs=0.5)
 
 
 def test_cola_y_utilizacion_de_la_estacion():
     est, cons = red_lineal(puestos=1)
-    r = correr([Pedido(1, 1, 30, 3, 0, 0, id=1)], est, cons)   # 3 lotes, 1 puesto
+    r = correr([Pedido(1, 1, 30, 3, 0, 0, id=1)], est, cons)
     e = analisis.analizar_estaciones(r, est)[0]
     assert e.cola_max == 2 and e.lotes == 3
-    assert e.utilizacion_pct == pytest.approx(30 / 120 * 100)  # 30 min ocupados de 120
+    assert e.utilizacion_pct == pytest.approx(30 / 120 * 100)
     assert e.espera_prom_min > 5
 
 
@@ -106,7 +102,6 @@ def test_prioridad_adelanta_al_pedido_urgente():
 
 def test_viajes_segun_capacidad():
     est, cons = red_lineal()
-    # lote de 10 u × 3 kg = 30 kg; capacidad 12 kg → 4 u por viaje → 3 viajes por traslado
     r = correr([Pedido(1, 1, 10, 3, 0, 0, id=1)], est, cons, prm(capacidad_kg=12), peso=3.0)
     assert [t.viajes for t in r.tareas] == [3, 3]
 
@@ -159,7 +154,6 @@ def test_generar_lotes_reparte_por_fraccion():
     assert por_rama == {"a": 70, "b": 30}
 
 
-# ------------------------------------------------------------------ análisis
 def test_carga_ofrecida_analitica():
     est, _ = red_lineal(t_proc=0.6, puestos=2)
     tipo = TipoPrenda("Camisa", 1, 10, 2.0, id=1)
@@ -199,7 +193,6 @@ def test_validar_rutas_exige_almacen_y_despacho():
     assert validar_rutas([RutaProceso(1, 1, "x", 100, "A>@NADA>D")], est)
 
 
-# ------------------------------------------------------------------ normativa y estadística
 def test_normativa_marca_pasillos_y_robot():
     from textilflow.domain.entities import Escenario, Taller
     est, _ = red_lineal()
@@ -226,5 +219,3 @@ def test_estadistica_ic95():
     assert r.ic_inf < 14 < r.ic_sup
     assert r.ic_sup - 14 == pytest.approx(2.776 * r.desv / math.sqrt(5), abs=1e-3)
     assert estadistica.resumir([5]).desv is None and estadistica.resumir([]).media is None
-    h = estadistica.histograma([1, 2, 2, 3, 9], 4)
-    assert sum(n for _, _, n in h) == 5

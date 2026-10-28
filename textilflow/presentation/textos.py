@@ -1,5 +1,3 @@
-"""Textos del modelo matemático para mostrar en pantalla."""
-
 FORMULAS = {
     "tiempo_abastecimiento_prom": "media(espera + recorrido) de las traslados atendidos",
     "distancia_total": "Σ distancia_m de las traslados atendidos",
@@ -11,7 +9,6 @@ FORMULAS = {
 
 FORMULA_VARIACION = "V = ((Xalt − Xbase) / Xbase) × 100"
 
-# Sentido de la mejora para colorear la variación (None = neutro, depende del contexto).
 MEJOR_SI_BAJA = {
     "tiempo_abastecimiento_prom": True,
     "distancia_total": True,

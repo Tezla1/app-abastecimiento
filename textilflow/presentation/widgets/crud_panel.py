@@ -1,4 +1,3 @@
-"""Panel genérico «formulario + tabla» para los CRUD (talleres, estaciones, robots…)."""
 from typing import Optional, Sequence
 
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -11,7 +10,7 @@ from .common import DataTable
 
 
 class CrudPanel(QWidget):
-    guardar_solicitado = pyqtSignal(dict)   # valores del formulario (+ "id")
+    guardar_solicitado = pyqtSignal(dict)
     eliminar_solicitado = pyqtSignal(int)
     seleccionado = pyqtSignal(int)
     nuevo_solicitado = pyqtSignal()
@@ -28,7 +27,6 @@ class CrudPanel(QWidget):
         raiz.setContentsMargins(0, 0, 0, 0)
         raiz.setSpacing(12)
 
-        # ---- formulario ----
         form_box = QFrame()
         form_box.setObjectName("tarjeta")
         form_box.setFixedWidth(ancho_form)
@@ -64,7 +62,6 @@ class CrudPanel(QWidget):
         fl.addLayout(botones)
         raiz.addWidget(form_box)
 
-        # ---- tabla ----
         tabla_box = QFrame()
         tabla_box.setObjectName("tarjeta")
         tl = QVBoxLayout(tabla_box)
@@ -80,7 +77,6 @@ class CrudPanel(QWidget):
         self.btn_eliminar.clicked.connect(self._eliminar)
         self.tabla.fila_seleccionada.connect(lambda i: i is not None and self.seleccionado.emit(int(i)))
 
-    # ---- construcción de campos ----
     def _crear_widget(self, c: CampoSpec) -> QWidget:
         if c.tipo == "int":
             w = QSpinBox()
@@ -108,13 +104,10 @@ class CrudPanel(QWidget):
         return w
 
     def insertar_bajo_formulario(self, widget: QWidget) -> None:
-        """Agrega un widget (nota, botón extra) justo debajo de los campos."""
         self._form_layout.insertWidget(self._form_layout.count() - 1, widget)
 
-    # ---- API para controladores ----
     def set_opciones(self, campo: str, opciones: Sequence[tuple], conservar: bool = True) -> None:
-        """opciones: [(valor, etiqueta)]. Mantiene la selección si sigue existiendo."""
-        w: QComboBox = self._widgets[campo]  # type: ignore[assignment]
+        w: QComboBox = self._widgets[campo]
         actual = w.currentData()
         w.blockSignals(True)
         w.clear()

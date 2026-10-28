@@ -11,7 +11,6 @@ TIPOS_OPC = list(TIPOS_ESCENARIO.items())
 
 
 class Controlador:
-    """Intermediario vista ↔ casos de uso. La vista nunca llama a la aplicación directamente."""
 
     def __init__(self, vista, ctx: AppContext):
         self.vista = vista
@@ -21,7 +20,6 @@ class Controlador:
         pass
 
     def _intentar(self, accion: Callable, *args):
-        """Ejecuta un caso de uso; los errores de negocio se muestran al usuario."""
         try:
             return accion(*args)
         except ErrorDeNegocio as e:
@@ -38,8 +36,8 @@ def etiqueta_estacion(e) -> str:
     return f"{e.codigo} · {e.nombre}" if e.nombre else e.codigo
 
 
+# devuelve datos planos para que la vista no toque entidades
 def construir_red(layout, taller_id: Optional[int], resaltar=frozenset()):
-    """Convierte la red del taller en view-models para el canvas 2D."""
     if taller_id is None:
         return [], []
     nodos = [NodoVM(e.codigo, e.nombre, e.funcion, e.x, e.y) for e in layout.listar_estaciones(taller_id)]
@@ -49,7 +47,6 @@ def construir_red(layout, taller_id: Optional[int], resaltar=frozenset()):
 
 
 def construir_animacion(resultado, estaciones) -> AnimacionVM:
-    """Convierte el resultado de una simulación en tuplas planas para el mapa animado."""
     p = resultado.proceso
     return AnimacionVM(
         t_fin=max(p.t_fin_min, 1.0),

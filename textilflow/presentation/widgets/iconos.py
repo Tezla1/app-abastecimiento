@@ -1,9 +1,7 @@
-"""Iconos vectoriales de la barra lateral (SVG propio, sin archivos ni emojis: se ven igual en cualquier sistema)."""
 from PyQt6.QtCore import QByteArray, Qt
 from PyQt6.QtGui import QIcon, QImage, QPainter, QPixmap
 from PyQt6.QtSvg import QSvgRenderer
 
-# trazos sobre una cuadrícula de 24 × 24; «currentColor» se sustituye por el color de cada sección
 _ICONOS = {
     "dashboard": '<rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/>'
                  '<rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/>',
@@ -23,7 +21,6 @@ _ICONOS = {
     "guia": '<circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7.5" r="0.6"/>',
 }
 
-# etiqueta de la página (o su comienzo) → icono
 _POR_ETIQUETA = [
     ("Dashboard", "dashboard"), ("Caracterización", "taller"), ("Layout", "layout"), ("Modelo", "modelo"),
     ("Diseño conceptual", "robot"), ("Escenarios", "escenarios"), ("Mapa", "mapa"), ("Requerimientos", "requisitos"),
@@ -42,7 +39,6 @@ def icono_svg(clave: str, color: str) -> str:
 
 
 def icono(etiqueta: str, color: str, tam: int = 20) -> QIcon:
-    """Icono de la sección: un color en reposo y otro (más claro) al seleccionarla."""
     ic = QIcon()
     for t in (tam, tam * 2):
         img = QImage(t, t, QImage.Format.Format_ARGB32)

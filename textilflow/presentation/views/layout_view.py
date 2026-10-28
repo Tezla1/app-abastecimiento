@@ -147,7 +147,6 @@ class LayoutView(PageView):
         limpiar.clicked.connect(self.limpiar_ruta_solicitado.emit)
         return w
 
-    # ---- API para el controlador ----
     def set_codigos(self, opciones: list[tuple]) -> None:
         for c in ("origen", "destino"):
             self.conexiones.set_opciones(c, opciones)

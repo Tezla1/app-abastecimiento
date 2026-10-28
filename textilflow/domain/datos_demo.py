@@ -1,9 +1,7 @@
-"""Datos de ejemplo SINTÉTICOS de un taller de confección (para validar el software, no son mediciones)."""
 from .entities import Conexion, Estacion, Pedido, Robot, RutaProceso, TipoPrenda
 
 NOMBRE_TALLER = "Confecciones Andina - Caso Experimental 01"
 
-# codigo, nombre, funcion, x, y, minutos/unidad, puestos, grupo
 ESTACIONES = [
     ("A", "Almacén", "ALMACEN", 2, 8, 0, 1, ""),
     ("C", "Corte", "PROCESO", 8, 8, 0.6, 3, ""),
@@ -16,7 +14,6 @@ ESTACIONES = [
     ("D", "Despacho", "DESPACHO", 32, 9, 0, 1, ""),
 ]
 
-# origen, destino, distancia (m), ancho (m)
 CONEXIONES = [
     ("A", "C", 6.0, 1.8), ("C", "CO", 6.5, 1.8), ("CO", "I", 6.0, 1.8), ("I", "E", 7.0, 1.8),
     ("E", "D", 6.0, 1.8), ("C", "B", 8.0, 1.5), ("CO", "P", 8.5, 0.95), ("I", "P", 6.0, 1.4),
@@ -24,7 +21,6 @@ CONEXIONES = [
     ("CO", "CO2", 4.0, 1.5), ("CO2", "I", 7.5, 1.5), ("A", "B", 13.0, 1.5), ("A", "P", 19.0, 1.5),
 ]
 
-# nombre, peso/unidad kg, unidades por lote, factor de proceso
 PRENDAS = [
     ("Camisa", 0.25, 24, 1.0),
     ("Pantalón", 0.60, 20, 1.2),
@@ -32,7 +28,6 @@ PRENDAS = [
     ("Uniforme", 0.50, 20, 1.1),
 ]
 
-# prenda, nombre de la rama, % de las unidades, secuencia (@GRUPO = cualquier estación del grupo)
 RUTAS = [
     ("Camisa", "Línea normal", 55, "A>C>@COSTURA>I>P>E>D"),
     ("Camisa", "Con bordado", 30, "A>C>B>@COSTURA>I>P>E>D"),
@@ -44,7 +39,6 @@ RUTAS = [
     ("Uniforme", "Bordado corporativo", 100, "A>C>B>@COSTURA>P>E>D"),
 ]
 
-# prenda, cantidad, prioridad (1 = urgente), llegada (min), vencimiento (min; 0 = sin límite)
 PEDIDOS = [
     ("Camisa", 300, 3, 0, 420),
     ("Pantalón", 200, 2, 15, 340),
@@ -53,9 +47,8 @@ PEDIDOS = [
     ("Camisa", 250, 3, 100, 470),
 ]
 
-ROBOT = ("AMR Andina Experimental 01", 50.0, 0.70, 0.80, 0.90)  # nombre, kg, m/s, ancho, radio de giro
+ROBOT = ("AMR Andina Experimental 01", 50.0, 0.70, 0.80, 0.90)
 
-# nombre, tipo, recursos, velocidad, capacidad kg, carga s, descarga s
 ESCENARIOS = [
     ("S0 · Manual (2 operarios)", "MANUAL", 2, 1.0, 25.0, 30.0, 30.0),
     ("S1 · AMR Andina (2 robots)", "AMR", 2, 0.70, 50.0, 30.0, 30.0),
@@ -63,7 +56,6 @@ ESCENARIOS = [
 
 
 def construir(taller_id: int) -> dict:
-    """Entidades de ejemplo (sin id) listas para guardar. tipos/rutas/pedidos se enlazan por nombre."""
     return {
         "estaciones": [Estacion(taller_id, c, n, f, x, y, t, cap, g) for c, n, f, x, y, t, cap, g in ESTACIONES],
         "conexiones": [Conexion(taller_id, o, d, dist, w) for o, d, dist, w in CONEXIONES],

@@ -6,14 +6,13 @@ from .. import theme
 from ..viewmodels import CampoSpec
 from ..widgets.common import DataTable, KpiCard, PageView
 from ..widgets.crud_panel import CrudPanel
-from ..widgets.histograma import Histograma
+from ..widgets.estabilidad import Estabilidad
 from ..widgets.line_chart import LineChart
 
 
 class SimulacionView(PageView):
     ejecutar_solicitado = pyqtSignal(int)
-    replicas_solicitadas = pyqtSignal(int, int)    # escenario, n
-    metrica_cambiada = pyqtSignal()
+    replicas_solicitadas = pyqtSignal(int, int)
 
     def __init__(self, tipos: list[tuple], politicas: list[tuple]):
         super().__init__("Escenarios y simulación",
@@ -49,7 +48,6 @@ class SimulacionView(PageView):
         self.panel.insertar_bajo_formulario(self.btn_simular)
         self.tabs.addTab(self.panel, "Escenarios · condiciones base")
 
-        # ---- resultados ----
         res = QWidget()
         rl = QVBoxLayout(res)
         rl.setContentsMargins(0, 0, 0, 0)
@@ -72,20 +70,33 @@ class SimulacionView(PageView):
             cl = QVBoxLayout(caja); cl.addWidget(g)
             graficos.addWidget(caja)
         rl.addLayout(graficos, 2)
-        sub = QLabel("Estado de las áreas · utilización simulada vs. carga ofrecida (modelo analítico ρ)")
+        abajo = QHBoxLayout()
+        caja_a = QFrame(); caja_a.setObjectName("tarjeta")
+        la = QVBoxLayout(caja_a)
+        sub = QLabel("Estado de las áreas")
         sub.setStyleSheet("font-size: 13px; font-weight: 700;")
-        rl.addWidget(sub)
-        self.tabla = DataTable(["Área", "Puestos", "Utilización %", "Carga ofrecida ρ %", "Espera media min",
-                                "Espera máx. min", "Cola máx.", "Lotes", "Unidades"], estirar=0)
-        rl.addWidget(self.tabla, 2)
+        nota = QLabel("Utilización simulada frente a la carga que le llega al área (ρ). Rojo: al límite.")
+        nota.setObjectName("tenue")
+        la.addWidget(sub)
+        la.addWidget(nota)
+        self.tabla = DataTable(["Área", "Puestos", "Util. %", "Carga ρ %", "Espera min", "Espera máx.", "Cola máx.",
+                                "Lotes", "Unid."], estirar=None)
+        la.addWidget(self.tabla, 1)
+        abajo.addWidget(caja_a, 5)
+        caja_b = QFrame(); caja_b.setObjectName("tarjeta")
+        lb = QVBoxLayout(caja_b)
         sub2 = QLabel("Alertas del escenario")
         sub2.setStyleSheet("font-size: 13px; font-weight: 700;")
-        rl.addWidget(sub2)
+        nota2 = QLabel("Lo que conviene revisar primero, de más a menos grave.")
+        nota2.setObjectName("tenue")
+        lb.addWidget(sub2)
+        lb.addWidget(nota2)
         self.tabla_alertas = DataTable(["Nivel", "Código", "Alerta", "Detalle"], estirar=3)
-        rl.addWidget(self.tabla_alertas, 2)
+        lb.addWidget(self.tabla_alertas, 1)
+        abajo.addWidget(caja_b, 4)
+        rl.addLayout(abajo, 3)
         self.tabs.addTab(res, "Resultados")
 
-        # ---- réplicas ----
         rep = QWidget()
         pl = QVBoxLayout(rep)
         pl.setContentsMargins(0, 0, 0, 0)
@@ -117,10 +128,9 @@ class SimulacionView(PageView):
         cuerpo.addLayout(izq, 3)
         der = QFrame(); der.setObjectName("tarjeta")
         dl = QVBoxLayout(der)
-        self.combo_metrica = QComboBox()
-        dl.addWidget(self.combo_metrica)
-        self.histo = Histograma("Distribución")
-        dl.addWidget(self.histo, 1)
+        self.estabilidad = Estabilidad()
+        dl.addWidget(self.estabilidad)
+        dl.addStretch(1)
         cuerpo.addWidget(der, 2)
         pl.addLayout(cuerpo, 1)
         self.tabs.addTab(rep, "Réplicas")
@@ -130,24 +140,13 @@ class SimulacionView(PageView):
         self.btn_simular.clicked.connect(lambda: self.ejecutar_solicitado.emit(0))
         self.btn_rep.clicked.connect(lambda: self.replicas_solicitadas.emit(
             int(self.combo_rep.currentData() or 0), self.n_rep.value()))
-        self.combo_metrica.currentIndexChanged.connect(lambda _: self.metrica_cambiada.emit())
 
-    # ---- API ----
     def set_escenarios_replicas(self, opciones: list[tuple]) -> None:
         previo = self.combo_rep.currentData()
         self.combo_rep.clear()
         for i, n in opciones:
             self.combo_rep.addItem(n, i)
         self.combo_rep.setCurrentIndex(max(self.combo_rep.findData(previo), 0))
-
-    def set_metricas(self, opciones: list[tuple]) -> None:
-        previo = self.combo_metrica.currentData()
-        self.combo_metrica.blockSignals(True)
-        self.combo_metrica.clear()
-        for k, n in opciones:
-            self.combo_metrica.addItem(n, k)
-        self.combo_metrica.setCurrentIndex(max(self.combo_metrica.findData(previo), 0))
-        self.combo_metrica.blockSignals(False)
 
     def mostrar_resultados(self, resumen, kpis, graf_wip, graf_cola, filas_areas, colores_areas, filas_alertas, colores_alertas):
         self.resumen.setText(resumen)
@@ -159,7 +158,8 @@ class SimulacionView(PageView):
         self.tabla_alertas.set_filas(filas_alertas, colores=colores_alertas)
         self.tabs.setCurrentIndex(1)
 
-    def mostrar_replicas(self, nota, filas_stats, filas_runs):
+    def mostrar_replicas(self, nota, filas_stats, filas_runs, estabilidad=(), mensaje=""):
         self.nota_rep.setText(nota)
+        self.estabilidad.set_datos(estabilidad, mensaje)
         self.tabla_stats.set_filas(filas_stats)
         self.tabla_runs.set_filas(filas_runs)

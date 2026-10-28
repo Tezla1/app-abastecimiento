@@ -14,11 +14,10 @@ from .widgets.logo import logo_icono, logo_pixmap
 
 class MainWindow(QMainWindow):
     pagina_cambiada = pyqtSignal(int)
-    taller_elegido = pyqtSignal(object)   # id o None
+    taller_elegido = pyqtSignal(object)
     alertas_solicitadas = pyqtSignal()
 
     def __init__(self, paginas: Sequence[tuple]):
-        """paginas: [(etiqueta, color, widget)]"""
         super().__init__()
         self.setWindowTitle(f"{NOMBRE} v{VERSION} · Optimización de procesos industriales e intralogística")
         self.setWindowIcon(logo_icono())
@@ -30,7 +29,6 @@ class MainWindow(QMainWindow):
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
 
-        # ---- barra lateral ----
         lateral = QFrame()
         lateral.setObjectName("sidebar")
         lateral.setFixedWidth(256)
@@ -60,6 +58,7 @@ class MainWindow(QMainWindow):
         for i, (etiqueta, color, widget) in enumerate(paginas):
             b = QPushButton(f" {etiqueta}")
             b.setObjectName("nav")
+            # el icono toma el color de la sección
             b.setIcon(icono_seccion(etiqueta, color))
             b.setIconSize(QSize(20, 20))
             b.setCheckable(True)
@@ -75,7 +74,6 @@ class MainWindow(QMainWindow):
         ll.addWidget(pie)
         lay.addWidget(lateral)
 
-        # ---- zona derecha ----
         der = QVBoxLayout()
         der.setContentsMargins(0, 0, 0, 0)
         cab = QFrame()

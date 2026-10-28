@@ -1,27 +1,3 @@
-"""Simulación de eventos discretos del flujo de procesos del taller.
-
-Cómo funciona (resumen; el README lo explica con más detalle):
-
-1. Cada pedido se divide en *ramas* según las rutas de su tipo de prenda
-   (p. ej. 70 % línea normal, 30 % con bordado) y cada rama en *lotes*.
-2. Un lote nace en Almacén y recorre su ruta: se traslada a la siguiente
-   estación (lo hace un recurso de transporte), espera cola si todos los
-   puestos están ocupados, se procesa y vuelve a pedir traslado, hasta llegar
-   a Despacho. Todas las estaciones trabajan en paralelo.
-3. Cola de traslados y de estaciones se ordenan por PRIORIDAD (1 = urgente) o
-   FIFO. En un paso «@GRUPO» el lote elige la estación del grupo menos cargada
-   (balanceo) o va en rotación si el balanceo está apagado.
-4. Cada traslado es una fila de `registro` (la entrada del modelo calculos.py).
-
-Definiciones de las columnas de `registro`:
-  * tiempo_espera_min    = inicio del traslado - instante en que el lote lo pidió.
-  * tiempo_recorrido_min = tiempo que el recurso queda ocupado con el traslado
-                           (vacío + cargado + carga/descarga). Es el numerador
-                           de la utilización de calculos.py.
-  * distancia_m          = distancia vacía + cargada.
-Un traslado es `atendida = 0` si no hay ruta/capacidad o no empezó antes del
-cierre del turno (tiempo_observacion_min).
-"""
 import heapq
 import itertools
 import math
@@ -42,7 +18,7 @@ class ParametrosSimulacion:
     t_descarga_s: float
     nodo_inicial: str
     reposicionamiento: bool
-    ancho_requerido_m: float       # ancho del robot + holguras (0 = sin restricción)
+    ancho_requerido_m: float
     tiempo_observacion_min: float
     politica: str = "PRIORIDAD"
     balanceo: bool = True
@@ -67,14 +43,13 @@ class Lote:
     pos: str = ""
     paso: int = 0
     fin_min: Optional[float] = None
-    estado: str = "en curso"      # en curso | completado | fallido
+    estado: str = "en curso"
     motivo: str = ""
-    compromiso: Optional[tuple] = None   # (estación, minutos) usado para balancear
+    compromiso: Optional[tuple] = None
 
 
 @dataclass
 class Visita:
-    """Paso de un lote por una estación de proceso."""
     estacion: str
     lote: int
     pedido_id: int
@@ -87,7 +62,6 @@ class Visita:
 
 @dataclass
 class Movimiento:
-    """Tramo de un recurso entre dos estaciones (vacío o cargado)."""
     recurso: int
     t0: float
     t1: float
@@ -101,7 +75,6 @@ class Movimiento:
 
 @dataclass
 class Tarea:
-    """Traslado de un lote entre dos estaciones (→ fila de `registro`)."""
     pedido_id: int
     lote: int
     desde: str
@@ -128,9 +101,7 @@ class ResultadoProceso:
     t_fin_min: float = 0.0
 
 
-# ---------------------------------------------------------------- lotes
 def _repartir(total: int, pesos: list[float]) -> list[int]:
-    """Reparte `total` en enteros proporcionales a `pesos` (método del mayor resto)."""
     suma = sum(pesos)
     cuotas = [total * p / suma for p in pesos]
     base = [int(c) for c in cuotas]
@@ -141,7 +112,6 @@ def _repartir(total: int, pesos: list[float]) -> list[int]:
 
 def generar_lotes(pedidos: Iterable[Pedido], tipos: Iterable[TipoPrenda], rutas: Iterable[RutaProceso],
                   factor_demanda_pct: float = 100.0) -> tuple[list[Lote], list[int]]:
-    """Divide cada pedido en ramas (según fracciones) y lotes. Devuelve (lotes, pedidos sin ruta)."""
     tipos = {t.id: t for t in tipos}
     por_tipo: dict[int, list[RutaProceso]] = {}
     for r in sorted(rutas, key=lambda r: r.id or 0):
@@ -167,7 +137,6 @@ def generar_lotes(pedidos: Iterable[Pedido], tipos: Iterable[TipoPrenda], rutas:
     return lotes, sin_ruta
 
 
-# ---------------------------------------------------------------- motor
 @dataclass
 class _Recurso:
     idx: int
@@ -213,6 +182,7 @@ class _Motor:
         self.rec = [_Recurso(i + 1, p.nodo_inicial) for i in range(p.num_recursos)]
         self.pendientes: list[_Tarea] = []
         self.heap: list = []
+        # desempata los eventos que caen en el mismo minuto
         self.seq = itertools.count()
         self.ids = itertools.count(1)
         self.rr: dict[str, int] = {}
@@ -220,8 +190,8 @@ class _Motor:
         self.cache: dict = {}
         self.res = ResultadoProceso(p)
 
-    # --- utilidades ---
     def ruta(self, a: str, b: str) -> Optional[Ruta]:
+        # las mismas rutas se piden muchas veces, mejor guardarlas
         if (a, b) not in self.cache:
             self.cache[(a, b)] = ruta_mas_corta(self.con, a, b, self.p.ancho_requerido_m)
         return self.cache[(a, b)]
@@ -237,7 +207,6 @@ class _Motor:
         v = self.p.variabilidad_pct / 100.0
         return d * self.rng.uniform(1 - v, 1 + v) if con_ruido and v > 0 else d
 
-    # --- ciclo principal ---
     def correr(self) -> ResultadoProceso:
         for lote in self.lotes:
             self.push(lote.llegada_min, "llega", lote)
@@ -273,7 +242,6 @@ class _Motor:
         lote.pos, lote.paso = primero, 0
         self.solicitar_siguiente(lote, t)
 
-    # --- selección de estación (con grupos) ---
     def resolver(self, token: str, lote: Lote, t: float, es_inicio: bool = False) -> Optional[str]:
         if not token.startswith(PREFIJO_GRUPO):
             return token if token in self.est else None
@@ -282,6 +250,7 @@ class _Motor:
             return None
         if len(miembros) == 1:
             return miembros[0]
+        # sin balanceo (o al arrancar) se reparte por turnos
         if not self.p.balanceo or es_inicio:
             i = self.rr.get(token, 0)
             self.rr[token] = i + 1
@@ -295,9 +264,9 @@ class _Motor:
             espera = self.estado[code].comprometido_min / self.est[code].capacidad
             return (r.distancia_m / v / 60.0 + espera, code)
 
+        # gana el que llegue antes contando la espera que ya tiene encima
         return min(miembros, key=estimado)
 
-    # --- avance de un lote ---
     def solicitar_siguiente(self, lote: Lote, t: float) -> None:
         if lote.paso >= len(lote.pasos) - 1:
             self.completar(lote, t)
@@ -350,11 +319,11 @@ class _Motor:
             item.visita.inicio_min, item.visita.fin_min = t, t + item.dur
             self.push(t + item.dur, "fin_proceso", code, item.lote)
 
-    # --- transporte ---
     def despachar(self, t: float) -> None:
         if t >= self.p.tiempo_observacion_min:
             return
         while self.pendientes and any(r.libre for r in self.rec):
+            # son pocas tareas, ordenar cada vez no pesa
             self.pendientes.sort(key=lambda x: self.clave(x.lote.prioridad, x.listo, x.id))
             tarea = self.pendientes[0]
             lote = tarea.lote
@@ -378,7 +347,7 @@ class _Motor:
                 if not cand:
                     alcanzable = any(r.pos == tarea.desde or self.ruta(r.pos, tarea.desde) for r in self.rec)
                     if alcanzable:
-                        return          # un recurso ocupado sí llega: esperar
+                        return
                     self.pendientes.pop(0)
                     self.fallar_tarea(tarea, "Sin ruta de reposicionamiento vacío.")
                     continue
@@ -395,6 +364,7 @@ class _Motor:
 
     def ejecutar(self, tarea: _Tarea, rec: _Recurso, cargada: Ruta, t: float) -> None:
         p, lote = self.p, tarea.lote
+        # cuántas unidades caben en un viaje según el peso
         por_viaje = max(1, int(p.capacidad_kg // lote.peso_unit_kg))
         viajes = math.ceil(lote.unidades / por_viaje)
         restante, cursor, pos, dist_total = lote.unidades, t, rec.pos, 0.0
@@ -437,14 +407,11 @@ class _Motor:
         for lote in self.lotes:
             if lote.estado == "en curso" and not lote.motivo:
                 lote.motivo = "En proceso al cierre del turno."
-        # los lotes que aún se estaban procesando o trasladando terminaron antes de vaciar el heap;
-        # los que no, quedan «en curso» y se reportan como incompletos
 
 
 def simular(p: ParametrosSimulacion, estaciones: Iterable[Estacion], conexiones: Iterable[Conexion],
             tipos: Iterable[TipoPrenda], rutas: Iterable[RutaProceso],
             pedidos: Iterable[Pedido]) -> ResultadoProceso:
-    """Ejecuta una simulación completa y determinista (salvo `variabilidad_pct` > 0, con semilla)."""
     lotes, sin_ruta = generar_lotes(pedidos, tipos, rutas, p.factor_demanda_pct)
     motor = _Motor(p, list(estaciones), list(conexiones), lotes)
     res = motor.correr()

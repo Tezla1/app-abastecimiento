@@ -30,9 +30,8 @@ class GestionarEscenarios:
             robot = self._robots.get(e.robot_id)
             if robot is None:
                 raise ErrorDeNegocio("El robot seleccionado ya no existe.")
-            # el perfil del robot es la fuente de verdad de velocidad y capacidad
             e.velocidad_ms, e.capacidad_kg = robot.velocidad_ms, robot.capacidad_kg
         return self._esc.update(e) if e.id else self._esc.add(e)
 
     def eliminar(self, escenario_id: int) -> None:
-        self._esc.delete(escenario_id)  # los registros caen en cascada
+        self._esc.delete(escenario_id)

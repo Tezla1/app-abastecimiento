@@ -1,4 +1,3 @@
-"""Generación de alertas a partir de la configuración, la normativa y la simulación."""
 from dataclasses import dataclass
 from typing import Iterable, Optional
 
@@ -26,7 +25,6 @@ def ordenar(alertas: Iterable[Alerta]) -> list[Alerta]:
 
 
 def validar_rutas(rutas: Iterable[RutaProceso], estaciones: list[Estacion]) -> list[str]:
-    """Problemas de definición de rutas (pasos inexistentes, no empieza en Almacén o no termina en Despacho)."""
     por_codigo = {e.codigo: e for e in estaciones}
     grupos = {e.grupo for e in estaciones if e.grupo}
     errores = []
@@ -81,7 +79,6 @@ def alertas_estaticas(estaciones: list[Estacion], tipos: list[TipoPrenda], rutas
 def alertas_escenario(par: dict, esc: Escenario, res: ResultadoProceso, estados: list[EstadoEstacion],
                       ind: IndicadoresProceso, calc: dict, pedidos: list[Pedido],
                       prendas: dict) -> list[Alerta]:
-    """Alertas dinámicas de un escenario simulado. `prendas`: pedido_id -> nombre de prenda."""
     out: list[Alerta] = []
     n = esc.nombre
 

@@ -1,4 +1,3 @@
-"""Widgets reutilizables: tarjeta KPI, tabla de datos, encabezado de página."""
 from typing import Optional, Sequence
 
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -40,7 +39,6 @@ class KpiCard(QFrame):
 
 
 class DataTable(QTableWidget):
-    """Tabla de solo lectura; guarda el id de cada fila para que el controlador lo recupere."""
     fila_seleccionada = pyqtSignal(object)
 
     def __init__(self, encabezados: Sequence[str], parent=None, estirar: Optional[int] = None):
@@ -93,7 +91,6 @@ class DataTable(QTableWidget):
 
 
 class PageView(QWidget):
-    """Página con título, subtítulo y color de acento propios."""
 
     def __init__(self, titulo: str, subtitulo: str, acento: str, parent=None):
         super().__init__(parent)

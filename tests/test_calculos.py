@@ -1,4 +1,3 @@
-"""El modelo matemático de calculos.py se usa tal cual: se verifica con cálculo a mano."""
 import pytest
 
 from textilflow.domain import calculos
@@ -16,7 +15,7 @@ REGS = [reg(1, 1.0, 3.0, 30), reg(1, 3.0, 5.0, 50), reg(0, 0, 0, 0)]
 def test_indicadores_a_mano():
     ind = calculos.calcular_indicadores(ESC, REGS)
     assert ind["solicitudes_atendidas_pct"] == pytest.approx(200 / 3)
-    assert ind["tiempo_abastecimiento_prom"] == pytest.approx(6.0)  # (4 + 8) / 2
+    assert ind["tiempo_abastecimiento_prom"] == pytest.approx(6.0)
     assert ind["distancia_total"] == 80
     assert ind["distancia_prom"] == 40
     assert ind["espera_prom"] == pytest.approx(2.0)

@@ -1,8 +1,3 @@
-"""Punto de entrada de TextilFlow.
-
-Uso:  python main.py            (guarda los datos en ~/.textilflow/textilflow.db)
-      python main.py --db ruta.db
-"""
 import argparse
 import sys
 from pathlib import Path
@@ -23,7 +18,8 @@ def main() -> int:
     args = parser.parse_args()
     if args.db != ":memory:":
         Path(args.db).parent.mkdir(parents=True, exist_ok=True)
-        antigua = Path.home() / ".intrabot" / "intrabot.db"      # datos de la versión anterior (INTRABOT)
+        # datos de cuando el programa se llamaba INTRABOT
+        antigua = Path.home() / ".intrabot" / "intrabot.db"
         if not Path(args.db).exists() and antigua.exists():
             import shutil
             shutil.copy2(antigua, args.db)
@@ -31,7 +27,7 @@ def main() -> int:
     contenedor = construir(args.db)
     if contenedor.db.respaldo_v1:
         print(f"Aviso: la base de datos de la versión 1 era incompatible y se conservó en {contenedor.db.respaldo_v1}")
-    if not contenedor.talleres.listar():  # primera ejecución: caso experimental de ejemplo
+    if not contenedor.talleres.listar():
         contenedor.demo.execute()
 
     app = QApplication(sys.argv)

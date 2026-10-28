@@ -6,7 +6,6 @@ from .nucleo import Contexto
 
 
 class CargadorContexto:
-    """Reúne en memoria todo lo que necesita un cálculo sobre un taller."""
 
     def __init__(self, talleres: TallerRepository, estaciones: EstacionRepository,
                  conexiones: ConexionRepository, tipos: TipoPrendaRepository,

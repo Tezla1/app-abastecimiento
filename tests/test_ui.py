@@ -1,4 +1,3 @@
-"""Flujos de interfaz sin pantalla: vista ↔ controlador ↔ casos de uso."""
 import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -91,8 +90,8 @@ def test_flujo_de_proceso_desde_formularios(ui):
     sim_c._guardar(base)
     sim_c._guardar_y_simular()
     assert not ui.errores, ui.errores
-    assert sim_c.vista.kpis[0]._valor.text() == "3/3"          # 3 lotes de 10 completados
-    assert sim_c.vista.tabla.rowCount() == 1                    # solo Proceso es un área con tiempo
+    assert sim_c.vista.kpis[0]._valor.text() == "3/3"
+    assert sim_c.vista.tabla.rowCount() == 1
 
 
 def test_mapa_anima_resalta_rutas_y_calor(ui):
@@ -109,7 +108,7 @@ def test_mapa_anima_resalta_rutas_y_calor(ui):
     assert v.estado_global.text().startswith("Lotes completados") and v.tabla_areas.rowCount() == 7
     p150 = mapa._arcos[frozenset(("A", "C"))].pen().widthF()
     mapa.set_tiempo(450)
-    assert mapa._arcos[frozenset(("A", "C"))].pen().widthF() >= p150          # el calor se acumula con el tiempo
+    assert mapa._arcos[frozenset(("A", "C"))].pen().widthF() >= p150
     mapa.set_modo_calor("ninguno")
     assert mapa._arcos[frozenset(("A", "C"))].pen().widthF() == 2
     m._nodo_clicado("B")
@@ -144,6 +143,7 @@ def test_requerimientos_y_parametros(ui):
     c._analizar(c.vista.combo.currentData(), 4)
     v = c.vista
     assert v.t_criticos.rowCount() >= 4 and v.t_barrido.rowCount() == 4 and v.t_norma.rowCount() >= 3
+    assert len(v.g_barrido._filas) == 4 and any(f[3] for f in v.g_barrido._filas)
     assert v.k_reco._valor.text() == "2" and v.t_alertas.rowCount() > 0
     c._guardar_parametro("umbral_cuello_botella_pct", 95)
     assert next(p for p in c._lista if p.clave == "umbral_cuello_botella_pct").valor == 95
@@ -162,7 +162,7 @@ def test_replicas_desde_la_interfaz(ui):
     c.refrescar()
     c._ejecutar_replicas(e.id, 8)
     assert c.vista.tabla_stats.rowCount() == 7 and c.vista.tabla_runs.rowCount() == 8
-    assert c.vista.histo._bins
+    assert len(c.vista.estabilidad._filas) == 7
 
 
 def test_alertas_en_insignia(ui):
@@ -178,7 +178,7 @@ def test_comparacion_muestra_kpis_de_proceso(ui):
     ui.controladores[CMP].vista.barra.boton.click()
     v = ui.controladores[CMP].vista
     assert "comparables" in v.veredicto.text() and v.tabla.rowCount() == 6 and v.tabla_proceso.rowCount() == 7
-    assert v.g_avance._series
+    assert v.g_avance._series and v.tarjetas._rejilla.count() == 6
 
 
 def test_eliminar_taller_y_estado_vacio(ui):

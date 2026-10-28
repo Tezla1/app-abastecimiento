@@ -1,9 +1,3 @@
-"""Parámetros normativos / de diseño y verificación de cumplimiento.
-
-IMPORTANTE: cada parámetro indica su fuente y si fue contrastado con el texto de la norma
-(`verificado`). Los valores marcados como NO verificados son criterios de diseño o citas
-secundarias: el estudio debe confirmarlos antes de usarlos como argumento legal.
-"""
 import math
 from dataclasses import dataclass
 from typing import Iterable
@@ -56,7 +50,6 @@ PARAMETROS_DEFECTO = [
 
 
 def valores(parametros: Iterable[Parametro]) -> dict:
-    """{clave: valor}; completa con los valores por defecto si falta alguno."""
     out = {p.clave: p.valor for p in PARAMETROS_DEFECTO}
     out.update({p.clave: p.valor for p in parametros})
     return out
@@ -73,7 +66,6 @@ class Cumplimiento:
 
 
 def ancho_requerido_robot(robot: Robot, par: dict) -> float:
-    """Ancho libre que necesita un robot: su ancho + holgura a cada lado."""
     return robot.ancho_m + 2 * par["holgura_lateral_robot_m"]
 
 
@@ -86,14 +78,12 @@ def evaluar(par: dict, taller: Taller, estaciones: list[Estacion], conexiones: l
         f, v = fuentes[clave]
         out.append(Cumplimiento(estado, clave, regla, detalle, f, v))
 
-    # Pasillos
     minimo = par["ancho_min_pasillo_m"]
     angostos = [f"{c.origen}–{c.destino} ({c.ancho_m:g} m)" for c in conexiones if c.ancho_m < minimo]
     add(INCUMPLE if angostos else CUMPLE, "ancho_min_pasillo_m", f"Pasillos ≥ {minimo:g} m",
         ("Por debajo del mínimo: " + ", ".join(angostos)) if angostos
         else f"Los {len(conexiones)} pasillos cumplen el mínimo.")
 
-    # Distancia entre máquinas (aproximada con las coordenadas de las áreas de proceso)
     proc = [e for e in estaciones if e.funcion == "PROCESO"]
     cerca = [f"{a.codigo}–{b.codigo}" for i, a in enumerate(proc) for b in proc[i + 1:]
              if math.hypot(a.x - b.x, a.y - b.y) < par["dist_min_entre_maquinas_m"]]
@@ -101,7 +91,6 @@ def evaluar(par: dict, taller: Taller, estaciones: list[Estacion], conexiones: l
         f"Distancia entre equipos ≥ {par['dist_min_entre_maquinas_m']:g} m",
         ("Áreas demasiado juntas: " + ", ".join(cerca)) if cerca else "Las áreas de proceso están separadas.")
 
-    # Área por trabajador
     if taller.area_m2 > 0 and taller.operadores > 0:
         por_op = taller.area_m2 / taller.operadores
         ok = por_op >= par["area_min_por_trabajador_m2"]

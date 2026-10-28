@@ -1,6 +1,6 @@
 from ...application.use_cases.analisis import METRICAS
 from ...domain.entities import POLITICAS, TIPOS_ESCENARIO, Escenario
-from ..theme import COLOR_NIVEL, ROJO, VERDE, fmt
+from ..theme import COLOR_NIVEL, NARANJA, ROJO, VERDE, fmt
 from .base import Controlador, etiqueta_estacion
 
 PALETA = ["#5CC8FF", "#FF7AC6", "#B6F36A", "#FFD166", "#C49BFF", "#FF9F6B", "#6BE3B2", "#E5484D"]
@@ -23,8 +23,6 @@ class SimulacionController(Controlador):
         p.eliminar_solicitado.connect(self._eliminar)
         vista.ejecutar_solicitado.connect(lambda _: self._guardar_y_simular())
         vista.replicas_solicitadas.connect(self._ejecutar_replicas)
-        vista.metrica_cambiada.connect(self._mostrar_histograma)
-        vista.set_metricas([(k, v[0]) for k, v in METRICAS.items()])
 
     def refrescar(self) -> None:
         tid = self.ctx.taller_id
@@ -75,7 +73,6 @@ class SimulacionController(Controlador):
             self.refrescar()
             self.vista.info("Escenario eliminado.")
 
-    # ---- simulación ----
     def _guardar_y_simular(self) -> None:
         e = self._guardar(self.vista.panel.valores())
         if e is None:
@@ -111,7 +108,6 @@ class SimulacionController(Controlador):
             wip, (s["t"], series_cola), filas, colores, fa, ca)
         self.vista.g_wip.set_marca(None)
 
-    # ---- réplicas ----
     def _ejecutar_replicas(self, escenario_id: int, n: int) -> None:
         r = self._intentar(self._replicas.execute, escenario_id, n)
         if r is None:
@@ -127,13 +123,32 @@ class SimulacionController(Controlador):
                  f["cola_max"]] for f in r.filas]
         self.vista.mostrar_replicas(r.nota or f"{r.n} réplicas de «{r.escenario.nombre}» · variabilidad ± "
                                     f"{r.escenario.variabilidad_pct:g} % · semillas {r.filas[0]['semilla']}–{r.filas[-1]['semilla']}.",
-                                    stats, runs)
-        self._mostrar_histograma()
+                                    stats, runs, *self._estabilidad(r))
 
-    def _mostrar_histograma(self) -> None:
-        r = self._ultimas
-        k = self.vista.combo_metrica.currentData()
-        if r is None or k is None:
-            return
-        x = r.resumen[k]
-        self.vista.histo.set_datos(r.histogramas[k], x.media, (x.ic_inf, x.ic_sup), METRICAS[k][0])
+    def _estabilidad(self, r):
+        filas, todas_iguales = [], True
+        for k, (nombre, dec) in METRICAS.items():
+            x = r.resumen[k]
+            if x.media is None:
+                continue
+            cv = None if not x.media else (x.desv or 0) / abs(x.media) * 100
+            if x.desv:
+                todas_iguales = False
+            # umbrales a ojo, solo para dar una idea rápida
+            if cv is None or cv < 0.05:
+                nivel, color = "Siempre igual", VERDE
+            elif cv < 3:
+                nivel, color = "Muy estable", VERDE
+            elif cv < 8:
+                nivel, color = "Algo variable", NARANJA
+            else:
+                nivel, color = "Muy variable", ROJO
+            filas.append((nombre, fmt(x.media, dec), f"entre {fmt(x.minimo, dec)} y {fmt(x.maximo, dec)}", nivel, color,
+                          min((cv or 0) / 10, 1.0)))
+        if todas_iguales:
+            msg = ("Las réplicas dieron todas lo mismo porque la variabilidad del escenario es 0 %. "
+                   "Pruebe con 10 o 15 % en «Condiciones base» para ver cuánto cambia el resultado.")
+        else:
+            msg = ("La barra mide cuánto se mueve cada resultado de una réplica a otra: "
+                   "cuanto más corta, más confiable es el número.")
+        return filas, msg

@@ -1,4 +1,3 @@
-"""Ensambla vistas + controladores + ventana principal (la «C» de MVC)."""
 from ..container import Container
 from . import theme
 from .context import AppContext
@@ -116,7 +115,7 @@ class AplicacionController:
         tid = self.ctx.taller_id
         try:
             alertas = self._c.alertas.execute(tid) if tid else []
-        except Exception:   # la insignia nunca debe tumbar la interfaz
+        except Exception:
             alertas = []
         self.ventana.set_alertas(len(alertas), sum(a.nivel == "CRÍTICA" for a in alertas),
                                  sum(a.nivel == "ALTA" for a in alertas))

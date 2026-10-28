@@ -28,7 +28,6 @@ class RequerimientosController(Controlador):
         else:
             self.vista.t_alertas.set_filas([])
 
-    # ---- parámetros ----
     def _mostrar_parametros(self) -> None:
         self._lista = self._par.listar()
         self.vista.t_params.set_filas(
@@ -53,7 +52,6 @@ class RequerimientosController(Controlador):
             self._mostrar_parametros()
             self.vista.info("Parámetros restaurados.")
 
-    # ---- análisis ----
     def _analizar(self, escenario_id: int, n_max: int) -> None:
         if not escenario_id:
             self.vista.error("Cree un escenario en «Escenarios y simulación» primero.")
@@ -84,9 +82,9 @@ class RequerimientosController(Controlador):
                                 fmt(f.lead_time_min, 0), fmt(f.makespan_min, 0), fmt(f.a_tiempo_pct, 0), "✔" if f.cumple else ""]
                                for f in r.barrido],
                               colores=[VERDE if f.cumple else None for f in r.barrido])
-        xs = [float(f.recursos) for f in r.barrido]
-        v.g_barrido.set_datos(xs, [("Utilización %", "#5CC8FF", [f.utilizacion_pct or 0 for f in r.barrido]),
-                                   ("Lotes completados %", "#6BE3B2", [f.completados_pct for f in r.barrido])])
+        v.g_barrido.set_datos([(f"{f.recursos} equipo{'s' if f.recursos != 1 else ''}", f.utilizacion_pct or 0,
+                                f"termina {f.completados_pct:.0f} % de lotes", f.recursos == r.recomendado)
+                               for f in r.barrido], objetivo)
         v.t_viajes.set_filas([[x["prenda"], fmt(x["peso_unidad_kg"], 2), x["lote_u"], fmt(x["lote_kg"], 1),
                                x["unidades_por_viaje"], x["viajes_por_traslado"] if x["viajes_por_traslado"] else "no carga",
                                x["lotes"], x["traslados_por_lote"], x["viajes_estimados"] if x["viajes_estimados"] else "—"]

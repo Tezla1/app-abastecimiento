@@ -29,7 +29,6 @@ class LayoutController(Controlador):
         vista.ruta_solicitada.connect(self._calcular_ruta)
         vista.limpiar_ruta_solicitado.connect(self._limpiar_ruta)
 
-    # ---- refresco ----
     def refrescar(self) -> None:
         tid = self.ctx.taller_id
         est = self._layout.listar_estaciones(tid) if tid else []
@@ -72,7 +71,6 @@ class LayoutController(Controlador):
             panel.limpiar()
             self._tras_cambio(panel, mensaje)
 
-    # ---- estaciones ----
     def _cargar_estacion(self, id_: int) -> None:
         e = next((x for x in self._layout.listar_estaciones(self.ctx.taller_id) if x.id == id_), None)
         if e:
@@ -91,7 +89,6 @@ class LayoutController(Controlador):
             self.vista.estaciones.set_valores(vars(g), g.id)
             self._tras_cambio(self.vista.estaciones, f"Estación «{g.codigo}» guardada.")
 
-    # ---- conexiones ----
     def _cargar_conexion(self, id_: int) -> None:
         c = next((x for x in self._layout.listar_conexiones(self.ctx.taller_id) if x.id == id_), None)
         if c:
@@ -108,7 +105,6 @@ class LayoutController(Controlador):
             self.vista.conexiones.set_valores(vars(g), g.id)
             self._tras_cambio(self.vista.conexiones, f"Conexión {g.origen}–{g.destino} guardada ({g.distancia_m:g} m).")
 
-    # ---- prendas, rutas y pedidos ----
     def _cargar_prenda(self, id_: int) -> None:
         t = next((x for x in self._procesos.listar_tipos() if x.id == id_), None)
         if t:
@@ -152,7 +148,6 @@ class LayoutController(Controlador):
             self.vista.pedidos.set_valores(vars(g), g.id)
             self._tras_cambio(self.vista.pedidos, f"Pedido #{g.id} guardado.")
 
-    # ---- ruta ----
     def _calcular_ruta(self, origen: str, destino: str, ancho: float) -> None:
         tid = self._exigir_taller()
         if tid is None:

@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import (QComboBox, QDoubleSpinBox, QFrame, QHBoxLayout, QLa
 
 from .. import theme
 from ..widgets.common import DataTable, KpiCard, PageView
-from ..widgets.line_chart import LineChart
+from ..widgets.barras_flota import BarrasFlota
 
 
 class RequerimientosView(PageView):
@@ -36,10 +36,8 @@ class RequerimientosView(PageView):
         self.cuerpo.addWidget(self.resumen)
 
         self.tabs = QTabWidget()
-        # ---- críticos
         self.t_criticos = DataTable(["Severidad", "Tipo", "Elemento", "Motivo"], estirar=3)
         self.tabs.addTab(self.t_criticos, "Componentes críticos")
-        # ---- distancias
         d = QWidget(); dl = QVBoxLayout(d); dl.setContentsMargins(0, 0, 0, 0)
         self.t_ramas = DataTable(["Prenda", "Rama", "%", "Camino físico", "Distancia m", "Transporte min"], estirar=3)
         dl.addWidget(self.t_ramas, 2)
@@ -49,7 +47,6 @@ class RequerimientosView(PageView):
         self.t_recursos = DataTable(["Recurso", "Viajes cargados", "Distancia m", "Ocupado min"], estirar=None)
         dl.addWidget(self.t_recursos, 1)
         self.tabs.addTab(d, "Distancias y recorridos")
-        # ---- equipos y viajes
         e = QWidget(); el = QVBoxLayout(e); el.setContentsMargins(0, 0, 0, 0)
         fila = QHBoxLayout()
         self.k_reco = KpiCard("Equipos recomendados", "#1B7A57")
@@ -65,7 +62,7 @@ class RequerimientosView(PageView):
         medio.addWidget(self.t_barrido, 3)
         caja = QFrame(); caja.setObjectName("tarjeta")
         cl = QVBoxLayout(caja)
-        self.g_barrido = LineChart("Efecto del tamaño de la flota", "equipos")
+        self.g_barrido = BarrasFlota()
         cl.addWidget(self.g_barrido)
         medio.addWidget(caja, 2)
         el.addLayout(medio, 2)
@@ -76,10 +73,8 @@ class RequerimientosView(PageView):
         self.notas.setWordWrap(True)
         el.addWidget(self.notas)
         self.tabs.addTab(e, "Equipos y viajes")
-        # ---- normativa
         self.t_norma = DataTable(["Estado", "Regla", "Detalle", "Fuente", "Verificada"], estirar=2)
         self.tabs.addTab(self.t_norma, "Normativa")
-        # ---- parámetros
         p = QWidget(); pl = QVBoxLayout(p); pl.setContentsMargins(0, 0, 0, 0)
         aviso = QLabel("Cada parámetro indica su fuente y si fue contrastado con el texto de la norma. Los marcados «No» son "
                        "criterios de diseño o citas secundarias: confírmelos antes de usarlos como argumento legal.")
@@ -99,7 +94,6 @@ class RequerimientosView(PageView):
         edl.addStretch(1)
         pl.addWidget(ed)
         self.tabs.addTab(p, "Parámetros normativos")
-        # ---- alertas
         self.t_alertas = DataTable(["Nivel", "Código", "Alerta", "Detalle"], estirar=3)
         self.tabs.addTab(self.t_alertas, "Alertas")
         self.cuerpo.addWidget(self.tabs, 1)

@@ -7,7 +7,6 @@ from ..errors import ErrorDeNegocio
 
 
 class ObtenerAlertas:
-    """Alertas de configuración, normativa y simulación de un taller (se recalculan, no se guardan)."""
 
     def __init__(self, escenarios: EscenarioRepository, registros: RegistroRepository, ctx: CargadorContexto):
         self._esc, self._reg, self._ctx = escenarios, registros, ctx

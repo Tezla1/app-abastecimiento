@@ -1,4 +1,3 @@
-"""SQLite: esquema v2 y migración (los archivos v1 se respaldan, no se destruyen)."""
 import os
 import shutil
 import sqlite3
@@ -68,7 +67,6 @@ CREATE TABLE IF NOT EXISTS parametro(
     fuente TEXT NOT NULL DEFAULT '', verificado INTEGER NOT NULL DEFAULT 0);
 """
 
-# Orden de dependencia: los padres primero.
 TABLAS = ("taller", "robot", "tipo_prenda", "estacion", "conexion", "ruta_proceso", "pedido",
           "escenario", "registro", "parametro")
 
@@ -79,6 +77,7 @@ def _es_esquema_antiguo(ruta: str) -> bool:
         try:
             version = c.execute("PRAGMA user_version").fetchone()[0]
             hay_datos = c.execute("SELECT count(*) FROM sqlite_master WHERE type='table'").fetchone()[0] > 0
+            # base vacía no cuenta como antigua
             return hay_datos and version < ESQUEMA_BD
         finally:
             c.close()
@@ -95,7 +94,7 @@ class Database:
             while os.path.exists(self.respaldo_v1):
                 n += 1
                 self.respaldo_v1 = f"{ruta}.v1.{n}.bak"
-            shutil.move(ruta, self.respaldo_v1)   # el modelo v1 (solicitudes) no es compatible
+            shutil.move(ruta, self.respaldo_v1)
         self.conn = sqlite3.connect(ruta)
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA foreign_keys = ON")

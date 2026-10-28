@@ -56,7 +56,7 @@ class MapaView(PageView):
         self.combo_vel = QComboBox()
         for n, v in VELOCIDADES:
             self.combo_vel.addItem(f"{n} min sim./s", v)
-        self.combo_vel.setCurrentIndex(3)   # ×1: un recorrido de 10 m se alcanza a ver
+        self.combo_vel.setCurrentIndex(3)
         self.slider = QSlider(Qt.Orientation.Horizontal)
         self.slider.setRange(0, 1000)
         self.reloj = QLabel("t = 0 min")

@@ -1,4 +1,3 @@
-"""Raíz de composición: el único lugar que conoce las implementaciones concretas."""
 from dataclasses import dataclass
 
 from .application.use_cases.alertas import ObtenerAlertas

@@ -1,4 +1,3 @@
-"""Parámetros normativos y de diseño editables (con su fuente y estado de verificación)."""
 from ...domain import normativa
 from ...domain.entities import Parametro
 from ..errors import ErrorDeNegocio
@@ -10,7 +9,6 @@ class GestionarParametros:
         self._repo = repo
 
     def listar(self) -> list[Parametro]:
-        """Todos los parámetros; siembra los valores por defecto la primera vez."""
         existentes = {p.clave: p for p in self._repo.list_all()}
         for d in normativa.PARAMETROS_DEFECTO:
             if d.clave not in existentes:

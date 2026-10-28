@@ -1,11 +1,10 @@
 from ..textos import DECIMALES, FORMULA_VARIACION, MEJOR_SI_BAJA
-from ..theme import AZUL, ROJO, TENUE, VERDE, fmt
-from ..widgets.bar_chart import BarraVariacion
+from ..theme import ROJO, TENUE, VERDE, fmt
 from .base import Controlador
 
 
+# depende del indicador: menos espera es bueno, menos pedidos atendidos no
 def color_variacion(clave: str, v) -> str:
-    """Verde si el cambio es una mejora, rojo si empeora, gris si es neutro o no hay dato."""
     mejor_si_baja = MEJOR_SI_BAJA.get(clave)
     if v is None or mejor_si_baja is None or v == 0:
         return TENUE
@@ -33,8 +32,7 @@ class ComparacionController(Controlador):
             return
         filas = [[f["indicador"], fmt(f["base"], DECIMALES[f["clave"]]), fmt(f["alternativo"], DECIMALES[f["clave"]]),
                   texto_variacion(f["variacion_pct"])] for f in r.filas]
-        barras = [BarraVariacion(f["indicador"], f["variacion_pct"], color_variacion(f["clave"], f["variacion_pct"]))
-                  for f in r.filas]
+        tarjetas = [self._tarjeta(f) for f in r.filas]
         if r.comparable:
             veredicto = (f"✔ Escenarios comparables · Base: «{r.base.nombre}» · Alternativo: «{r.alternativo.nombre}» · "
                          f"{FORMULA_VARIACION}")
@@ -46,4 +44,20 @@ class ComparacionController(Controlador):
         if r.series_base and r.series_alt:
             avance = (r.series_base["t"], [(r.base.nombre, "#8FA0BC", r.series_base["completados"]),
                                            (r.alternativo.nombre, "#6BE3B2", r.series_alt["completados"])])
-        self.vista.mostrar(veredicto, filas, barras, proceso, avance)
+        self.vista.mostrar(veredicto, filas, tarjetas, proceso, avance)
+
+    def _tarjeta(self, f):
+        v = f["variacion_pct"]
+        color = color_variacion(f["clave"], v)
+        if v is None:
+            palabra = "Sin dato"
+        elif v == 0:
+            palabra = "Igual"
+        elif color == VERDE:
+            palabra = "Mejora"
+        elif color == ROJO:
+            palabra = "Empeora"
+        else:
+            palabra = "Sube" if v > 0 else "Baja"
+        d = DECIMALES[f["clave"]]
+        return (f["indicador"], fmt(f["base"], d), fmt(f["alternativo"], d), texto_variacion(v), color, palabra)

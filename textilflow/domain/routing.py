@@ -1,4 +1,3 @@
-"""Ruteo sobre la red del taller (Dijkstra con filtro de ancho de pasillo)."""
 import heapq
 from dataclasses import dataclass
 from typing import Iterable, Optional
@@ -41,7 +40,6 @@ def _adyacencia(conexiones: Iterable[Conexion], ancho_min_m: float) -> dict:
 
 def ruta_mas_corta(conexiones: Iterable[Conexion], origen: str, destino: str,
                    ancho_min_m: float = 0.0) -> Optional[Ruta]:
-    """Ruta de menor distancia usando solo arcos con ancho >= ancho_min_m."""
     if origen == destino:
         return Ruta((origen,), ())
     adj = _adyacencia(conexiones, ancho_min_m)
@@ -52,6 +50,7 @@ def ruta_mas_corta(conexiones: Iterable[Conexion], origen: str, destino: str,
         d, nodo = heapq.heappop(cola)
         if nodo == destino:
             break
+        # entrada vieja de la cola, ya hay un camino mejor
         if d > dist.get(nodo, float("inf")):
             continue
         for t in adj.get(nodo, []):
@@ -73,7 +72,6 @@ def ruta_mas_corta(conexiones: Iterable[Conexion], origen: str, destino: str,
 
 
 def red_conexa(codigos: Iterable[str], conexiones: Iterable[Conexion]) -> bool:
-    """True si todas las estaciones se alcanzan desde la primera (ignora el sentido)."""
     codigos = list(codigos)
     if len(codigos) <= 1:
         return True
@@ -121,15 +119,12 @@ def _componentes(vecinos: dict, ignorar_nodo: Optional[str] = None, ignorar_arco
 
 
 def nodos_criticos(codigos: Iterable[str], conexiones: Iterable[Conexion]) -> dict:
-    """Puntos de articulación: {nodo: nº de partes en que queda la red si ese nodo falla}.
-
-    Por fuerza bruta (quitar cada nodo y contar componentes): las redes de un taller son pequeñas.
-    """
     codigos, conexiones = list(codigos), list(conexiones)
     v = _vecinos(codigos, conexiones)
     base = _componentes(v)
     out = {}
     for n in codigos:
+        # si al quitar el nodo la red se parte, ese nodo es crítico
         partes = _componentes(v, ignorar_nodo=n)
         if partes > base:
             out[n] = partes
@@ -137,7 +132,6 @@ def nodos_criticos(codigos: Iterable[str], conexiones: Iterable[Conexion]) -> di
 
 
 def arcos_criticos(codigos: Iterable[str], conexiones: Iterable[Conexion]) -> list:
-    """Puentes: arcos cuya falla deja la red dividida (no hay ruta alternativa)."""
     codigos, conexiones = list(codigos), list(conexiones)
     v = _vecinos(codigos, conexiones)
     base = _componentes(v)

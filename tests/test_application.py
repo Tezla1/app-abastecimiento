@@ -1,5 +1,3 @@
-
-
 def test_cargar_demo_dos_veces_crea_copia():
     from textilflow.container import construir
     c = construir(":memory:")

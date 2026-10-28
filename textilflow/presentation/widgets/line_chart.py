@@ -1,4 +1,3 @@
-"""Gráfico de líneas simple con cuadrícula, leyenda y marcador de instante (para animaciones)."""
 from typing import Optional, Sequence
 
 from PyQt6.QtCore import QPointF, QRectF, Qt
@@ -19,7 +18,6 @@ class LineChart(QWidget):
         self.setMinimumHeight(180)
 
     def set_datos(self, x: Sequence[float], series: Sequence[tuple], escalonado: bool = False) -> None:
-        """series: [(nombre, color, valores)] con la misma longitud que x."""
         self._x, self._series, self._escalonado = list(x), list(series), escalonado
         self.update()
 
@@ -49,7 +47,6 @@ class LineChart(QWidget):
         vmax = max((max(v) for _, _, v in self._series if v), default=1.0)
         vmax = max(vmax, 1e-9)
         tope = self._redondear(vmax)
-        # cuadrícula
         for i in range(5):
             y = zona.bottom() - zona.height() * i / 4
             p.setPen(QPen(QColor(theme.BORDE), 1, Qt.PenStyle.DotLine))
@@ -65,7 +62,6 @@ class LineChart(QWidget):
         p.drawText(QRectF(zona.left(), h - 16, zona.width(), 14), Qt.AlignmentFlag.AlignRight, self.etiqueta_x)
         if self.etiqueta_y:
             p.drawText(QRectF(2, 6, izq + 30, 14), Qt.AlignmentFlag.AlignLeft, "")
-        # series
         for nombre, color, vals in self._series:
             ruta = QPainterPath()
             previo = None
@@ -82,12 +78,10 @@ class LineChart(QWidget):
             p.setPen(QPen(QColor(color), 2))
             p.setBrush(Qt.BrushStyle.NoBrush)
             p.drawPath(ruta)
-        # marcador de instante
         if self._marca is not None and x0 <= self._marca <= x1:
             xp = zona.left() + (self._marca - x0) / (x1 - x0) * zona.width()
             p.setPen(QPen(QColor("#FFD166"), 1.5, Qt.PenStyle.DashLine))
             p.drawLine(QPointF(xp, zona.top()), QPointF(xp, zona.bottom()))
-        # leyenda
         x = zona.right()
         for nombre, color, _ in reversed(self._series):
             ancho = p.fontMetrics().horizontalAdvance(nombre) + 26

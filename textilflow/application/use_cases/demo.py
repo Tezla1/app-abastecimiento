@@ -1,4 +1,3 @@
-"""Datos de ejemplo (sintéticos) tomados del caso experimental de TextilFlow."""
 from ...domain import datos_demo as D
 from ...domain.entities import Escenario, Pedido, Robot, RutaProceso, Taller
 from .analisis import EjecutarSimulacion
@@ -21,9 +20,9 @@ class CargarDatosDemo:
 
     def execute(self) -> Taller:
         self._par.listar()
-        # si el ejemplo ya está cargado se crea otra copia ("… (2)") en vez de chocar con los datos existentes
         usados = {t.nombre for t in self._t.listar()}
         nombre, n = NOMBRE_DEMO, 1
+        # si el ejemplo ya está cargado, se crea otra copia numerada
         while nombre in usados:
             n += 1
             nombre = f"{NOMBRE_DEMO} ({n})"
@@ -35,7 +34,7 @@ class CargarDatosDemo:
         for c in datos["conexiones"]:
             self._l.guardar_conexion(c)
         ids = {}
-        existentes = {t.nombre.lower(): t for t in self._p.listar_tipos()}   # las prendas son globales: se reutilizan
+        existentes = {t.nombre.lower(): t for t in self._p.listar_tipos()}
         for tp in datos["tipos"]:
             previo = existentes.get(tp.nombre.lower())
             ids[tp.nombre] = previo.id if previo else self._p.guardar_tipo(tp).id
@@ -53,15 +52,14 @@ class CargarDatosDemo:
         return taller
 
     def preparar_escenario_base(self, taller: Taller) -> bool:
-        """Un taller importado de Excel no trae escenarios: crea S0 manual (2 operarios) y lo simula, para
-        que el Mapa operativo funcione al instante. No hace nada si el taller ya tiene escenarios."""
         if self._e.listar(taller.id):
             return False
         estaciones = self._l.listar_estaciones(taller.id)
         inicio = next((e.codigo for e in estaciones if e.funcion == "ALMACEN"), None) or (
             estaciones[0].codigo if estaciones else "")
         _, _, _, v, cap, tc, td = D.ESCENARIOS[0]
-        n = max(2, -(-len(estaciones) // 5))        # flota inicial: un operario por cada ~5 áreas (mínimo 2)
+        # regla sencilla: un operario por cada 5 áreas
+        n = max(2, -(-len(estaciones) // 5))
         e0 = self._e.guardar(Escenario(taller.id, f"S0 · Manual ({n} operarios)", "MANUAL", n, 480, v, cap, tc, td,
                                        inicio, True))
         self._s.execute(e0.id)

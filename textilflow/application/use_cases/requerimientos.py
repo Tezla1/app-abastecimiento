@@ -1,4 +1,3 @@
-"""Requerimientos del proyecto: componentes críticos, distancias, equipos, viajes y normativa."""
 import math
 from typing import Optional
 
@@ -12,7 +11,6 @@ from .nucleo import analizar, correr, exigir_simulable
 
 
 def viajes_por_prenda(ctx, esc: Escenario) -> list[dict]:
-    """Unidades por viaje y viajes por lote según la capacidad del equipo (ceil(unidades / floor(cap / peso)))."""
     lotes_por_tipo: dict[int, int] = {}
     unidades: dict[int, int] = {}
     for p in ctx.pedidos:

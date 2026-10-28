@@ -87,7 +87,7 @@ class DataManagerView(PageView):
         b6.clicked.connect(self.demo_solicitado.emit)
         b7.clicked.connect(self._ejemplo_archivo)
 
-    def info(self, mensaje: str) -> None:  # sobrescribe: aquí hay un registro de operaciones
+    def info(self, mensaje: str) -> None:
         self.info_texto.appendPlainText(mensaje)
 
     def _guardar(self, titulo, nombre, filtro, senal) -> None:

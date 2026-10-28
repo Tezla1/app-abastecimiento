@@ -33,6 +33,7 @@ class DashboardView(PageView):
         cl.addWidget(s)
         self.mapa = MapaOperativo()
         cl.addWidget(self.mapa, 1)
+        cl.addWidget(self._leyenda())
         medio.addWidget(caja, 3)
 
         derecha = QVBoxLayout()
@@ -82,6 +83,27 @@ class DashboardView(PageView):
         derecha.addWidget(act)
         medio.addLayout(derecha, 1)
         self.cuerpo.addLayout(medio, 1)
+
+    def _leyenda(self) -> QFrame:
+        marco = QFrame()
+        marco.setStyleSheet(f"background: {theme.PANEL_2}; border-radius: 8px;")
+        lay = QHBoxLayout(marco)
+        lay.setContentsMargins(12, 6, 12, 6)
+        titulo = QLabel("Cómo leer los colores")
+        titulo.setStyleSheet("font-weight: 700;")
+        lay.addWidget(titulo)
+        lay.addWidget(QLabel("Poco tránsito"))
+        barra = QFrame()
+        barra.setFixedSize(150, 10)
+        barra.setStyleSheet(f"background: {theme.GRADIENTE_CSS}; border-radius: 5px;")
+        lay.addWidget(barra)
+        lay.addWidget(QLabel("Mucho tránsito"))
+        nota = QLabel("Azul y verde: pasillo despejado · amarillo: movimiento normal · rojo: el más cargado, conviene vigilarlo. "
+                      "Línea más gruesa = más viajes. Gris tenue: casi sin uso.")
+        nota.setObjectName("tenue")
+        nota.setWordWrap(True)
+        lay.addWidget(nota, 1)
+        return marco
 
     def mostrar_kpis(self, talleres: int, estaciones: int, conexiones: int, pedidos: int, escenarios: int, alertas: int) -> None:
         self.k_talleres.set_valor(str(talleres), "Registrados")

@@ -32,7 +32,7 @@ planchado, empaque) antes de salir por Despacho. Hay tres fuentes de pérdida: *
 * **Tráfico**: pasadas y kg por arco y nodo (mapa de calor), acumulable en el tiempo.
 * **Críticos**: cuellos de botella, nodos y arcos cuya falla desconecta la red (puntos únicos de falla), pasillos bajo la norma, arco más transitado.
 * **Requerimientos**: barrido de flota 1…N (utilización, espera, cierre), estimación analítica N ≥ trabajo de transporte / (turno × utilización objetivo), viajes por prenda, distancias por rama.
-* **Réplicas**: N corridas con semillas distintas → media, desviación, mínimo, máximo e IC 95 % (t de Student), con histograma.
+* **Réplicas**: N corridas con semillas distintas → media, desviación, mínimo, máximo e IC 95 % (t de Student), y un resumen de qué tan estable es cada resultado.
 
 ## 5. Alertas
 Configuración (sin Almacén o Despacho, rutas inválidas, prenda sin ruta), normativa (pasillo bajo el mínimo, robot que no cabe),

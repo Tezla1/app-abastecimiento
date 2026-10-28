@@ -1,5 +1,3 @@
-"""Tema oscuro tipo TextilFlow y utilidades de formato."""
-
 BG = "#0B1220"
 PANEL = "#101A2E"
 PANEL_2 = "#15233D"
@@ -27,12 +25,10 @@ COLOR_ESTADO = {"PASS": VERDE, "WARNING": NARANJA, "FAIL": ROJO}
 COLOR_NIVEL = {"CRÍTICA": ROJO, "ALTA": NARANJA, "MEDIA": DORADO, "INFO": TENUE}
 COLOR_RECURSOS = ["#5CC8FF", "#FF7AC6", "#B6F36A", "#FFD166", "#C49BFF", "#FF9F6B", "#6BE3B2", "#F2F2F2"]
 
-# Escala del mapa de calor (de poco a mucho tránsito)
 ESCALA_CALOR = [(0.0, "#2F6BDE"), (0.35, "#1BA39C"), (0.6, "#E8D21F"), (0.8, "#F29A1F"), (1.0, "#E5484D")]
 
 
 def color_calor(x: float) -> str:
-    """Color hexadecimal de la escala de calor para x en [0, 1]."""
     x = min(1.0, max(0.0, x))
     for (a, ca), (b, cb) in zip(ESCALA_CALOR, ESCALA_CALOR[1:]):
         if x <= b:
@@ -48,7 +44,6 @@ GRADIENTE_CSS = "qlineargradient(x1:0, y1:0, x2:1, y2:0, " + ", ".join(
 
 
 def fmt(valor, decimales: int = 2, sufijo: str = "") -> str:
-    """Formatea un número; None se muestra como «—» (indicador sin datos)."""
     if valor is None:
         return "—"
     return f"{valor:,.{decimales}f}{sufijo}"

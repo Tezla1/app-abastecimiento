@@ -1,7 +1,3 @@
-"""Puertos: contratos que la infraestructura implementa.
-
-La aplicación solo conoce estas interfaces, nunca SQLite, openpyxl o zipfile.
-"""
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Generic, Optional, TypeVar
@@ -79,7 +75,6 @@ class RegistroRepository(Repository[Registro], ABC):
 
 
 class SnapshotRepository(ABC):
-    """Volcado y restauración completa de los datos del proyecto."""
 
     @abstractmethod
     def dump(self) -> dict: ...
@@ -94,8 +89,8 @@ class DatosExcel:
     estaciones: list = field(default_factory=list)
     conexiones: list = field(default_factory=list)
     tipos: list = field(default_factory=list)
-    rutas: list = field(default_factory=list)      # [(nombre de prenda, RutaProceso)]
-    pedidos: list = field(default_factory=list)    # [(nombre de prenda, Pedido)]
+    rutas: list = field(default_factory=list)
+    pedidos: list = field(default_factory=list)
     errores: list = field(default_factory=list)
 
 

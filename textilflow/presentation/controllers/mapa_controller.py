@@ -42,7 +42,6 @@ class MapaController(Controlador):
         if self._resultado is None:
             self.vista.mapa.dibujar(*construir_red(self._layout, tid))
 
-    # ---- simulación ----
     def _simular(self, escenario_id: int) -> None:
         if not escenario_id:
             self.vista.error("Cree y seleccione un escenario en «Escenarios y simulación».")
@@ -80,7 +79,6 @@ class MapaController(Controlador):
             m.reproducir()
             self.vista.set_jugando(True)
 
-    # ---- tiempo ----
     def _tiempo(self, t: float) -> None:
         if not self._anim:
             return
@@ -105,7 +103,6 @@ class MapaController(Controlador):
         v.estado_global.setText(f"Lotes completados: {hechos}/{len(lotes)} · esperando: {sum(cola.values())} · "
                                 f"en proceso: {sum(proc.values())}")
 
-    # ---- consulta por nodo / pedido ----
     def _nodo_clicado(self, codigo: str) -> None:
         if self._resultado is None:
             self.vista.info("Simule y anime un escenario para consultar las rutas de un área.")
@@ -125,7 +122,6 @@ class MapaController(Controlador):
         rutas = self._rutas.execute(r, nodo, pedido)
         caminos = [x["camino"] for x in rutas]
         principales = [i for i, x in enumerate(rutas) if x["principal"]]
-        # primero se dibujan las secundarias y al final la principal de mayor volumen
         orden = sorted(range(len(rutas)), key=lambda i: rutas[i]["principal"])
         self.vista.mapa.resaltar_caminos([caminos[i] for i in orden],
                                          len(orden) - 1 if principales else None, self._nodo)

@@ -7,7 +7,6 @@ from ...application.ports import ReportExporter
 
 
 def _celda_segura(v):
-    """Evita inyección de fórmulas al abrir el CSV/Excel en una hoja de cálculo."""
     if isinstance(v, str) and v[:1] in ("=", "+", "-", "@"):
         return "'" + v
     return v
@@ -17,7 +16,7 @@ class ArchivoReportExporter(ReportExporter):
     def exportar_csv(self, ruta: str, filas: list[dict]) -> None:
         if not filas:
             raise ValueError("No hay filas para exportar.")
-        with open(ruta, "w", newline="", encoding="utf-8-sig") as f:  # utf-8-sig: Excel lee bien las tildes
+        with open(ruta, "w", newline="", encoding="utf-8-sig") as f:
             w = csv.DictWriter(f, fieldnames=list(filas[0].keys()))
             w.writeheader()
             for fila in filas:

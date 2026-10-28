@@ -1,7 +1,3 @@
-"""Mapa operativo dinámico: animación de recursos, colas, ocupación y mapa de calor en el tiempo.
-
-La vista solo conoce tuplas planas (viewmodels). Al pulsar un nodo emite `nodo_clicado`.
-"""
 import bisect
 from typing import Optional, Sequence
 
@@ -17,7 +13,6 @@ ESCALA = 22.0
 RADIO = 18.0
 PASO_MS = 40
 
-# zonas del taller: (clave, título, color)
 ZONAS = {
     "ABASTECIMIENTO": ("ABASTECIMIENTO", "#F2A33A"),
     "PROCESO": ("PROCESO", "#2A8FD6"),
@@ -32,8 +27,8 @@ _PALABRAS_ZONA = [("ACABADO", ("planch", "empaq", "acabad", "etiquet")),
                   ("SALIDA", ("despach", "control", "calidad"))]
 
 
+# las zonas se deducen del nombre del área; lo que no calza va a PROCESO
 def zona_de(n) -> str:
-    """Zona de un nodo: por función logística y, si es un área de proceso, por palabras de su nombre."""
     if n.funcion == "ALMACEN" or n.funcion == "BASE":
         return "ABASTECIMIENTO"
     if n.funcion == "DESPACHO":
@@ -85,7 +80,7 @@ class MapaOperativo(QGraphicsView):
         self._max_arco = 1.0
         self._max_kg = 1.0
         self._t = 0.0
-        self._velocidad = 20.0   # minutos simulados por segundo real
+        self._velocidad = 20.0
         self._modo = "pasadas"
         self._seleccion: Optional[str] = None
         self._camino_resaltado: list[tuple] = []
@@ -96,7 +91,6 @@ class MapaOperativo(QGraphicsView):
         self._ajustado = True
         self._estatico: dict = {}
 
-    # ------------------------------------------------------------- construcción
     def dibujar(self, nodos: Sequence[NodoVM], arcos: Sequence[ArcoVM]) -> None:
         self.pausar()
         self._escena.clear()
@@ -157,7 +151,6 @@ class MapaOperativo(QGraphicsView):
         self._actualizar()
 
     def _dibujar_zonas(self, nodos) -> None:
-        """Recuadros punteados que agrupan las áreas por etapa (abastecimiento, proceso, flujo, acabado, salida)."""
         grupos: dict[str, list] = {}
         for n in nodos:
             grupos.setdefault(zona_de(n), []).append(self._pos[n.codigo])
@@ -169,7 +162,7 @@ class MapaOperativo(QGraphicsView):
             t.setFont(f); t.setBrush(QBrush(c.lighter(115)))
             x0 = min(q.x() for q in pts) - RADIO - 14; x1 = max(q.x() for q in pts) + RADIO + 14
             ancho_t = t.boundingRect().width() + 12
-            if x1 - x0 < ancho_t:                      # zona de un solo nodo: ancho mínimo para el título
+            if x1 - x0 < ancho_t:
                 m = (x0 + x1) / 2; x0, x1 = m - ancho_t / 2, m + ancho_t / 2
             y0 = min(q.y() for q in pts) - RADIO - 8; y1 = max(q.y() for q in pts) + RADIO + 22
             relleno = QColor(c); relleno.setAlpha(24)
@@ -177,11 +170,10 @@ class MapaOperativo(QGraphicsView):
             r = self._escena.addRect(QRectF(x0, y0, x1 - x0, y1 - y0), borde, QBrush(relleno))
             r.setZValue(0)
             r.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
-            t.setPos(x0 + 6, y1 + 1)                   # título bajo el recuadro: no tapa nombres ni códigos
+            t.setPos(x0 + 6, y1 + 1)
             t.setZValue(0.5)
             t.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
 
-    # ------------------------------------------------------------- datos de animación
     def cargar_animacion(self, anim: Optional[AnimacionVM]) -> None:
         self.pausar()
         for it in self._recursos_items:
@@ -214,11 +206,9 @@ class MapaOperativo(QGraphicsView):
         self._actualizar()
 
     def calor_estatico(self, trafico: dict) -> None:
-        """Mapa de calor fijo (sin animación): {frozenset({a, b}): pasadas}."""
         self._estatico = dict(trafico)
         self._actualizar()
 
-    # ------------------------------------------------------------- reproducción
     def reproducir(self) -> None:
         if not self._anim:
             return
@@ -234,6 +224,7 @@ class MapaOperativo(QGraphicsView):
         return self._timer.isActive()
 
     def set_velocidad(self, min_por_s: float) -> None:
+        # el mínimo es muy lento a propósito, para seguir un recorrido
         self._velocidad = max(0.01, float(min_por_s))
 
     def set_modo_calor(self, modo: str) -> None:
@@ -261,9 +252,7 @@ class MapaOperativo(QGraphicsView):
             return
         self.set_tiempo(nuevo)
 
-    # ------------------------------------------------------------- selección y rutas resaltadas
     def resaltar_caminos(self, caminos: Sequence[tuple], principal: Optional[int] = 0, nodo: Optional[str] = None) -> None:
-        """Dibuja encima los caminos (tuplas de nodos). El índice `principal` se resalta más."""
         for it in self._resaltes:
             self._escena.removeItem(it)
         self._resaltes.clear()
@@ -284,13 +273,12 @@ class MapaOperativo(QGraphicsView):
     def limpiar_resaltes(self) -> None:
         self.resaltar_caminos([], None, None)
 
-    # ------------------------------------------------------------- actualización por instante
     def _actualizar(self) -> None:
         t = self._t
         a = self._anim
-        # --- arcos (mapa de calor)
         for k, it in self._arcos.items():
             if a and self._modo == "pasadas":
+                # cuántos pasos por este arco ya empezaron
                 n = bisect.bisect_right(self._inicios_arco.get(k, []), t)
                 x = n / self._max_arco
             elif not a and self._estatico:
@@ -305,7 +293,6 @@ class MapaOperativo(QGraphicsView):
             else:
                 it.setPen(QPen(QColor(theme.color_calor(x) if x > 0 else "#2A3A5C"), 2 + 7 * x, Qt.PenStyle.SolidLine,
                                Qt.PenCapStyle.RoundCap))
-        # --- nodos: ocupación / cola
         ocup, cola = {}, {}
         if a:
             for est, lleg, ini, fin in a.visitas:
@@ -330,14 +317,12 @@ class MapaOperativo(QGraphicsView):
             c.setPen(QPen(QColor("#FFD166") if seleccionado else borde, 4 if seleccionado else 3))
             q, o = cola.get(cod, 0), ocup.get(cod, 0)
             self._badges[cod].setText((f"cola {q}" if q else "") + (" · " if q and o else "") + (f"▶{o}/{cap}" if o and cap else ""))
-        # --- recursos
         for it, kg, r in self._recursos_items:
             pos, carga = self._pos_recurso(r, t)
             if pos is None:
                 it.setVisible(False)
                 continue
             it.setVisible(True)
-            # parado en un área: se dibuja SOBRE el círculo (no dentro), uno al lado del otro
             for cod, q in self._pos.items():
                 if abs(q.x() - pos.x()) < 0.5 and abs(q.y() - pos.y()) < 0.5:
                     n = len(self._recursos_items)
@@ -372,7 +357,6 @@ class MapaOperativo(QGraphicsView):
             objetivo -= d
         return pts[-1], kg if cargado else 0.0
 
-    # ------------------------------------------------------------- interacción y zoom
     def mousePressEvent(self, e) -> None:
         self._press = e.position()
         super().mousePressEvent(e)

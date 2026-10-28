@@ -9,7 +9,6 @@ from .talleres import exigir_valido
 
 
 class GestionarLayout:
-    """Estaciones y conexiones de un taller, sin romper relaciones con las rutas."""
 
     def __init__(self, estaciones: EstacionRepository, conexiones: ConexionRepository,
                  rutas: RutaProcesoRepository):
@@ -17,7 +16,6 @@ class GestionarLayout:
         self._con = conexiones
         self._rut = rutas
 
-    # ---- estaciones ----
     def listar_estaciones(self, taller_id: int) -> list[Estacion]:
         return self._est.list_by_taller(taller_id)
 
@@ -57,14 +55,13 @@ class GestionarLayout:
                 raise ErrorDeNegocio(f"La estación «{c}» no existe en este taller.")
         return por_codigo
 
-    # ---- conexiones ----
     def listar_conexiones(self, taller_id: int) -> list[Conexion]:
         return self._con.list_by_taller(taller_id)
 
     def guardar_conexion(self, c: Conexion) -> Conexion:
         exigir_valido(c)
         est = self._exigir_estaciones(c.taller_id, c.origen, c.destino)
-        if c.distancia_m <= 0:  # distancia automática por coordenadas
+        if c.distancia_m <= 0:
             a, b = est[c.origen], est[c.destino]
             c.distancia_m = round(math.hypot(a.x - b.x, a.y - b.y), 2)
             if c.distancia_m <= 0:
@@ -74,7 +71,6 @@ class GestionarLayout:
     def eliminar_conexion(self, conexion_id: int) -> None:
         self._con.delete(conexion_id)
 
-    # ---- red ----
     def calcular_ruta(self, taller_id: int, origen: str, destino: str,
                       ancho_min_m: float = 0.0) -> Optional[Ruta]:
         self._exigir_estaciones(taller_id, origen, destino)

@@ -1,4 +1,3 @@
-"""Vista 2D del taller con QGraphicsView: nodos, arcos con distancia y ruta resaltada."""
 from typing import Sequence
 
 from PyQt6.QtCore import QPointF, QRectF, Qt
@@ -9,7 +8,7 @@ from PyQt6.QtWidgets import (QGraphicsScene, QGraphicsTextItem, QGraphicsView, Q
 from .. import theme
 from ..viewmodels import ArcoVM, NodoVM
 
-ESCALA = 20.0   # píxeles por metro
+ESCALA = 20.0
 RADIO = 17.0
 
 
@@ -25,7 +24,6 @@ class LayoutCanvas(QGraphicsView):
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self._ajustado = True
 
-    # ---- dibujo ----
     def dibujar(self, nodos: Sequence[NodoVM], arcos: Sequence[ArcoVM]) -> None:
         self._escena.clear()
         if not nodos:
@@ -92,7 +90,6 @@ class LayoutCanvas(QGraphicsView):
         t.setDefaultTextColor(color)
         return t
 
-    # ---- zoom ----
     def ajustar(self) -> None:
         self._ajustado = True
         if self._escena.items():
@@ -112,7 +109,6 @@ class LayoutCanvas(QGraphicsView):
 
 
 class LayoutCanvasConControles(QWidget):
-    """Canvas + botones − / + / Ajustar."""
 
     def __init__(self, parent=None):
         super().__init__(parent)

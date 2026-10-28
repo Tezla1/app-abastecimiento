@@ -29,4 +29,4 @@ class GestionarTalleres:
     def eliminar(self, taller_id: int) -> None:
         if self._talleres.get(taller_id) is None:
             raise ErrorDeNegocio("El taller ya no existe.")
-        self._talleres.delete(taller_id)  # estaciones, conexiones, etc. caen en cascada
+        self._talleres.delete(taller_id)

@@ -1,4 +1,3 @@
-"""Repositorios SQLite genéricos basados en los campos de cada dataclass."""
 import sqlite3
 from dataclasses import fields
 from typing import Generic, Optional, TypeVar
@@ -20,7 +19,6 @@ class _SqliteRepo(Generic[T]):
         self._cols = [f.name for f in fields(self.entidad) if f.name != "id"]
         self._bools = {f.name for f in fields(self.entidad) if f.type is bool}
 
-    # --- conversión ---
     def _a_entidad(self, fila: sqlite3.Row) -> T:
         datos = {c: fila[c] for c in self._cols}
         for b in self._bools:
@@ -30,7 +28,6 @@ class _SqliteRepo(Generic[T]):
     def _valores(self, e: T) -> list:
         return [getattr(e, c) for c in self._cols]
 
-    # --- CRUD ---
     def add(self, e: T) -> T:
         cols = ", ".join(self._cols)
         marcas = ", ".join("?" for _ in self._cols)
@@ -58,7 +55,7 @@ class _SqliteRepo(Generic[T]):
         return [self._a_entidad(f) for f in filas]
 
     def _list_where(self, columna: str, valor) -> list[T]:
-        assert columna in self._cols  # nunca viene del usuario
+        assert columna in self._cols
         filas = self._db.conn.execute(
             f"SELECT * FROM {self.tabla} WHERE {columna} = ? ORDER BY id", (valor,)).fetchall()
         return [self._a_entidad(f) for f in filas]
@@ -124,7 +121,7 @@ class SqliteRegistroRepository(_SqliteRepo[Registro], ports.RegistroRepository):
     def replace_for_escenario(self, escenario_id: int, registros: list[Registro]) -> None:
         cols = ", ".join(self._cols)
         marcas = ", ".join("?" for _ in self._cols)
-        with self._db.conn:  # una sola transacción: o se reemplaza todo o nada
+        with self._db.conn:
             self._db.conn.execute("DELETE FROM registro WHERE escenario_id = ?", (escenario_id,))
             self._db.conn.executemany(
                 f"INSERT INTO registro({cols}) VALUES({marcas})", [self._valores(r) for r in registros])
@@ -141,7 +138,7 @@ class SqliteSnapshotRepository(ports.SnapshotRepository):
     def load(self, datos: dict) -> None:
         conn = self._db.conn
         columnas = {t: [r["name"] for r in conn.execute(f"PRAGMA table_info({t})")] for t in TABLAS}
-        for t in TABLAS:  # validar todo antes de borrar nada
+        for t in TABLAS:
             filas = datos.get(t, [])
             if not isinstance(filas, list):
                 raise ValueError(f"Tabla «{t}» con formato inválido.")
@@ -150,12 +147,12 @@ class SqliteSnapshotRepository(ports.SnapshotRepository):
                     raise ValueError(f"Fila inválida en la tabla «{t}».")
         conn.execute("PRAGMA foreign_keys = OFF")
         try:
-            with conn:  # transacción: si algo falla, SQLite revierte todo
+            with conn:
                 for t in reversed(TABLAS):
                     conn.execute(f"DELETE FROM {t}")
                 for t in TABLAS:
                     for fila in datos.get(t, []):
-                        cols = [c for c in columnas[t] if c in fila]  # solo columnas conocidas
+                        cols = [c for c in columnas[t] if c in fila]
                         conn.execute(
                             f"INSERT INTO {t}({', '.join(cols)}) VALUES({', '.join('?' for _ in cols)})",
                             [fila[c] for c in cols])

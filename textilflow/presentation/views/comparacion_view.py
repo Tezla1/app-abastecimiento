@@ -2,10 +2,10 @@ from PyQt6.QtWidgets import QFrame, QLabel, QVBoxLayout
 
 from .. import theme
 from ..textos import FORMULA_VARIACION
-from ..widgets.bar_chart import VariationChart
 from ..widgets.common import DataTable, PageView
 from ..widgets.line_chart import LineChart
 from ..widgets.par_escenarios import ParEscenariosBar
+from ..widgets.tarjetas_comparacion import TarjetasComparacion
 
 
 class ComparacionView(PageView):
@@ -18,11 +18,17 @@ class ComparacionView(PageView):
         self.veredicto = QLabel("Elija dos escenarios simulados y pulse «Comparar».")
         self.veredicto.setWordWrap(True)
         self.cuerpo.addWidget(self.veredicto)
+        t = QLabel("¿Qué mejora y qué empeora con el escenario alternativo?")
+        t.setStyleSheet("font-size: 14px; font-weight: 700;")
+        self.cuerpo.addWidget(t)
+        self.tarjetas = TarjetasComparacion()
+        self.cuerpo.addWidget(self.tarjetas)
+
         self.tabla = DataTable(["Indicador", "Base", "Alternativo", "Variación (%)"], estirar=0)
-        self.tabla.setFixedHeight(235)
+        self.tabla.setFixedHeight(190)
         self.cuerpo.addWidget(self.tabla)
         self.tabla_proceso = DataTable(["Indicador del proceso completo", "Base", "Alternativo", "Variación (%)"], estirar=0)
-        self.tabla_proceso.setFixedHeight(235)
+        self.tabla_proceso.setFixedHeight(190)
         self.cuerpo.addWidget(self.tabla_proceso)
         caja0 = QFrame()
         caja0.setObjectName("tarjeta")
@@ -30,25 +36,11 @@ class ComparacionView(PageView):
         self.g_avance = LineChart("Lotes completados en el tiempo", "min")
         c0.addWidget(self.g_avance)
         self.cuerpo.addWidget(caja0, 1)
-        caja = QFrame()
-        caja.setObjectName("tarjeta")
-        cl = QVBoxLayout(caja)
-        t = QLabel("Variación porcentual respecto al escenario base")
-        t.setStyleSheet("font-size: 14px; font-weight: 700;")
-        cl.addWidget(t)
-        self.grafico = VariationChart()
-        cl.addWidget(self.grafico, 1)
-        leyenda = QLabel(f'<span style="color:{theme.VERDE}">■</span> mejora &nbsp; '
-                         f'<span style="color:{theme.ROJO}">■</span> empeora &nbsp; '
-                         f'<span style="color:{theme.TENUE}">■</span> neutro (depende del contexto)')
-        leyenda.setObjectName("tenue")
-        cl.addWidget(leyenda)
-        self.cuerpo.addWidget(caja, 1)
 
-    def mostrar(self, veredicto: str, filas: list, barras: list, filas_proceso: list = (), avance=None) -> None:
+    def mostrar(self, veredicto: str, filas: list, tarjetas: list, filas_proceso: list = (), avance=None) -> None:
         self.veredicto.setText(veredicto)
         self.tabla.set_filas(filas)
         self.tabla_proceso.set_filas(list(filas_proceso))
         if avance:
             self.g_avance.set_datos(*avance)
-        self.grafico.set_barras(barras)
+        self.tarjetas.set_tarjetas(tarjetas)

@@ -19,7 +19,7 @@ class DashboardController(Controlador):
         )
         self.vista.mostrar_actividad(r.actividad)
         vistas, top = set(), []
-        for a in r.alertas:           # una fila por alerta distinta (cada escenario repite las suyas)
+        for a in r.alertas:
             k = (a.codigo, a.elemento)
             if k not in vistas:
                 vistas.add(k)

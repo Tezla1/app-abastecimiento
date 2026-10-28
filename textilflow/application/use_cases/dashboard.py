@@ -31,7 +31,7 @@ class ObtenerDashboard:
         esc = self._esc.list_by_taller(taller_id)
         simulados = [e for e in esc if self._reg.list_by_escenario(e.id)]
         traf = {}
-        if simulados:   # mapa de calor del último escenario simulado
+        if simulados:
             try:
                 traf = simular_completo(self._ctx.cargar(taller_id), simulados[-1]).trafico.arcos
             except ErrorDeNegocio:

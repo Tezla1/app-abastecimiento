@@ -26,7 +26,6 @@ class GestionarRobots:
         self._robots.delete(robot_id)
 
     def evaluar_compatibilidad(self, taller_id: int, robot_id: int) -> CompatibilidadRobot:
-        """Compatibilidad geométrica y de carga robot ↔ taller (no es certificación de seguridad)."""
         robot = self._robots.get(robot_id)
         if robot is None:
             raise ErrorDeNegocio("Seleccione un robot válido.")

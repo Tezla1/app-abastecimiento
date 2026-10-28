@@ -1,4 +1,3 @@
-"""Lectura/escritura de talleres en Excel con openpyxl."""
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 
@@ -88,7 +87,6 @@ class OpenpyxlGateway(ExcelGateway):
             wb.close()
         return datos
 
-    # --- helpers de lectura ---
     @staticmethod
     def _txt(v) -> str:
         return "" if v is None else str(v).strip()

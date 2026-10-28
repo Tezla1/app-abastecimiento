@@ -7,7 +7,7 @@ from ..widgets.par_escenarios import ParEscenariosBar
 
 
 class ResultadosView(PageView):
-    exportar_solicitado = pyqtSignal(int, int, str, str)   # base, alt, ruta, formato (xlsx|csv)
+    exportar_solicitado = pyqtSignal(int, int, str, str)
 
     def __init__(self):
         super().__init__("Resultados y reportes",

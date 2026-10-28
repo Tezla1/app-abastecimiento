@@ -1,4 +1,3 @@
-"""Entidades del dominio. No dependen de Qt, SQLite ni Excel."""
 from dataclasses import dataclass
 from typing import Optional
 
@@ -26,7 +25,7 @@ POLITICAS = {
     "FIFO": "FIFO · orden de llegada",
 }
 
-PREFIJO_GRUPO = "@"  # en una ruta, «@COSTURA» = cualquier estación del grupo COSTURA
+PREFIJO_GRUPO = "@"
 
 
 @dataclass
@@ -62,9 +61,9 @@ class Estacion:
     funcion: str = "PROCESO"
     x: float = 0.0
     y: float = 0.0
-    tiempo_proceso_min: float = 0.0   # minutos por unidad (solo áreas de proceso)
-    capacidad: int = 1                # puestos que trabajan en paralelo
-    grupo: str = ""                   # estaciones del mismo grupo son alternativas entre sí
+    tiempo_proceso_min: float = 0.0
+    capacidad: int = 1
+    grupo: str = ""
     id: Optional[int] = None
 
     def validar(self) -> list[str]:
@@ -89,7 +88,7 @@ class Conexion:
     taller_id: int
     origen: str
     destino: str
-    distancia_m: float = 0.0  # 0 => se calcula con las coordenadas
+    distancia_m: float = 0.0
     ancho_m: float = 1.5
     bidireccional: bool = True
     id: Optional[int] = None
@@ -107,11 +106,10 @@ class Conexion:
 
 @dataclass
 class TipoPrenda:
-    """Tipo de confección (camisa, pantalón, chaqueta…)."""
     nombre: str
     peso_unidad_kg: float = 0.3
-    unidades_por_lote: int = 50   # tamaño del lote que se procesa y transporta junto
-    factor_proceso: float = 1.0   # multiplica los tiempos de proceso de las estaciones
+    unidades_por_lote: int = 50
+    factor_proceso: float = 1.0
     id: Optional[int] = None
 
     def validar(self) -> list[str]:
@@ -129,21 +127,16 @@ class TipoPrenda:
 
 @dataclass
 class RutaProceso:
-    """Una rama del proceso de un tipo de prenda: Almacén > … > Despacho.
-
-    Un tipo de prenda puede tener varias ramas; `fraccion_pct` indica qué parte
-    de cada pedido sigue esa rama (p. ej. 70 % línea normal, 30 % con bordado).
-    """
     taller_id: int
     tipo_prenda_id: int
     nombre: str
     fraccion_pct: float = 100.0
-    secuencia: str = ""   # códigos separados por «>»; «@GRUPO» elige una estación del grupo
+    secuencia: str = ""
     id: Optional[int] = None
 
     def pasos(self) -> list[str]:
         pasos = [p.strip() for p in self.secuencia.split(">") if p.strip()]
-        return [p.upper() if p.startswith(PREFIJO_GRUPO) else p for p in pasos]   # los grupos se guardan en mayúsculas
+        return [p.upper() if p.startswith(PREFIJO_GRUPO) else p for p in pasos]
 
     def validar(self) -> list[str]:
         e = []
@@ -164,9 +157,9 @@ class Pedido:
     taller_id: int
     tipo_prenda_id: int
     cantidad: int
-    prioridad: int = 3          # 1 = más urgente
+    prioridad: int = 3
     llegada_min: float = 0.0
-    vencimiento_min: float = 0.0  # 0 = sin fecha límite
+    vencimiento_min: float = 0.0
     origen_datos: str = "SINTETICO"
     id: Optional[int] = None
 
@@ -214,11 +207,6 @@ class Robot:
 
 @dataclass
 class Escenario:
-    """Escenario a evaluar (S0 base o S1 alternativo) y sus condiciones base.
-
-    `num_recursos` y `tiempo_observacion_min` son los datos que consume
-    `calculos.calcular_indicadores`.
-    """
     taller_id: int
     nombre: str
     tipo: str = "MANUAL"
@@ -232,9 +220,9 @@ class Escenario:
     reposicionamiento: bool = True
     robot_id: Optional[int] = None
     politica: str = "PRIORIDAD"
-    balanceo: bool = True            # elegir la estación menos cargada de un grupo
+    balanceo: bool = True
     factor_demanda_pct: float = 100.0
-    variabilidad_pct: float = 0.0    # ± sobre los tiempos de proceso (solo réplicas)
+    variabilidad_pct: float = 0.0
     semilla: int = 1
     id: Optional[int] = None
 
@@ -265,7 +253,6 @@ class Escenario:
         return e
 
     def para_calculo(self) -> dict:
-        """Formato que espera calculos.calcular_indicadores (`escenario`)."""
         return {
             "num_recursos": self.num_recursos,
             "tiempo_observacion_min": self.tiempo_observacion_min,
@@ -274,7 +261,6 @@ class Escenario:
 
 @dataclass
 class Registro:
-    """Fila de la tabla `registro`: un traslado (lote de una estación a otra)."""
     escenario_id: int
     pedido_id: Optional[int]
     lote: int
@@ -292,7 +278,6 @@ class Registro:
     id: Optional[int] = None
 
     def para_calculo(self) -> dict:
-        """Formato que espera calculos.calcular_indicadores (`registros`)."""
         return {
             "atendida": self.atendida,
             "tiempo_espera_min": self.tiempo_espera_min,
@@ -303,13 +288,12 @@ class Registro:
 
 @dataclass
 class Parametro:
-    """Parámetro normativo o de diseño editable (clave única)."""
     clave: str
     valor: float
     unidad: str = ""
     descripcion: str = ""
     fuente: str = ""
-    verificado: bool = False   # True = valor contrastado con el texto de la norma
+    verificado: bool = False
     id: Optional[int] = None
 
     def validar(self) -> list[str]:

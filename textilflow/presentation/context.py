@@ -4,9 +4,8 @@ from PyQt6.QtCore import QObject, pyqtSignal
 
 
 class AppContext(QObject):
-    """Estado compartido de la interfaz: taller activo y avisos de cambios."""
     taller_activo_cambiado = pyqtSignal()
-    talleres_cambiaron = pyqtSignal()   # se creó / editó / eliminó algún taller
+    talleres_cambiaron = pyqtSignal()
 
     def __init__(self):
         super().__init__()

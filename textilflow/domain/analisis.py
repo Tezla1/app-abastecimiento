@@ -1,4 +1,3 @@
-"""Análisis de resultados de la simulación y del modelo analítico (funciones puras)."""
 import math
 from dataclasses import dataclass, field
 from typing import Iterable, Optional
@@ -8,7 +7,6 @@ from .routing import arcos_criticos, nodos_criticos, ruta_mas_corta
 from .simulacion import ResultadoProceso, generar_lotes
 
 
-# ------------------------------------------------------------ estaciones
 @dataclass
 class EstadoEstacion:
     codigo: str
@@ -20,12 +18,11 @@ class EstadoEstacion:
     cola_max: int
     lotes: int
     unidades: int
-    carga_ofrecida_pct: Optional[float] = None   # modelo analítico (ρ)
+    carga_ofrecida_pct: Optional[float] = None
 
 
 def analizar_estaciones(res: ResultadoProceso, estaciones: Iterable[Estacion],
                         carga_ofrecida: Optional[dict] = None) -> list[EstadoEstacion]:
-    """Utilización, esperas y cola máxima de cada área de proceso."""
     h = res.params.tiempo_observacion_min
     out = []
     for e in estaciones:
@@ -54,20 +51,19 @@ def analizar_estaciones(res: ResultadoProceso, estaciones: Iterable[Estacion],
     return out
 
 
+# miro la peor de las dos medidas, la simulada o la analítica
 def carga_de(e: EstadoEstacion) -> float:
-    """Carga de una estación: la mayor entre la utilización simulada y la carga ofrecida analítica."""
     return max(e.utilizacion_pct, e.carga_ofrecida_pct or 0.0)
 
 
 def cuello_de_botella(estados: list[EstadoEstacion], umbral_pct: float = 85.0) -> Optional[EstadoEstacion]:
-    """Estación más cargada si alcanza el umbral (desempata por espera media)."""
     if not estados:
         return None
+    # si hay empate gana la que más hace esperar
     peor = max(estados, key=lambda s: (carga_de(s), s.espera_prom_min))
     return peor if carga_de(peor) >= umbral_pct else None
 
 
-# ------------------------------------------------------------ proceso
 @dataclass
 class IndicadoresProceso:
     lotes: int = 0
@@ -84,7 +80,7 @@ class IndicadoresProceso:
     pedidos_con_vencimiento: int = 0
     pedidos_a_tiempo_pct: Optional[float] = None
     tardanza_prom_min: Optional[float] = None
-    pedidos_tarde: list = field(default_factory=list)       # [(pedido_id, prioridad, tardanza o None)]
+    pedidos_tarde: list = field(default_factory=list)
     espera_transporte_prom_min: Optional[float] = None
 
 
@@ -109,7 +105,6 @@ def indicadores_proceso(res: ResultadoProceso, pedidos: Iterable[Pedido]) -> Ind
     atendidas = [t for t in res.tareas if t.atendida]
     if atendidas:
         ind.espera_transporte_prom_min = sum(t.espera_min for t in atendidas) / len(atendidas)
-    # Pedidos: completo = todos sus lotes completados; fin = el último lote.
     por_pedido: dict[int, list] = {}
     for l in res.lotes:
         por_pedido.setdefault(l.pedido_id, []).append(l)
@@ -139,12 +134,11 @@ def indicadores_proceso(res: ResultadoProceso, pedidos: Iterable[Pedido]) -> Ind
     return ind
 
 
-# ------------------------------------------------------------ tráfico / calor
 @dataclass
 class Trafico:
-    arcos: dict = field(default_factory=dict)      # frozenset({a, b}) -> pasadas
-    arcos_kg: dict = field(default_factory=dict)   # frozenset({a, b}) -> kg transportados
-    nodos: dict = field(default_factory=dict)      # código -> pasadas
+    arcos: dict = field(default_factory=dict)
+    arcos_kg: dict = field(default_factory=dict)
+    nodos: dict = field(default_factory=dict)
 
     def max_arco(self) -> int:
         return max(self.arcos.values(), default=0)
@@ -166,7 +160,6 @@ def trafico(res: ResultadoProceso) -> Trafico:
 
 
 def series_tiempo(res: ResultadoProceso, estaciones: Iterable[Estacion], puntos: int = 160) -> dict:
-    """Series para graficar: lotes en el sistema, completados acumulados y cola por estación."""
     fin = max(res.t_fin_min, res.params.tiempo_observacion_min, 1.0)
     paso = fin / puntos
     ts = [i * paso for i in range(puntos + 1)]
@@ -183,7 +176,6 @@ def series_tiempo(res: ResultadoProceso, estaciones: Iterable[Estacion], puntos:
     return {"t": ts, "wip": wip, "completados": hechos, "cola": cola}
 
 
-# ------------------------------------------------------------ modelo analítico
 def _miembros(estaciones: Iterable[Estacion], token: str) -> list[Estacion]:
     estaciones = list(estaciones)
     if token.startswith(PREFIJO_GRUPO):
@@ -193,12 +185,6 @@ def _miembros(estaciones: Iterable[Estacion], token: str) -> list[Estacion]:
 
 def carga_ofrecida(estaciones: Iterable[Estacion], tipos: Iterable[TipoPrenda], rutas: Iterable[RutaProceso],
                    pedidos: Iterable[Pedido], horizonte_min: float, factor_demanda_pct: float = 100.0) -> dict:
-    """Modelo analítico: {estación: (minutos de trabajo ofrecidos, ρ %)}.
-
-    ρ = Σ(unidades × tiempo por unidad × factor de la prenda) / (puestos × horizonte).
-    Un paso «@GRUPO» reparte el trabajo en partes iguales entre los miembros del grupo (balanceo ideal).
-    ρ ≥ 100 % significa que la demanda no cabe en el turno aunque no hubiera esperas ni transporte.
-    """
     estaciones = list(estaciones)
     lotes, _ = generar_lotes(pedidos, tipos, rutas, factor_demanda_pct)
     carga = {e.codigo: 0.0 for e in estaciones if e.tiempo_proceso_min > 0}
@@ -224,7 +210,6 @@ class RamaDistancia:
 
 def distancias_ramas(estaciones: Iterable[Estacion], conexiones: Iterable[Conexion], tipos: Iterable[TipoPrenda],
                      rutas: Iterable[RutaProceso], velocidad_ms: float, ancho_requerido_m: float = 0.0) -> list:
-    """Distancia física (camino más corto) que recorre cada rama de proceso."""
     estaciones, conexiones = list(estaciones), list(conexiones)
     tipos = {t.id: t for t in tipos}
     out = []
@@ -238,7 +223,7 @@ def distancias_ramas(estaciones: Iterable[Estacion], conexiones: Iterable[Conexi
                 continue
             if pos is None:
                 elegido = ms[0].codigo
-            else:   # entre alternativas, la más cercana
+            else:
                 cand = []
                 for e in ms:
                     rt = ruta_mas_corta(conexiones, pos, e.codigo, ancho_requerido_m) if pos != e.codigo else None
@@ -258,10 +243,6 @@ def distancias_ramas(estaciones: Iterable[Estacion], conexiones: Iterable[Conexi
 
 
 def flota_analitica(res: ResultadoProceso, utilizacion_objetivo_pct: float) -> dict:
-    """Estimación matemática de la flota a partir del trabajo de transporte de una simulación.
-
-    N ≥ Σ(tiempo ocupado de los traslados) / (horizonte × utilización objetivo).
-    """
     ocupado = sum(t.recorrido_min for t in res.tareas if t.atendida)
     h = res.params.tiempo_observacion_min
     req = ocupado / (h * utilizacion_objetivo_pct / 100.0) if h and utilizacion_objetivo_pct else 0.0
@@ -270,7 +251,6 @@ def flota_analitica(res: ResultadoProceso, utilizacion_objetivo_pct: float) -> d
 
 
 def resumen_recorridos(res: ResultadoProceso) -> dict:
-    """Viajes y distancias de la simulación (cargado/vacío) y por recurso."""
     vacio = sum(m.distancia_m for m in res.movimientos if not m.cargado)
     cargado = sum(m.distancia_m for m in res.movimientos if m.cargado)
     viajes_cargados = sum(1 for m in res.movimientos if m.cargado)
@@ -285,13 +265,12 @@ def resumen_recorridos(res: ResultadoProceso) -> dict:
             "distancia_total_m": cargado + vacio, "por_recurso": por_recurso}
 
 
-# ------------------------------------------------------------ componentes críticos
 @dataclass
 class Critico:
     tipo: str
     elemento: str
     motivo: str
-    severidad: str   # CRÍTICA | ALTA | MEDIA
+    severidad: str
     valor: Optional[float] = None
 
 
@@ -339,9 +318,7 @@ def componentes_criticos(estaciones: Iterable[Estacion], conexiones: Iterable[Co
     return sorted(out, key=lambda c: (_ORDEN_SEV[c.severidad], c.tipo))
 
 
-# ------------------------------------------------------------ consulta por nodo / mapa de calor dinámico
 def trafico_hasta(res: ResultadoProceso, t: float) -> Trafico:
-    """Tráfico acumulado de los movimientos iniciados hasta el instante t (mapa de calor dinámico)."""
     tr = Trafico()
     for m in res.movimientos:
         if m.t0 > t:
@@ -356,7 +333,6 @@ def trafico_hasta(res: ResultadoProceso, t: float) -> Trafico:
 
 
 def caminos_por_lote(res: ResultadoProceso) -> dict:
-    """{lote: (nodos recorridos con carga, distancia cargada m)} reconstruido de los movimientos."""
     out: dict[int, list] = {}
     dist: dict[int, float] = {}
     for m in sorted(res.movimientos, key=lambda x: x.t0):
@@ -369,10 +345,6 @@ def caminos_por_lote(res: ResultadoProceso) -> dict:
 
 
 def rutas_de_nodo(res: ResultadoProceso, nodo: str, pedido_id: Optional[int] = None) -> list[dict]:
-    """Rutas físicas que realmente usan los lotes que pasan por un nodo (opcionalmente de un solo pedido).
-
-    Agrupa por pedido, rama y camino. `principal` marca la ruta con más unidades de cada pedido.
-    """
     caminos = caminos_por_lote(res)
     grupos: dict[tuple, dict] = {}
     for l in res.lotes:
