@@ -25,10 +25,10 @@ def ui(qapp, monkeypatch):
     c = construir(":memory:")
     ctl = AplicacionController(c)
     errores = []
-    for v in ctl.ventana.findChildren(object):
-        if hasattr(v, "error") and hasattr(v, "confirmar"):
-            monkeypatch.setattr(v, "error", errores.append)
-            monkeypatch.setattr(v, "confirmar", lambda m: True)
+    # las páginas se construyen al visitarlas, así que se parchea la clase base y no cada vista
+    from textilflow.presentation.widgets.common import PageView
+    monkeypatch.setattr(PageView, "error", lambda self, m: errores.append(m))
+    monkeypatch.setattr(PageView, "confirmar", lambda self, m: True)
     ctl.iniciar()
     ctl.errores = errores
     ctl.c = c
@@ -254,3 +254,30 @@ def test_cambio_de_tema_reconstruye_la_ventana(qapp):
     ap.controlador.ventana.close()
     theme.aplicar("oscuro")
     c.db.close()
+
+
+def test_cambio_de_tema_conserva_taller_y_pagina_y_no_reconstruye_todo(qapp):
+    from PyQt6.QtCore import QCoreApplication, QEvent
+    from textilflow.presentation.app import Aplicacion
+    c = construir(":memory:")
+    c.demo.execute()
+    ap = Aplicacion(c, qapp)
+    try:
+        ap.controlador.ventana.ir_a(SIM)
+        taller = ap.controlador.ctx.taller_id
+        base = len(ap.controlador.ventana.findChildren(object))
+        for _ in range(3):
+            ap.alternar_tema()
+            QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+        ctl = ap.controlador
+        assert theme.tema_actual() == "claro"
+        assert ctl.ctx.taller_id == taller and ctl.ventana.pagina_actual() == SIM
+        # solo la página visible está construida; las demás esperan a ser visitadas
+        assert sum(ctl.controladores.construida(i) for i in range(14)) == 1
+        assert len(ctl.ventana.findChildren(object)) <= base * 1.1
+        for i in range(14):
+            ctl.ventana.ir_a(i)
+    finally:
+        theme.aplicar("oscuro")
+        ap.controlador.ventana.close()
+        c.db.close()

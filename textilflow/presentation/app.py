@@ -1,4 +1,5 @@
-from PyQt6.QtCore import QSettings
+from PyQt6.QtCore import QSettings, Qt
+from PyQt6.QtWidgets import QApplication, QWidget
 
 from ..container import Container
 from . import theme
@@ -38,52 +39,75 @@ from .views.validacion_view import ValidacionView
 POLITICAS_OPC = list(POLITICAS.items())
 
 
+class _Paginas:
+    """Lista perezosa de controladores: cada página (vista + controlador) se construye la primera vez que se pide."""
+
+    def __init__(self, fabricas, al_construir):
+        self._fabricas = fabricas
+        self._hechos = [None] * len(fabricas)
+        self._al_construir = al_construir
+
+    def __len__(self):
+        return len(self._fabricas)
+
+    def construida(self, i: int) -> bool:
+        return self._hechos[i] is not None
+
+    def __getitem__(self, i):
+        if self._hechos[i] is None:
+            vista, ctl = self._fabricas[i]()
+            self._hechos[i] = ctl
+            self._al_construir(i, vista)
+        return self._hechos[i]
+
+    def __iter__(self):
+        for i in range(len(self._fabricas)):
+            yield self[i]
+
+
 class AplicacionController:
     def __init__(self, c: Container, ventana=None):
         self.ctx = AppContext()
         self._c = c
-        v = {
-            "dashboard": DashboardView(), "taller": TallerView(ORIGENES_OPC),
-            "layout": LayoutView(FUNCIONES_OPC, ORIGENES_OPC), "modelo": ModeloView(),
-            "robot": RobotView(ORIGENES_OPC), "simulacion": SimulacionView(TIPOS_OPC, POLITICAS_OPC),
-            "mapa": MapaView(), "req": RequerimientosView(), "guia": GuiaView(),
-            "comparacion": ComparacionView(), "resultados": ResultadosView(),
-            "validacion": ValidacionView(), "cont": ContingenciasView(list(MOTIVOS_CIERRE.items())), "datos": DataManagerView(),
-        }
-        self.controladores = [
-            DashboardController(v["dashboard"], self.ctx, c.dashboard, c.layout),
-            TallerController(v["taller"], self.ctx, c.talleres),
-            LayoutController(v["layout"], self.ctx, c.layout, c.procesos),
-            ModeloController(v["modelo"], self.ctx, c.escenarios, c.indicadores, c.simulacion, c.parametros),
-            RobotController(v["robot"], self.ctx, c.robots),
-            SimulacionController(v["simulacion"], self.ctx, c.escenarios, c.layout, c.robots, c.indicadores, c.simulacion,
-                                 c.replicas, c.parametros),
-            MapaController(v["mapa"], self.ctx, c.escenarios, c.layout, c.procesos, c.simulacion, c.rutas),
-            RequerimientosController(v["req"], self.ctx, c.escenarios, c.requerimientos, c.alertas, c.parametros),
-            ComparacionController(v["comparacion"], self.ctx, c.escenarios, c.comparacion),
-            ResultadosController(v["resultados"], self.ctx, c.escenarios, c.comparacion, c.reporte),
-            ContingenciasController(v["cont"], self.ctx, c.cierres, c.informe_cierres, c.exportar_contingencias, c.simulacion, c.escenarios, c.layout),
-            ValidacionController(v["validacion"], self.ctx, c.validacion),
-            DataManagerController(v["datos"], self.ctx, c.datos, c.demo),
-            GuiaController(v["guia"], self.ctx),
+        ctx = self.ctx
+
+        def f(vista_cls, ctl_cls, *args_vista, serv=()):
+            def construir():
+                vista = vista_cls(*args_vista)
+                return vista, ctl_cls(vista, ctx, *[getattr(c, n) for n in serv])
+            return construir
+
+        fabricas = [
+            f(DashboardView, DashboardController, serv=("dashboard", "layout")),
+            f(TallerView, TallerController, ORIGENES_OPC, serv=("talleres",)),
+            f(LayoutView, LayoutController, FUNCIONES_OPC, ORIGENES_OPC, serv=("layout", "procesos")),
+            f(ModeloView, ModeloController, serv=("escenarios", "indicadores", "simulacion", "parametros")),
+            f(RobotView, RobotController, ORIGENES_OPC, serv=("robots",)),
+            f(SimulacionView, SimulacionController, TIPOS_OPC, POLITICAS_OPC,
+              serv=("escenarios", "layout", "robots", "indicadores", "simulacion", "replicas", "parametros")),
+            f(MapaView, MapaController, serv=("escenarios", "layout", "procesos", "simulacion", "rutas")),
+            f(RequerimientosView, RequerimientosController, serv=("escenarios", "requerimientos", "alertas", "parametros")),
+            f(ComparacionView, ComparacionController, serv=("escenarios", "comparacion")),
+            f(ResultadosView, ResultadosController, serv=("escenarios", "comparacion", "reporte")),
+            f(ContingenciasView, ContingenciasController, list(MOTIVOS_CIERRE.items()),
+              serv=("cierres", "informe_cierres", "exportar_contingencias", "simulacion", "escenarios", "layout")),
+            f(ValidacionView, ValidacionController, serv=("validacion",)),
+            f(DataManagerView, DataManagerController, serv=("datos", "demo")),
+            f(GuiaView, GuiaController),
         ]
-        paginas = [
-            ("Dashboard", theme.AZUL, v["dashboard"]),
-            ("Caracterización del taller", theme.NARANJA, v["taller"]),
-            ("Layout y movimientos", theme.AZUL, v["layout"]),
-            ("Modelo matemático", theme.VERDE, v["modelo"]),
-            ("Diseño conceptual del robot", theme.TURQUESA, v["robot"]),
-            ("Escenarios y simulación", theme.VERDE, v["simulacion"]),
-            ("Mapa operativo", theme.VERDE, v["mapa"]),
-            ("Requerimientos y normativas", theme.DORADO, v["req"]),
-            ("Comparación experimental", theme.MORADO, v["comparacion"]),
-            ("Resultados y reportes", theme.NARANJA, v["resultados"]),
-            ("Contingencias y cierres", theme.ROJO, v["cont"]),
-            ("Validación integral", theme.DORADO, v["validacion"]),
-            ("Data Manager", theme.TURQUESA, v["datos"]),
-            ("Guía y acerca de", theme.TURQUESA, v["guia"]),
+        nombres = [
+            ("Dashboard", theme.AZUL), ("Caracterización del taller", theme.NARANJA),
+            ("Layout y movimientos", theme.AZUL), ("Modelo matemático", theme.VERDE),
+            ("Diseño conceptual del robot", theme.TURQUESA), ("Escenarios y simulación", theme.VERDE),
+            ("Mapa operativo", theme.VERDE), ("Requerimientos y normativas", theme.DORADO),
+            ("Comparación experimental", theme.MORADO), ("Resultados y reportes", theme.NARANJA),
+            ("Contingencias y cierres", theme.ROJO), ("Validación integral", theme.DORADO),
+            ("Data Manager", theme.TURQUESA), ("Guía y acerca de", theme.TURQUESA),
         ]
-        self._indice_req = [n for n, *_ in paginas].index("Requerimientos y normativas")
+        self._indice_req = [n for n, _ in nombres].index("Requerimientos y normativas")
+        self.ventana = None
+        self.controladores = _Paginas(fabricas, self._pagina_lista)
+        paginas = [(n, col, QWidget()) for n, col in nombres]
         if ventana is None:
             self.ventana = MainWindow(paginas)
         else:
@@ -98,6 +122,11 @@ class AplicacionController:
         self.ctx.cierres_cambiaron.connect(self._actualizar_alertas)
         self.ctx.taller_activo_cambiado.connect(self._taller_cambio)
         self.ctx.talleres_cambiaron.connect(self._recargar_talleres)
+
+    def _pagina_lista(self, i: int, vista) -> None:
+        """Pone la vista recién construida en el lugar de su marcador."""
+        if self.ventana is not None:
+            self.ventana.poner_pagina(i, vista)
 
     def _pagina_cambio(self, i: int) -> None:
         self.controladores[i].refrescar()
@@ -145,17 +174,31 @@ class Aplicacion:
         self.controlador.ventana.show()
 
     def _montar(self, taller_id=None, pagina: int = 0, ventana=None) -> None:
+        if ventana is not None and self.controlador is not None:
+            # se libera primero el contenido anterior para que reaplicar los estilos sea barato
+            self.controlador.ventana.vaciar()
+            self.controlador.ctx.deleteLater()
         self._qapp.setStyleSheet(theme.hoja_de_estilo())
         self.controlador = AplicacionController(self._c, ventana)
         v = self.controlador.ventana
         v.tema_solicitado.connect(self.alternar_tema)
-        self.controlador.iniciar(taller_id)
         if pagina:
-            v.ir_a(pagina)
+            v.seleccionar(pagina)
+        self.controlador.iniciar(taller_id)
 
     def alternar_tema(self) -> None:
+        """Cambia el tema sin construir de nuevo las 14 páginas: la ventana conserva su marco y solo se
+        vuelve a crear la página visible; las demás se construyen al visitarlas (ya con la paleta nueva)."""
         viejo = self.controlador
+        v = viejo.ventana
+        taller, pagina = viejo.ctx.taller_id, v.pagina_actual()
         nuevo = "claro" if theme.tema_actual() == "oscuro" else "oscuro"
         self._ajustes.setValue("tema", nuevo)
         theme.aplicar(nuevo)
-        self._montar(viejo.ctx.taller_id, viejo.ventana.pagina_actual(), viejo.ventana)
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        v.setUpdatesEnabled(False)
+        try:
+            self._montar(taller, pagina, v)
+        finally:
+            v.setUpdatesEnabled(True)
+            QApplication.restoreOverrideCursor()

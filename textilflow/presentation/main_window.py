@@ -1,6 +1,6 @@
 from typing import Optional, Sequence
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QCoreApplication, QEvent, Qt, pyqtSignal
 from PyQt6.QtWidgets import (QButtonGroup, QComboBox, QFrame, QHBoxLayout, QLabel, QMainWindow,
                              QPushButton, QStackedWidget, QVBoxLayout, QWidget)
 
@@ -114,9 +114,31 @@ class MainWindow(QMainWindow):
         self.combo_taller.activated.connect(lambda _: self.taller_elegido.emit(self.combo_taller.currentData()))
         self._grupo.button(0).setChecked(True)
 
+    def poner_pagina(self, i: int, widget: QWidget) -> None:
+        """Sustituye el marcador de la página i por la vista real (construcción perezosa)."""
+        marcador = self._pila.widget(i)
+        actual = self._pila.currentIndex()
+        self._pila.removeWidget(marcador)
+        self._pila.insertWidget(i, widget)
+        self._pila.setCurrentIndex(actual)
+        marcador.deleteLater()
+
+    def vaciar(self) -> None:
+        """Quita las páginas y el marco actuales antes de armar los nuevos."""
+        viejo = self.takeCentralWidget()
+        if viejo is not None:
+            viejo.hide()
+            viejo.deleteLater()
+            QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+
     def _ir(self, i: int) -> None:
         self._pila.setCurrentIndex(i)
         self.pagina_cambiada.emit(i)
+
+    def seleccionar(self, i: int) -> None:
+        """Marca la página i sin emitir señales (no la construye todavía)."""
+        self._grupo.button(i).setChecked(True)
+        self._pila.setCurrentIndex(i)
 
     def ir_a(self, i: int) -> None:
         self._grupo.button(i).setChecked(True)
