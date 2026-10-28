@@ -1,6 +1,6 @@
 # TextilFlow 4.0.7k · optimización de procesos industriales e intralogística (PyQt6)
 
-![Mapa operativo](docs/img/02_mapa_operativo_nodo_B.png)
+![Dashboard de TextilFlow](docs/img/01_dashboard.png)
 
 Aplicación de escritorio para talleres de confección: modela el **proceso completo Almacén → áreas en paralelo → Despacho**,
 lo simula con eventos discretos y responde qué componentes son críticos, qué distancias se recorren, cuántos equipos y cuántos
@@ -111,7 +111,20 @@ archivo pese menos y abra más rápido.
 | Guía y acerca de | Explicación del funcionamiento y versión. |
 
 La barra superior muestra la insignia de alertas (se recalcula sola al guardar datos), el cambio de tema claro u oscuro,
-el taller activo y el estado del programa.
+el taller activo y el estado del programa. El programa abre con el **tema claro**; cada pestaña tiene su propio color en el menú lateral.
+
+## Capturas de la interfaz
+
+Capturas de la versión 4.0.7k con el tema claro y el taller de ejemplo «Confecciones Andina».
+
+| | |
+|---|---|
+| ![Escenarios y simulación](docs/img/07_escenarios_resultados.png)<br>**Escenarios y simulación** | ![Mapa operativo](docs/img/09_mapa_operativo.png)<br>**Mapa operativo** |
+| ![Cuellos de botella](docs/img/11_cuellos_de_botella.png)<br>**Cuellos de botella** | ![Comparación experimental](docs/img/13_comparacion_experimental.png)<br>**Comparación experimental** |
+| ![Layout y movimientos](docs/img/03_layout_movimientos.png)<br>**Layout y movimientos** | ![Inventario](docs/img/04_inventario.png)<br>**Inventario** |
+| ![Contingencias y cierres](docs/img/15_contingencias_cierres.png)<br>**Contingencias y cierres** | ![Validación integral](docs/img/16_validacion_integral.png)<br>**Validación integral** |
+
+Las 18 capturas están en `docs/img/`.
 
 ## Alertas, cuellos de botella e inventario
 
