@@ -25,14 +25,14 @@ class LayoutView(PageView):
 
         self.estaciones = CrudPanel(
             "Estación", "Nodos registrados",
-            [CampoSpec("codigo", "Código *", placeholder="Ej.: A"),
-             CampoSpec("nombre", "Nombre", placeholder="Ej.: Almacén"),
-             CampoSpec("funcion", "Función en el proceso", "combo"),
-             CampoSpec("x", "X (m)", "float", -10_000, 10_000, 2),
-             CampoSpec("y", "Y (m)", "float", -10_000, 10_000, 2),
-             CampoSpec("tiempo_proceso_min", "Tiempo (min/unidad)", "float", 0, 10_000, 3),
-             CampoSpec("capacidad", "Puestos en paralelo", "int", 1, 1000, defecto=1),
-             CampoSpec("grupo", "Grupo alternativo", placeholder="Ej.: COSTURA")],
+            [CampoSpec("codigo", "Código *", placeholder="Ej.: A", ayuda="Código corto y único del área o nodo (letras/números). Ej.: A = Almacén, C = Corte, D = Despacho. Se usa en las rutas de proceso."),
+             CampoSpec("nombre", "Nombre", placeholder="Ej.: Almacén", ayuda="Nombre del área o estación. Ej.: Almacén, Corte, Despacho."),
+             CampoSpec("funcion", "Función en el proceso", "combo", ayuda="Papel del área: Almacén (punto inicial), Despacho (punto final), Área de proceso, Punto de espera/buffer o Base del recurso. Debe haber un Almacén y un Despacho."),
+             CampoSpec("x", "X (m)", "float", -10_000, 10_000, 2, ayuda="Posición horizontal del área en el plano, en metros (m), medida desde el origen (0, 0) del taller."),
+             CampoSpec("y", "Y (m)", "float", -10_000, 10_000, 2, ayuda="Posición vertical del área en el plano, en metros (m), medida desde el origen (0, 0) del taller."),
+             CampoSpec("tiempo_proceso_min", "Tiempo (min/unidad)", "float", 0, 10_000, 3, ayuda="Minutos que tarda procesar UNA unidad en este puesto (min/unidad). Ej.: 0,5 = 30 segundos. Use 0 si es solo paso o almacenamiento."),
+             CampoSpec("capacidad", "Puestos en paralelo", "int", 1, 1000, defecto=1, ayuda="Cantidad de puestos o máquinas que trabajan en paralelo en esta área (entero ≥ 1)."),
+             CampoSpec("grupo", "Grupo alternativo", placeholder="Ej.: COSTURA", ayuda="Nombre de un grupo de áreas equivalentes (Ej.: COSTURA). En las rutas se escribe «@COSTURA» para elegir la menos cargada. Opcional.")],
             ["ID", "Código", "Nombre", "Función", "X", "Y", "min/u", "Puestos", "Grupo"], theme.AZUL, estirar=2)
         self.estaciones.set_opciones("funcion", funciones)
         n1 = QLabel("Almacén = inicio y Despacho = fin de toda ruta (solo uno de cada uno). Las áreas «Proceso» "
@@ -43,10 +43,10 @@ class LayoutView(PageView):
 
         self.conexiones = CrudPanel(
             "Conexión", "Conexiones registradas",
-            [CampoSpec("origen", "Origen", "combo"), CampoSpec("destino", "Destino", "combo"),
-             CampoSpec("distancia_m", "Distancia (m)", "float", 0, 100_000, 2),
-             CampoSpec("ancho_m", "Ancho pasillo (m)", "float", 0.05, 100, 2, 1.5),
-             CampoSpec("bidireccional", "Bidireccional", "check", defecto=True)],
+            [CampoSpec("origen", "Origen", "combo", ayuda="Área de donde sale el material por este pasillo."), CampoSpec("destino", "Destino", "combo", ayuda="Área a la que llega el material por este pasillo."),
+             CampoSpec("distancia_m", "Distancia (m)", "float", 0, 100_000, 2, ayuda="Longitud real del recorrido entre origen y destino, en metros (m), medida por el pasillo (no en línea recta)."),
+             CampoSpec("ancho_m", "Ancho pasillo (m)", "float", 0.05, 100, 2, 1.5, ayuda="Ancho libre del pasillo en metros (m). Debe ser mayor que el ancho del robot para que pueda pasar."),
+             CampoSpec("bidireccional", "Bidireccional", "check", defecto=True, ayuda="Marcado: se puede circular en ambos sentidos. Desmarcado: solo de origen a destino.")],
             ["ID", "Origen", "Destino", "Distancia (m)", "Ancho (m)", "Sentido"], theme.AZUL)
         nota = QLabel("Distancia = 0 → se calcula con las coordenadas de las estaciones.")
         nota.setObjectName("tenue")
@@ -55,10 +55,10 @@ class LayoutView(PageView):
 
         self.prendas = CrudPanel(
             "Tipo de prenda", "Tipos de confección",
-            [CampoSpec("nombre", "Nombre *", placeholder="Ej.: Camisa"),
-             CampoSpec("peso_unidad_kg", "Peso por unidad (kg)", "float", 0.001, 1000, 3, 0.3),
-             CampoSpec("unidades_por_lote", "Unidades por lote", "int", 1, 100_000, defecto=24),
-             CampoSpec("factor_proceso", "Factor de tiempo de proceso", "float", 0.05, 100, 2, 1.0)],
+            [CampoSpec("nombre", "Nombre *", placeholder="Ej.: Camisa", ayuda="Nombre del tipo de prenda. Ej.: Camisa, Pantalón. Obligatorio."),
+             CampoSpec("peso_unidad_kg", "Peso por unidad (kg)", "float", 0.001, 1000, 3, 0.3, ayuda="Peso de una prenda terminada en kilogramos (kg). Ej.: camisa ≈ 0,3 kg. Sirve para calcular la carga transportada."),
+             CampoSpec("unidades_por_lote", "Unidades por lote", "int", 1, 100_000, defecto=24, ayuda="Cuántas prendas van juntas en cada lote de transporte (entero ≥ 1). Ej.: 24."),
+             CampoSpec("factor_proceso", "Factor de tiempo de proceso", "float", 0.05, 100, 2, 1.0, ayuda="Multiplicador de los tiempos de proceso para esta prenda. 1,0 = tiempo base; 1,5 = 50 % más lento; 0,8 = 20 % más rápido.")],
             ["ID", "Prenda", "kg/u", "Lote (u)", "Factor"], theme.AZUL, estirar=1)
         n2 = QLabel("El lote es la unidad que se procesa y se transporta junta. El factor multiplica los "
                     "tiempos de cada área (una chaqueta cose más lento que una camisa).")
@@ -68,10 +68,10 @@ class LayoutView(PageView):
 
         self.rutas = CrudPanel(
             "Ruta de proceso (rama)", "Ramas de cada prenda",
-            [CampoSpec("tipo_prenda_id", "Prenda", "combo"),
-             CampoSpec("nombre", "Nombre de la rama *", placeholder="Ej.: Con bordado"),
-             CampoSpec("fraccion_pct", "% de las unidades", "float", 0.1, 100, 1, 100.0),
-             CampoSpec("secuencia", "Secuencia *", "multiline", placeholder="A>C>B>@COSTURA>I>E>D")],
+            [CampoSpec("tipo_prenda_id", "Prenda", "combo", ayuda="Prenda a la que pertenece este registro."),
+             CampoSpec("nombre", "Nombre de la rama *", placeholder="Ej.: Con bordado", ayuda="Nombre de esta ruta o rama de la prenda. Ej.: Línea normal, Con bordado. Obligatorio."),
+             CampoSpec("fraccion_pct", "% de las unidades", "float", 0.1, 100, 1, 100.0, ayuda="Porcentaje de las unidades de esta prenda que sigue esta rama (0,1 a 100). Las ramas de una misma prenda deben sumar 100 %."),
+             CampoSpec("secuencia", "Secuencia *", "multiline", placeholder="A>C>B>@COSTURA>I>E>D", ayuda="Pasos separados por «>», con códigos de área. Ej.: A>C>@COSTURA>I>E>D. Debe empezar en el Almacén (A) y terminar en el Despacho (D). «@GRUPO» elige la menos cargada del grupo.")],
             ["ID", "Prenda", "Rama", "%", "Secuencia"], theme.AZUL, ancho_form=380, estirar=4)
         self.nota_rutas = QLabel("")
         self.nota_rutas.setObjectName("tenue")
@@ -80,12 +80,12 @@ class LayoutView(PageView):
 
         self.pedidos = CrudPanel(
             "Pedido", "Pedidos del taller",
-            [CampoSpec("tipo_prenda_id", "Prenda", "combo"),
-             CampoSpec("cantidad", "Cantidad (unidades)", "int", 1, 1_000_000, defecto=100),
-             CampoSpec("prioridad", "Prioridad (1 = urgente)", "int", 1, 9, defecto=3),
-             CampoSpec("llegada_min", "Llega al almacén (min)", "float", 0, 100_000, 1),
-             CampoSpec("vencimiento_min", "Fecha límite (min, 0 = sin)", "float", 0, 100_000, 1),
-             CampoSpec("origen_datos", "Origen de datos", "combo")],
+            [CampoSpec("tipo_prenda_id", "Prenda", "combo", ayuda="Prenda a la que pertenece este registro."),
+             CampoSpec("cantidad", "Cantidad (unidades)", "int", 1, 1_000_000, defecto=100, ayuda="Número de prendas del pedido (entero ≥ 1)."),
+             CampoSpec("prioridad", "Prioridad (1 = urgente)", "int", 1, 9, defecto=3, ayuda="De 1 a 9: 1 es la más urgente y 9 la menos urgente."),
+             CampoSpec("llegada_min", "Llega al almacén (min)", "float", 0, 100_000, 1, ayuda="Minuto de la simulación en que el pedido llega al almacén. 0 = al iniciar el turno."),
+             CampoSpec("vencimiento_min", "Fecha límite (min, 0 = sin)", "float", 0, 100_000, 1, ayuda="Minuto límite para entregar el pedido. Use 0 si no tiene fecha límite."),
+             CampoSpec("origen_datos", "Origen de datos", "combo", ayuda="«Real» si el pedido es de producción real, «Sintético» si es de ejemplo o supuesto, «Diseño / conceptual» si es parte de una propuesta.")],
             ["ID", "Prenda", "Cantidad", "Prior.", "Llegada", "Límite", "Datos"], theme.AZUL, estirar=1)
         self.pedidos.set_opciones("origen_datos", origenes)
 

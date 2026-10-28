@@ -1,3 +1,14 @@
+# TextilFlow 4.0.7f
+
+## Ayudas emergentes en los formularios
+- Al pasar el mouse sobre cualquier campo o su etiqueta aparece un texto que explica qué se debe escribir: unidad, rango y ejemplo.
+  Ej.: «Área (m²)» → «Área total de producción en metros cuadrados (m²): largo × ancho del piso útil. Ej.: 20 m × 12 m = 240 m².»
+- Cubre los 61 campos de Caracterización del taller, Layout y movimientos (estaciones, conexiones, prendas, rutas, pedidos), Diseño del robot, Escenarios y simulación, y Contingencias y cierres.
+- Los textos de las listas (origen de datos, función, tipo, política) describen las opciones reales del programa.
+- Técnico: nuevo campo `ayuda` en `CampoSpec` (`viewmodels.py`); `crud_panel.py` lo asigna como tooltip del campo y de su etiqueta. Un test verifica que ningún campo quede sin ayuda.
+
+---
+
 # TextilFlow 4.0.7e
 
 ## Formularios compactos (Caracterización, Layout, etc.)

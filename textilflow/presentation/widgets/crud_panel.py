@@ -43,6 +43,13 @@ class CrudPanel(QWidget):
             w = self._crear_widget(c)
             self._widgets[c.nombre] = w
             formulario.addRow(c.etiqueta, w)
+            if c.ayuda:
+                w.setToolTip(c.ayuda)
+                w.setWhatsThis(c.ayuda)
+                etiqueta = formulario.labelForField(w)
+                if etiqueta is not None:
+                    etiqueta.setToolTip(c.ayuda)
+                    etiqueta.setCursor(Qt.CursorShape.WhatsThisCursor)
         marco = QWidget()
         envoltorio = QVBoxLayout(marco)          # los campos quedan arriba y juntos; el sobrante va al final
         envoltorio.setContentsMargins(0, 4, 0, 0)

@@ -19,13 +19,13 @@ class ContingenciasView(PageView):
                          "rutas y simulaciones solo, y le muestra aquí qué área quedó afectada y por dónde se desvía el trabajo.",
                          theme.ROJO)
         campos = [
-            CampoSpec("codigo", "Área a cerrar *", "combo"),
-            CampoSpec("motivo", "Motivo *", "combo"),
-            CampoSpec("detalle", "¿Qué pasó?", "multiline"),
-            CampoSpec("desde_min", "Desde el minuto", "float", 0, 100_000, 1, 0.0),
-            CampoSpec("hasta_min", "Reabre en el minuto", "float", 0, 100_000, 1, 0.0),
-            CampoSpec("bloquea_paso", "Bloquea el paso", "check", defecto=True),
-            CampoSpec("vigente", "Cierre activo", "check", defecto=True),
+            CampoSpec("codigo", "Área a cerrar *", "combo", ayuda="Área o estación que se cierra (por ejemplo, Corte por falla de máquina)."),
+            CampoSpec("motivo", "Motivo *", "combo", ayuda="Causa del cierre (falla, mantenimiento, falta de material, etc.)."),
+            CampoSpec("detalle", "¿Qué pasó?", "multiline", ayuda="Descripción libre de lo que ocurrió. Opcional."),
+            CampoSpec("desde_min", "Desde el minuto", "float", 0, 100_000, 1, 0.0, ayuda="Minuto de la simulación en que se cierra el área. 0 = desde el inicio del turno."),
+            CampoSpec("hasta_min", "Reabre en el minuto", "float", 0, 100_000, 1, 0.0, ayuda="Minuto en que el área vuelve a operar. Debe ser mayor que «Desde el minuto»."),
+            CampoSpec("bloquea_paso", "Bloquea el paso", "check", defecto=True, ayuda="Marcado: el área cerrada también bloquea el paso del material por ella. Desmarcado: solo deja de procesar."),
+            CampoSpec("vigente", "Cierre activo", "check", defecto=True, ayuda="Marcado: el cierre se aplica en las simulaciones. Desmarque para ignorarlo sin borrarlo."),
         ]
         self.panel = CrudPanel("Registrar cierre", "Cierres registrados del taller", campos,
                                ["ID", "Área", "Motivo", "Desde", "Reapertura", "Estado"], theme.ROJO, 420, estirar=2)

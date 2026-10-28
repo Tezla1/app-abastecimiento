@@ -19,12 +19,12 @@ class RobotView(PageView):
                          "La factibilidad por ancho es geométrica, no una certificación de seguridad.",
                          theme.TURQUESA)
         campos = [
-            CampoSpec("nombre", "Nombre *", placeholder="Ej.: AMR Conceptual 01"),
-            CampoSpec("capacidad_kg", "Capacidad carga (kg) *", "float", 0.1, 100_000, 2, 50.0),
-            CampoSpec("velocidad_ms", "Velocidad (m/s) *", "float", 0.01, 100, 3, 0.7),
-            CampoSpec("ancho_m", "Ancho robot (m) *", "float", 0.01, 100, 3, 0.75),
-            CampoSpec("radio_giro_m", "Radio de giro (m)", "float", 0, 100, 3, 0.9),
-            CampoSpec("origen_datos", "Origen de datos", "combo"),
+            CampoSpec("nombre", "Nombre *", placeholder="Ej.: AMR Conceptual 01", ayuda="Nombre del perfil del robot. Ej.: «AMR Conceptual 01». Obligatorio."),
+            CampoSpec("capacidad_kg", "Capacidad carga (kg) *", "float", 0.1, 100_000, 2, 50.0, ayuda="Carga máxima que el robot transporta por viaje, en kilogramos (kg). Revise la ficha técnica del robot."),
+            CampoSpec("velocidad_ms", "Velocidad (m/s) *", "float", 0.01, 100, 3, 0.7, ayuda="Velocidad media de desplazamiento en metros por segundo (m/s). Ej.: 0,7 m/s ≈ 2,5 km/h."),
+            CampoSpec("ancho_m", "Ancho robot (m) *", "float", 0.01, 100, 3, 0.75, ayuda="Ancho total del robot en metros (m). Debe ser menor que el ancho de los pasillos por donde circula."),
+            CampoSpec("radio_giro_m", "Radio de giro (m)", "float", 0, 100, 3, 0.9, ayuda="Radio mínimo de giro en metros (m): espacio que necesita para dar una vuelta. Opcional."),
+            CampoSpec("origen_datos", "Origen de datos", "combo", ayuda="«Real» si son de un equipo medido o de ficha técnica, «Sintético» si son supuestos, «Diseño / conceptual» si es una propuesta de diseño."),
         ]
         self.panel = CrudPanel("Nuevo perfil de robot", "Perfiles de robot registrados", campos,
                                ["ID", "Nombre", "Cap. kg", "Vel. m/s", "Ancho m", "Radio giro m", "Origen"],

@@ -554,3 +554,17 @@ def test_validacion_muestra_estados_en_espanol(ui):
     assert v.k_pass._titulo.text() == "APROBADO" and v.k_warn._titulo.text() == "ADVERTENCIA" and v.k_fail._titulo.text() == "FALLA"
     estados = {v.tabla.item(r, 0).text() for r in range(v.tabla.rowCount())}
     assert estados and estados <= {"APROBADO", "ADVERTENCIA", "FALLA"}
+
+
+def test_todos_los_campos_tienen_ayuda_emergente():
+    """Cada campo de formulario explica qué se debe escribir (unidad, rango, ejemplo)."""
+    import re
+    import glob
+    import os
+    carpeta = os.path.join(os.path.dirname(__file__), "..", "textilflow", "presentation", "views")
+    total = 0
+    for ruta in glob.glob(os.path.join(carpeta, "*.py")):
+        fuente = open(ruta, encoding="utf-8").read()
+        total += len(re.findall(r'CampoSpec\("', fuente))
+        assert len(re.findall(r'ayuda="', fuente)) >= len(re.findall(r'CampoSpec\("', fuente)), ruta
+    assert total >= 60
