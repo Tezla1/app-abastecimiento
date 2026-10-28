@@ -1,13 +1,17 @@
-from ...domain.entities import FUNCIONES, Conexion, Estacion, Pedido, RutaProceso, TipoPrenda
-from ..theme import fmt
+from PyQt6.QtWidgets import QApplication
+
+from ...domain.entities import (ESTADOS_COMPRA, FUNCIONES, Conexion, Estacion, Pedido, RutaProceso, SolicitudCompra,
+                                Stock, TipoPrenda)
+from ..theme import COLOR_NIVEL, fmt
 from .base import Controlador, construir_red, etiqueta_estacion
 
 
 class LayoutController(Controlador):
-    def __init__(self, vista, ctx, layout, procesos):
+    def __init__(self, vista, ctx, layout, procesos, inventario):
         super().__init__(vista, ctx)
         self._layout = layout
         self._procesos = procesos
+        self._inv = inventario
         self._resaltar = frozenset()
         e, c = vista.estaciones, vista.conexiones
         pr, ru, pe = vista.prendas, vista.rutas, vista.pedidos
@@ -20,6 +24,15 @@ class LayoutController(Controlador):
         pe.seleccionado.connect(self._cargar_pedido)
         pe.guardar_solicitado.connect(self._guardar_pedido)
         pe.eliminar_solicitado.connect(lambda i: self._eliminar(self._procesos.eliminar_pedido, i, pe, "Pedido eliminado."))
+        iv, co = vista.inventario, vista.compras
+        iv.seleccionado.connect(self._cargar_stock)
+        iv.guardar_solicitado.connect(self._guardar_stock)
+        iv.eliminar_solicitado.connect(lambda i: self._eliminar(self._inv.eliminar_stock, i, iv, "Registro de inventario eliminado."))
+        co.seleccionado.connect(self._cargar_compra)
+        co.guardar_solicitado.connect(self._guardar_compra)
+        co.eliminar_solicitado.connect(lambda i: self._eliminar(self._inv.eliminar_compra, i, co, "Solicitud eliminada."))
+        vista.aviso_solicitado.connect(self._generar_aviso)
+        vista.copiar_aviso_solicitado.connect(self._copiar_aviso)
         e.seleccionado.connect(self._cargar_estacion)
         e.guardar_solicitado.connect(self._guardar_estacion)
         e.eliminar_solicitado.connect(lambda i: self._eliminar(self._layout.eliminar_estacion, i, e, "Estación eliminada."))
@@ -55,10 +68,82 @@ class LayoutController(Controlador):
         self.vista.pedidos.set_filas([[p.id, nombres.get(p.tipo_prenda_id, "?"), p.cantidad, p.prioridad,
                                        fmt(p.llegada_min, 0), fmt(p.vencimiento_min, 0) if p.vencimiento_min else "—",
                                        p.origen_datos] for p in peds], [p.id for p in peds])
+        self._mostrar_inventario(tid, nombres)
         self.vista.conexiones.set_filas(
             [[c.id, c.origen, c.destino, fmt(c.distancia_m), fmt(c.ancho_m), "↔" if c.bidireccional else "→"]
              for c in con], [c.id for c in con])
         self.vista.dibujar_red(*construir_red(self._layout, tid, self._resaltar, self.ctx.cerrados()))
+
+    def _mostrar_inventario(self, tid, nombres: dict) -> None:
+        stocks = self._inv.listar_stock(tid) if tid else []
+        filas, colores = [], []
+        for s in stocks:
+            b = self._inv.balance(tid, s)
+            if s.unidades <= 0:
+                estado, nivel = "Agotado", "CRÍTICA"
+            elif b["falta"] > 0:
+                estado, nivel = f"No alcanza (faltan {b['falta']})", "ALTA"
+            elif s.unidades <= s.stock_minimo:
+                estado, nivel = "Stock bajo", "MEDIA"
+            else:
+                estado, nivel = "Suficiente", None
+            filas.append([s.id, nombres.get(s.tipo_prenda_id, "?"), s.unidades, s.stock_minimo, b["demanda"],
+                          b["en_compra"], b["falta"], estado])
+            colores.append(COLOR_NIVEL.get(nivel) if nivel else None)
+        self.vista.inventario.set_filas(filas, [s.id for s in stocks], colores)
+        compras = self._inv.listar_compras(tid) if tid else []
+        self.vista.compras.set_filas(
+            [[c.id, c.registrado or "—", nombres.get(c.tipo_prenda_id, "?"), c.cantidad,
+              ESTADOS_COMPRA[c.estado].split(" ·")[0], c.nota or "—"] for c in compras], [c.id for c in compras])
+
+    def _cargar_stock(self, id_: int) -> None:
+        s = next((x for x in self._inv.listar_stock(self.ctx.taller_id) if x.id == id_), None)
+        if s:
+            self.vista.inventario.set_valores(vars(s), s.id)
+
+    def _guardar_stock(self, d: dict) -> None:
+        tid = self._exigir_taller()
+        if tid is None:
+            return
+        g = self._intentar(self._inv.guardar_stock, Stock(tid, d["tipo_prenda_id"] or 0, d["unidades"], d["stock_minimo"], d["id"]))
+        if g:
+            self.vista.inventario.set_valores(vars(g), g.id)
+            self._tras_cambio(self.vista.inventario, "Inventario guardado.")
+
+    def _cargar_compra(self, id_: int) -> None:
+        c = next((x for x in self._inv.listar_compras(self.ctx.taller_id) if x.id == id_), None)
+        if c:
+            self.vista.compras.set_valores(vars(c), c.id)
+
+    def _guardar_compra(self, d: dict) -> None:
+        tid = self._exigir_taller()
+        if tid is None:
+            return
+        c = SolicitudCompra(tid, d["tipo_prenda_id"] or 0, d["cantidad"], d["estado"] or "PENDIENTE", d["nota"], "", d["id"])
+        g = self._intentar(self._inv.guardar_compra, c)
+        if g:
+            self.vista.compras.set_valores(vars(g), g.id)
+            self._tras_cambio(self.vista.compras, "Solicitud de compra guardada."
+                              + (" Las unidades se sumaron al inventario." if g.estado == "RECIBIDA" else ""))
+
+    def _generar_aviso(self, tipo_id: int) -> None:
+        tid = self._exigir_taller()
+        if tid is None:
+            return
+        g = self._intentar(self._inv.generar_aviso, tid, tipo_id)
+        if g:
+            self.vista.compras.set_valores(vars(g), g.id)
+            self._tras_cambio(self.vista.compras, f"Aviso de compra creado por {g.cantidad} unidades "
+                              "(pestaña «Compras»). Copie el aviso y entréguelo a Compras.")
+
+    def _copiar_aviso(self) -> None:
+        tid = self._exigir_taller()
+        if tid is None:
+            return
+        texto = self._intentar(self._inv.aviso_para_compras, tid)
+        if texto:
+            QApplication.clipboard().setText(texto)
+            self.vista.info("Aviso copiado al portapapeles. Péguelo en un correo o mensaje para Compras.")
 
     def _tras_cambio(self, panel, mensaje: str) -> None:
         self.refrescar()

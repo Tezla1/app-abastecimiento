@@ -1,13 +1,14 @@
 from typing import Callable, Optional
 
 from ...application.errors import ErrorDeNegocio
-from ...domain.entities import FUNCIONES, ORIGENES_DATOS, TIPOS_ESCENARIO
+from ...domain.entities import ESTADOS_COMPRA, FUNCIONES, ORIGENES_DATOS, TIPOS_ESCENARIO
 from ..context import AppContext
 from ..viewmodels import AnimacionVM, ArcoVM, NodoVM
 
 ORIGENES_OPC = list(ORIGENES_DATOS.items())
 FUNCIONES_OPC = list(FUNCIONES.items())
 TIPOS_OPC = list(TIPOS_ESCENARIO.items())
+COMPRAS_OPC = list(ESTADOS_COMPRA.items())
 
 
 class Controlador:

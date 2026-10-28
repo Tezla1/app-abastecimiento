@@ -310,6 +310,52 @@ MOTIVOS_CIERRE = {
 }
 
 
+ESTADOS_COMPRA = {
+    "PENDIENTE": "Pendiente · por pedir a Compras",
+    "PEDIDA": "Pedida · en camino",
+    "RECIBIDA": "Recibida · ya está en el almacén",
+    "CANCELADA": "Cancelada",
+}
+
+
+@dataclass
+class Stock:
+    """Unidades disponibles en el almacén del taller para una prenda, y el mínimo que dispara el aviso."""
+    taller_id: int
+    tipo_prenda_id: int
+    unidades: int = 0
+    stock_minimo: int = 0
+    id: Optional[int] = None
+
+    def validar(self) -> list[str]:
+        e = []
+        if self.unidades < 0:
+            e.append("Las unidades en el almacén no pueden ser negativas.")
+        if self.stock_minimo < 0:
+            e.append("El stock mínimo no puede ser negativo.")
+        return e
+
+
+@dataclass
+class SolicitudCompra:
+    """Aviso que el operador genera para que Compras haga el pedido de reposición."""
+    taller_id: int
+    tipo_prenda_id: int
+    cantidad: int
+    estado: str = "PENDIENTE"
+    nota: str = ""
+    registrado: str = ""
+    id: Optional[int] = None
+
+    def validar(self) -> list[str]:
+        e = []
+        if self.cantidad < 1:
+            e.append("La cantidad a comprar debe ser al menos 1 unidad.")
+        if self.estado not in ESTADOS_COMPRA:
+            e.append("Estado de la compra no válido.")
+        return e
+
+
 @dataclass
 class Cierre:
     taller_id: int

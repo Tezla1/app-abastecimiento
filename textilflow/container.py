@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from .application.use_cases.alertas import ObtenerAlertas
 from .application.use_cases.analisis import (CalcularIndicadores, CompararEscenarios, EjecutarReplicas,
                                              EjecutarSimulacion, ExportarReporte)
+from .application.use_cases.inventario import GestionarInventario
 from .application.use_cases.cierres import ExportarContingencias, GestionarCierres, InformeCierres
 from .application.use_cases.contexto import CargadorContexto
 from .application.use_cases.dashboard import ObtenerDashboard
@@ -48,6 +49,7 @@ class Container:
     datos: GestionarDatos
     demo: CargarDatosDemo
     cierres: GestionarCierres
+    inventario: GestionarInventario
     informe_cierres: InformeCierres
     exportar_contingencias: ExportarContingencias
     respaldos: Respaldos = None
@@ -70,7 +72,9 @@ def construir(ruta_db: str = ":memory:") -> Container:
     escenarios = GestionarEscenarios(r_esc, r_est, r_rob)
     simulacion = EjecutarSimulacion(r_esc, r_reg, ctx)
     comparacion = CompararEscenarios(r_esc, r_reg, ctx)
-    alertas = ObtenerAlertas(r_esc, r_reg, ctx)
+    inventario = GestionarInventario(R.SqliteStockRepository(db), R.SqliteSolicitudCompraRepository(db), r_ped, r_tip,
+                                    r_taller)
+    alertas = ObtenerAlertas(r_esc, r_reg, ctx, inventario)
     cierres = GestionarCierres(r_cie, r_est)
     informe_cierres = InformeCierres(r_esc, ctx)
     datos = GestionarDatos(talleres, layout, procesos, OpenpyxlGateway(), R.SqliteSnapshotRepository(db), RlrArchive())
@@ -86,7 +90,8 @@ def construir(ruta_db: str = ":memory:") -> Container:
         validacion=ValidarProyecto(r_taller, r_est, r_con, r_tip, r_rut, r_ped, r_rob, r_esc, r_reg, r_par),
         dashboard=ObtenerDashboard(r_taller, r_est, r_con, r_tip, r_rut, r_ped, r_esc, r_reg, alertas, ctx),
         datos=datos,
-        demo=CargarDatosDemo(talleres, layout, procesos, robots, escenarios, simulacion, parametros),
+        demo=CargarDatosDemo(talleres, layout, procesos, robots, escenarios, simulacion, parametros, inventario),
+        inventario=inventario,
         cierres=cierres, informe_cierres=informe_cierres,
         exportar_contingencias=ExportarContingencias(cierres, informe_cierres, ArchivoReportExporter()),
         respaldos=respaldos,

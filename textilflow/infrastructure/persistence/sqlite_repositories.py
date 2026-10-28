@@ -4,7 +4,7 @@ from typing import Generic, Optional, TypeVar
 
 from ...application import ports
 from ...domain.entities import (Cierre, Conexion, Escenario, Estacion, Parametro, Pedido, Registro,
-                                Robot, RutaProceso, Taller, TipoPrenda)
+                                Robot, RutaProceso, SolicitudCompra, Stock, Taller, TipoPrenda)
 from .database import TABLAS, Database
 
 T = TypeVar("T")
@@ -87,6 +87,20 @@ class SqliteCierreRepository(_SqliteRepo[Cierre], ports.CierreRepository):
     tabla, entidad = "cierre", Cierre
 
     def list_by_taller(self, taller_id: int) -> list[Cierre]:
+        return self._list_where("taller_id", taller_id)
+
+
+class SqliteStockRepository(_SqliteRepo[Stock], ports.StockRepository):
+    tabla, entidad = "stock", Stock
+
+    def list_by_taller(self, taller_id: int) -> list[Stock]:
+        return self._list_where("taller_id", taller_id)
+
+
+class SqliteSolicitudCompraRepository(_SqliteRepo[SolicitudCompra], ports.SolicitudCompraRepository):
+    tabla, entidad = "solicitud_compra", SolicitudCompra
+
+    def list_by_taller(self, taller_id: int) -> list[SolicitudCompra]:
         return self._list_where("taller_id", taller_id)
 
 

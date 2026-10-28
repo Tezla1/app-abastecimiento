@@ -9,7 +9,7 @@ from ..container import Container
 from . import theme
 from .context import AppContext
 from ..domain.entities import MOTIVOS_CIERRE, POLITICAS
-from .controllers.base import FUNCIONES_OPC, ORIGENES_OPC, TIPOS_OPC
+from .controllers.base import COMPRAS_OPC, FUNCIONES_OPC, ORIGENES_OPC, TIPOS_OPC
 from .controllers.comparacion_controller import ComparacionController
 from .controllers.contingencias_controller import ContingenciasController
 from .controllers.dashboard_controller import DashboardController
@@ -84,7 +84,8 @@ class AplicacionController:
         fabricas = [
             f(DashboardView, DashboardController, serv=("dashboard", "layout")),
             f(TallerView, TallerController, ORIGENES_OPC, serv=("talleres",)),
-            f(LayoutView, LayoutController, FUNCIONES_OPC, ORIGENES_OPC, serv=("layout", "procesos")),
+            f(LayoutView, LayoutController, FUNCIONES_OPC, ORIGENES_OPC, COMPRAS_OPC,
+              serv=("layout", "procesos", "inventario")),
             f(ModeloView, ModeloController, serv=("escenarios", "indicadores", "simulacion", "parametros")),
             f(RobotView, RobotController, ORIGENES_OPC, serv=("robots",)),
             f(SimulacionView, SimulacionController, TIPOS_OPC, POLITICAS_OPC,

@@ -68,6 +68,18 @@ CREATE TABLE IF NOT EXISTS cierre(
     desde_min REAL NOT NULL DEFAULT 0, hasta_min REAL NOT NULL DEFAULT 0,
     bloquea_paso INTEGER NOT NULL DEFAULT 1, vigente INTEGER NOT NULL DEFAULT 1,
     registrado TEXT NOT NULL DEFAULT '');
+CREATE TABLE IF NOT EXISTS stock(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    taller_id INTEGER NOT NULL REFERENCES taller(id) ON DELETE CASCADE,
+    tipo_prenda_id INTEGER NOT NULL REFERENCES tipo_prenda(id) ON DELETE CASCADE,
+    unidades INTEGER NOT NULL DEFAULT 0, stock_minimo INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(taller_id, tipo_prenda_id));
+CREATE TABLE IF NOT EXISTS solicitud_compra(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    taller_id INTEGER NOT NULL REFERENCES taller(id) ON DELETE CASCADE,
+    tipo_prenda_id INTEGER NOT NULL REFERENCES tipo_prenda(id) ON DELETE CASCADE,
+    cantidad INTEGER NOT NULL, estado TEXT NOT NULL DEFAULT 'PENDIENTE',
+    nota TEXT NOT NULL DEFAULT '', registrado TEXT NOT NULL DEFAULT '');
 CREATE TABLE IF NOT EXISTS parametro(
     id INTEGER PRIMARY KEY AUTOINCREMENT, clave TEXT NOT NULL UNIQUE, valor REAL NOT NULL,
     unidad TEXT NOT NULL DEFAULT '', descripcion TEXT NOT NULL DEFAULT '',
@@ -75,7 +87,7 @@ CREATE TABLE IF NOT EXISTS parametro(
 """
 
 TABLAS = ("taller", "robot", "tipo_prenda", "estacion", "conexion", "ruta_proceso", "pedido",
-          "escenario", "registro", "cierre", "parametro")
+          "escenario", "registro", "cierre", "stock", "solicitud_compra", "parametro")
 
 
 def _es_esquema_antiguo(ruta: str) -> bool:

@@ -14,10 +14,12 @@ class LayoutView(PageView):
     ruta_solicitada = pyqtSignal(str, str, float)
     limpiar_ruta_solicitado = pyqtSignal()
     pestana_cambiada = pyqtSignal()
+    aviso_solicitado = pyqtSignal(int)
+    copiar_aviso_solicitado = pyqtSignal()
 
-    def __init__(self, funciones: list[tuple], origenes: list[tuple]):
+    def __init__(self, funciones: list[tuple], origenes: list[tuple], estados_compra: list[tuple]):
         super().__init__("Layout y movimientos",
-                         "Defina las áreas (Almacén → … → Despacho), los pasillos, las prendas con sus ramas de proceso y los pedidos del taller activo.",
+                         "Defina las áreas (Almacén → … → Despacho), los pasillos, las prendas con sus ramas de proceso y los pedidos y el inventario del taller activo.",
                          theme.AZUL)
         self.tabs = QTabWidget()
         self.tabs.tabBar().setUsesScrollButtons(True)      # en ventanas angostas las pestañas se desplazan en vez de ensanchar la página
@@ -89,11 +91,44 @@ class LayoutView(PageView):
             ["ID", "Prenda", "Cantidad", "Prior.", "Llegada", "Límite", "Datos"], theme.AZUL, estirar=1)
         self.pedidos.set_opciones("origen_datos", origenes)
 
+        self.inventario = CrudPanel(
+            "Unidades en el almacén", "Inventario del taller",
+            [CampoSpec("tipo_prenda_id", "Prenda", "combo", ayuda="Prenda de la que se registran las unidades disponibles."),
+             CampoSpec("unidades", "Unidades en almacén", "int", 0, 10_000_000, defecto=0,
+                       ayuda="Cuántas unidades de esta prenda hay hoy disponibles en el almacén del taller (entero ≥ 0). Si llega a 0 se genera una alerta crítica."),
+             CampoSpec("stock_minimo", "Stock mínimo (aviso)", "int", 0, 10_000_000, defecto=0,
+                       ayuda="Cantidad a partir de la cual se avisa que hay que reponer. Al comprar se pide lo necesario para cubrir los pedidos y dejar este mínimo.")],
+            ["ID", "Prenda", "En almacén", "Mínimo", "Pedidos", "En compra", "Faltan", "Estado"], theme.NARANJA, estirar=1)
+        self.nota_inventario = QLabel("Registre cuántas unidades hay en el almacén. Si no alcanzan para los pedidos o se "
+                                      "agotan, aparece una alerta y puede generar el aviso de compra para Compras.")
+        self.nota_inventario.setObjectName("tenue")
+        self.nota_inventario.setWordWrap(True)
+        self.btn_aviso = QPushButton("Generar aviso de compra")
+        self.btn_aviso.setToolTip("Crea una solicitud de compra pendiente con la cantidad que falta para cubrir los pedidos y el stock mínimo.")
+        self.inventario.insertar_bajo_formulario(self.btn_aviso)
+        self.inventario.insertar_bajo_formulario(self.nota_inventario)
+        self.btn_aviso.clicked.connect(lambda: self.aviso_solicitado.emit(int(self.inventario.widget("tipo_prenda_id").currentData() or 0)))
+
+        self.compras = CrudPanel(
+            "Aviso de compra", "Solicitudes de compra",
+            [CampoSpec("tipo_prenda_id", "Prenda", "combo", ayuda="Prenda que se debe comprar."),
+             CampoSpec("cantidad", "Cantidad (unidades)", "int", 1, 10_000_000, defecto=100, ayuda="Unidades que Compras debe pedir (entero ≥ 1)."),
+             CampoSpec("estado", "Estado", "combo", ayuda="Pendiente: Compras aún no pide. Pedida: ya se hizo el pedido. Recibida: llegó y se suma al stock (no se puede revertir). Cancelada: no se comprará."),
+             CampoSpec("nota", "Nota", "multiline", ayuda="Proveedor, fecha estimada de llegada, número de orden u otra observación. Opcional.")],
+            ["ID", "Fecha", "Prenda", "Cantidad", "Estado", "Nota"], theme.NARANJA, estirar=5)
+        self.compras.set_opciones("estado", estados_compra)
+        self.btn_copiar = QPushButton("Copiar aviso para Compras")
+        self.btn_copiar.setToolTip("Copia al portapapeles un mensaje con todo lo que está pendiente de pedir, listo para enviar a Compras.")
+        self.compras.insertar_bajo_formulario(self.btn_copiar)
+        self.btn_copiar.clicked.connect(self.copiar_aviso_solicitado.emit)
+
         self.tabs.addTab(self.estaciones, "Estaciones / Nodos")
         self.tabs.addTab(self.conexiones, "Conexiones / Arcos")
         self.tabs.addTab(self.prendas, "Prendas")
         self.tabs.addTab(self.rutas, "Rutas de proceso")
         self.tabs.addTab(self.pedidos, "Pedidos")
+        self.tabs.addTab(self.inventario, "Inventario")
+        self.tabs.addTab(self.compras, "Compras")
         self.tabs.addTab(self._crear_vista_2d(), "Vista 2D")
         self.tabs.currentChanged.connect(lambda _: self.pestana_cambiada.emit())
         self.cuerpo.addWidget(self.tabs, 1)
@@ -173,6 +208,8 @@ class LayoutView(PageView):
     def set_prendas(self, opciones: list[tuple]) -> None:
         self.rutas.set_opciones("tipo_prenda_id", opciones)
         self.pedidos.set_opciones("tipo_prenda_id", opciones)
+        self.inventario.set_opciones("tipo_prenda_id", opciones)
+        self.compras.set_opciones("tipo_prenda_id", opciones)
 
     def set_ayuda_rutas(self, texto: str) -> None:
         self.nota_rutas.setText(texto)

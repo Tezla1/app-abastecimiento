@@ -26,7 +26,7 @@ Doble clic en `construir_exe.bat` (necesita Python 3.11+ instalado). Genera `dis
 ## Cambios de la 4.0.7d (beta)
 
 Ventana de error descriptiva, respaldos automáticos y aviso al guardar, tareas largas con progreso, arranque más rápido,
-animación que se pausa y páginas adaptables. Detalle y cómo funciona cada cambio: **CAMBIOS_4.0.7g.md**.
+animación que se pausa y páginas adaptables. Detalle y cómo funciona cada cambio: **CAMBIOS_4.0.7h.md**.
 
 ## Qué hay de nuevo en 4.0
 

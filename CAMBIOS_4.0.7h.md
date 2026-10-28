@@ -1,3 +1,28 @@
+# TextilFlow 4.0.7h
+
+## Inventario del taller, alertas de stock y avisos de compra
+Pedido: avisar cuando el taller se queda sin unidades, qué hacer y que el operador genere un aviso para que Compras haga el pedido.
+(Es a nivel de **taller y prenda**, no de estación.)
+
+**Cómo funciona** (Layout y movimientos → pestañas «Inventario» y «Compras»)
+1. **Inventario:** por cada prenda se registran las *unidades en almacén* y un *stock mínimo (aviso)*. La tabla compara con los pedidos del taller y muestra: En almacén, Mínimo, Pedidos, En compra, Faltan y Estado (Suficiente / Stock bajo / No alcanza / Agotado).
+2. **Alertas automáticas** (insignia 🔔, Dashboard y Requerimientos → Alertas), cada una con su posible solución:
+   - `STOCK-AGOTADO` (CRÍTICA): 0 unidades en el almacén.
+   - `STOCK-INSUF` (ALTA): las unidades no alcanzan para la suma de los pedidos.
+   - `STOCK-BAJO` (MEDIA): quedan unidades iguales o por debajo del mínimo.
+   - `COMPRA-PENDIENTE` (MEDIA): hay un aviso de compra que Compras aún no ha pedido.
+3. **Generar aviso de compra** (botón en Inventario): crea una solicitud *Pendiente* por la cantidad necesaria = pedidos + stock mínimo − unidades en almacén − lo que ya viene en compra.
+4. **Compras:** la solicitud pasa por Pendiente → Pedida → Recibida (o Cancelada). Al marcarla **Recibida** las unidades se suman solas al inventario; una solicitud recibida o cancelada ya no se puede modificar. Mientras haya compra en camino, la alerta baja a MEDIA y ya no pide comprar de más.
+5. **Copiar aviso para Compras:** copia al portapapeles un mensaje listo para enviar (taller, fecha, prendas y cantidades pendientes).
+
+**Otros**
+- El taller de ejemplo trae stock: las camisas (400 unidades) no alcanzan para los 550 pedidos y se genera la alerta con la solución «comprar 200 unidades».
+- Los datos viajan en el proyecto `.rlr` y en los respaldos; los proyectos y bases antiguos se abren sin cambios (tablas nuevas `stock` y `solicitud_compra`).
+- El stock no se descuenta durante la simulación (las alertas comparan contra los pedidos); la importación/exportación a Excel todavía no incluye inventario.
+- Técnico: `domain/entities.py` (`Stock`, `SolicitudCompra`), `domain/alertas.py` (`balance_stock`, `alertas_stock`), `application/use_cases/inventario.py`, `layout_view.py`/`layout_controller.py`. 101 tests.
+
+---
+
 # TextilFlow 4.0.7g
 
 ## Alertas con posible solución + pestaña «Cuellos de botella»

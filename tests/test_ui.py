@@ -579,3 +579,22 @@ def test_pestana_cuellos_de_botella_lista_cuellos_con_solucion(ui):
     assert "cuello" in v.nota_cuellos.text()
     col_solucion = v.t_cuellos.columnCount() - 1
     assert all(v.t_cuellos.item(i, col_solucion).text() not in ("", "—") for i in range(v.t_cuellos.rowCount()))
+
+
+def test_inventario_y_compras_en_pantalla(ui):
+    con_demo(ui)
+    ctl = ui.controladores[LAYOUT]
+    ctl.refrescar()
+    v = ctl.vista
+    assert v.inventario.tabla.rowCount() == 4 and v.compras.tabla.rowCount() == 0
+    camisa = next(i for i in range(v.inventario.tabla.rowCount()) if v.inventario.tabla.item(i, 1).text() == "Camisa")
+    assert "faltan 150" in v.inventario.tabla.item(camisa, 7).text()
+    # el operador genera el aviso y lo copia para Compras
+    v.inventario.widget("tipo_prenda_id").setCurrentIndex(v.inventario.widget("tipo_prenda_id").findText("Camisa"))
+    v.aviso_solicitado.emit(v.inventario.widget("tipo_prenda_id").currentData())
+    assert v.compras.tabla.rowCount() == 1 and not ui.errores
+    v.copiar_aviso_solicitado.emit()
+    from PyQt6.QtWidgets import QApplication
+    assert "Camisa: 200 unidades" in QApplication.clipboard().text()
+    # sin avisos pendientes pide algo coherente en vez de fallar
+    ctl._intentar(lambda: None)

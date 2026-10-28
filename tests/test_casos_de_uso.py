@@ -463,3 +463,78 @@ def test_alertas_de_configuracion_traen_solucion(app):
     alertas = alertas_estaticas([], [], [], [], [])
     assert {a.codigo for a in alertas} == {"CFG-ALM", "CFG-DES"}
     assert all(a.solucion for a in alertas)
+
+
+def _tipo(app, nombre):
+    return next(t for t in app.procesos.listar_tipos() if t.nombre == nombre)
+
+
+def test_demo_trae_stock_y_alerta_de_camisas_que_no_alcanzan(demo):
+    app, taller = demo
+    camisa = _tipo(app, "Camisa")
+    s = next(x for x in app.inventario.listar_stock(taller.id) if x.tipo_prenda_id == camisa.id)
+    b = app.inventario.balance(taller.id, s)
+    assert (s.unidades, b["demanda"], b["falta"]) == (400, 550, 150)
+    assert b["sugerida"] == 200          # 150 que faltan + 50 de mínimo
+    a = next(x for x in app.alertas.execute(taller.id) if x.codigo == "STOCK-INSUF")
+    assert a.elemento == "Camisa" and "200" in a.solucion and a.solucion
+
+
+def test_taller_sin_unidades_genera_alerta_critica_y_aviso_de_compra(demo):
+    from textilflow.domain.entities import Stock
+    app, taller = demo
+    pant = _tipo(app, "Pantalón")
+    s = next(x for x in app.inventario.listar_stock(taller.id) if x.tipo_prenda_id == pant.id)
+    app.inventario.guardar_stock(Stock(taller.id, pant.id, 0, 30, s.id))
+    a = next(x for x in app.alertas.execute(taller.id) if x.codigo == "STOCK-AGOTADO")
+    assert a.nivel == "CRÍTICA" and a.elemento == "Pantalón"
+    aviso = app.inventario.generar_aviso(taller.id, pant.id)
+    assert aviso.estado == "PENDIENTE" and aviso.cantidad == 230      # 200 de pedidos + 30 de mínimo
+    codigos = {x.codigo for x in app.alertas.execute(taller.id)}
+    assert "COMPRA-PENDIENTE" in codigos
+    # con la compra en camino la alerta baja a MEDIA y ya no pide comprar más
+    a = next(x for x in app.alertas.execute(taller.id) if x.codigo == "STOCK-AGOTADO")
+    assert a.nivel == "MEDIA" and "en compra" in a.detalle
+    with pytest.raises(ErrorDeNegocio):
+        app.inventario.generar_aviso(taller.id, pant.id)
+    texto = app.inventario.aviso_para_compras(taller.id)
+    assert "Pantalón: 230 unidades" in texto and taller.nombre in texto
+
+
+def test_recibir_la_compra_suma_al_stock_y_no_se_puede_modificar(demo):
+    app, taller = demo
+    camisa = _tipo(app, "Camisa")
+    aviso = app.inventario.generar_aviso(taller.id, camisa.id)
+    aviso.estado = "PEDIDA"
+    app.inventario.guardar_compra(aviso)
+    aviso.estado = "RECIBIDA"
+    app.inventario.guardar_compra(aviso)
+    s = next(x for x in app.inventario.listar_stock(taller.id) if x.tipo_prenda_id == camisa.id)
+    assert s.unidades == 600
+    assert not [a for a in app.alertas.execute(taller.id) if a.codigo.startswith(("STOCK", "COMPRA"))]
+    aviso.estado = "PENDIENTE"
+    with pytest.raises(ErrorDeNegocio):
+        app.inventario.guardar_compra(aviso)
+
+
+def test_stock_una_fila_por_prenda_y_validaciones(demo):
+    from textilflow.domain.entities import Stock
+    app, taller = demo
+    camisa = _tipo(app, "Camisa")
+    n = len(app.inventario.listar_stock(taller.id))
+    app.inventario.guardar_stock(Stock(taller.id, camisa.id, 10, 5))
+    assert len(app.inventario.listar_stock(taller.id)) == n
+    with pytest.raises(ErrorDeNegocio):
+        app.inventario.guardar_stock(Stock(taller.id, camisa.id, -1, 0))
+    with pytest.raises(ErrorDeNegocio):
+        app.inventario.generar_aviso(taller.id, 99999)
+
+
+def test_inventario_viaja_en_el_proyecto(demo, tmp_path):
+    app, taller = demo
+    ruta = str(tmp_path / "p.rlr")
+    app.datos.exportar_proyecto(ruta)
+    app.talleres.eliminar(taller.id)
+    assert not app.inventario.listar_stock(taller.id)
+    app.datos.restaurar_proyecto(ruta)
+    assert len(app.inventario.listar_stock(taller.id)) == 4

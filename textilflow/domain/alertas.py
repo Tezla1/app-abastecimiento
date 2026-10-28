@@ -3,7 +3,8 @@ from dataclasses import dataclass
 from typing import Iterable, Optional
 
 from .analisis import EstadoEstacion, IndicadoresProceso, carga_de, cuello_de_botella
-from .entities import (MOTIVOS_CIERRE, PREFIJO_GRUPO, Cierre, Escenario, Estacion, Pedido, RutaProceso, TipoPrenda)
+from .entities import (MOTIVOS_CIERRE, PREFIJO_GRUPO, Cierre, Escenario, Estacion, Pedido, RutaProceso,
+                       SolicitudCompra, Stock, TipoPrenda)
 from .normativa import ADVERTENCIA, INCUMPLE, Cumplimiento
 from .simulacion import ResultadoProceso
 
@@ -148,6 +149,57 @@ def alertas_cierres(cierres: Iterable[Cierre], estaciones: list[Estacion]) -> li
                                    "impacto. Para mitigarlo: reparta la carga con una estación gemela del mismo grupo "
                                    "(«@GRUPO»), cree una ruta alterna, programe el mantenimiento fuera de turno o "
                                    "adelante la reapertura. Si el cierre ya no aplica, desmarque «Cierre activo»."))
+    return out
+
+
+def balance_stock(s: Stock, pedidos: Iterable[Pedido], solicitudes: Iterable[SolicitudCompra]) -> dict:
+    """Cuentas de una prenda: demanda de los pedidos, lo que ya viene en compra y cuánto conviene comprar."""
+    demanda = sum(p.cantidad for p in pedidos if p.tipo_prenda_id == s.tipo_prenda_id)
+    abiertas = [c for c in solicitudes if c.tipo_prenda_id == s.tipo_prenda_id and c.estado in ("PENDIENTE", "PEDIDA")]
+    en_compra = sum(c.cantidad for c in abiertas)
+    falta = max(0, demanda - s.unidades)
+    # se pide lo que falta para cubrir los pedidos y dejar el stock mínimo, descontando lo que ya viene en camino
+    sugerida = max(0, demanda + s.stock_minimo - s.unidades - en_compra)
+    return dict(demanda=demanda, en_compra=en_compra, falta=falta, sugerida=sugerida,
+                sin_pedir=sum(c.cantidad for c in abiertas if c.estado == "PENDIENTE"))
+
+
+def alertas_stock(stocks: Iterable[Stock], tipos: list[TipoPrenda], pedidos: list[Pedido],
+                  solicitudes: list[SolicitudCompra]) -> list[Alerta]:
+    """Avisos de inventario del taller: sin unidades, unidades que no alcanzan para los pedidos y stock bajo."""
+    nombres = {t.id: t.nombre for t in tipos}
+    out: list[Alerta] = []
+    for s in stocks:
+        n = nombres.get(s.tipo_prenda_id, "?")
+        b = balance_stock(s, pedidos, solicitudes)
+        if s.unidades <= 0:
+            nivel, cod, tit = "CRÍTICA", "STOCK-AGOTADO", f"Sin unidades de {n} en el almacén"
+            det = f"El taller se quedó sin {n}; los pedidos necesitan {b['demanda']} unidades."
+        elif b["falta"] > 0:
+            nivel, cod, tit = "ALTA", "STOCK-INSUF", f"Las unidades de {n} no alcanzan para los pedidos"
+            det = f"Hay {s.unidades} unidades y los pedidos suman {b['demanda']}: faltan {b['falta']}."
+        elif s.unidades <= s.stock_minimo:
+            nivel, cod, tit = "MEDIA", "STOCK-BAJO", f"Stock bajo de {n}"
+            det = f"Quedan {s.unidades} unidades, igual o por debajo del mínimo ({s.stock_minimo})."
+        else:
+            continue
+        if b["sugerida"] > 0:
+            sol = (f"Genere el aviso de compra por {b['sugerida']} unidades en «Layout y movimientos → Inventario» "
+                   "(botón «Generar aviso de compra») y pásele la solicitud a Compras para que haga el pedido.")
+        else:
+            nivel = "MEDIA"
+            det += f" Ya hay {b['en_compra']} unidades en compra."
+            sol = ("Haga seguimiento con Compras hasta que llegue la mercancía y registre la recepción en la pestaña "
+                   "«Compras» para que se sume al stock.")
+        out.append(Alerta(nivel, cod, tit, det, n, "", sol))
+    for s in solicitudes:
+        if s.estado == "PENDIENTE":
+            n = nombres.get(s.tipo_prenda_id, "?")
+            out.append(Alerta("MEDIA", "COMPRA-PENDIENTE", f"Aviso de compra sin gestionar: {n}",
+                              f"Se pidió comprar {s.cantidad} unidades de {n} ({s.registrado or 'sin fecha'}) y Compras "
+                              "todavía no ha hecho el pedido.", n, "",
+                              "Entregue el aviso a Compras («Copiar aviso para Compras») y, cuando hagan el pedido, "
+                              "cambie su estado a «Pedida»."))
     return out
 
 

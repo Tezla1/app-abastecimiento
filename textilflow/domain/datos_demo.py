@@ -47,6 +47,14 @@ PEDIDOS = [
     ("Camisa", 250, 3, 100, 470),
 ]
 
+# unidades en el almacén y stock mínimo por prenda (las camisas no alcanzan para los 550 pedidos)
+STOCK = [
+    ("Camisa", 400, 50),
+    ("Pantalón", 250, 30),
+    ("Chaqueta", 120, 20),
+    ("Uniforme", 150, 20),
+]
+
 ROBOT = ("AMR Andina Experimental 01", 50.0, 0.70, 0.80, 0.90)
 
 ESCENARIOS = [

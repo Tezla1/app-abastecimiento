@@ -1,6 +1,6 @@
 from ...domain import normativa
 from ...domain import analisis
-from ...domain.alertas import Alerta, alertas_estaticas, alertas_prediccion, ordenar
+from ...domain.alertas import Alerta, alertas_estaticas, alertas_prediccion, alertas_stock, ordenar
 from ..ports import EscenarioRepository, RegistroRepository
 from .contexto import CargadorContexto
 from .nucleo import exigir_simulable, simular_completo
@@ -9,14 +9,18 @@ from ..errors import ErrorDeNegocio
 
 class ObtenerAlertas:
 
-    def __init__(self, escenarios: EscenarioRepository, registros: RegistroRepository, ctx: CargadorContexto):
-        self._esc, self._reg, self._ctx = escenarios, registros, ctx
+    def __init__(self, escenarios: EscenarioRepository, registros: RegistroRepository, ctx: CargadorContexto,
+                 inventario=None):
+        self._esc, self._reg, self._ctx, self._inv = escenarios, registros, ctx, inventario
 
     def execute(self, taller_id: int, simuladas_solo: bool = True) -> list[Alerta]:
         ctx = self._ctx.cargar(taller_id)
         escenarios = self._esc.list_by_taller(taller_id)
         cumpl = normativa.evaluar(ctx.par, ctx.taller, ctx.estaciones, ctx.conexiones, escenarios, ctx.robots)
         out = alertas_estaticas(ctx.estaciones, ctx.tipos, ctx.rutas, ctx.pedidos, cumpl)
+        if self._inv is not None:
+            out += alertas_stock(self._inv.listar_stock(taller_id), ctx.tipos, ctx.pedidos,
+                                 self._inv.listar_compras(taller_id))
         try:
             exigir_simulable(ctx)
         except ErrorDeNegocio:

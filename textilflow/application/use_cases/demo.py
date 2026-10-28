@@ -1,5 +1,5 @@
 from ...domain import datos_demo as D
-from ...domain.entities import Escenario, Pedido, Robot, RutaProceso, Taller
+from ...domain.entities import Escenario, Pedido, Robot, RutaProceso, Stock, Taller
 from .analisis import EjecutarSimulacion
 from .escenarios import GestionarEscenarios
 from .layout import GestionarLayout
@@ -14,7 +14,8 @@ NOMBRE_DEMO = D.NOMBRE_TALLER
 class CargarDatosDemo:
     def __init__(self, talleres: GestionarTalleres, layout: GestionarLayout, procesos: GestionarProcesos,
                  robots: GestionarRobots, escenarios: GestionarEscenarios, simulacion: EjecutarSimulacion,
-                 parametros: GestionarParametros):
+                 parametros: GestionarParametros, inventario=None):
+        self._inv = inventario
         self._t, self._l, self._p, self._r = talleres, layout, procesos, robots
         self._e, self._s, self._par = escenarios, simulacion, parametros
 
@@ -42,6 +43,9 @@ class CargarDatosDemo:
             self._p.guardar_ruta(RutaProceso(taller.id, ids[prenda], nombre, frac, seq))
         for prenda, cant, prio, llegada, venc in D.PEDIDOS:
             self._p.guardar_pedido(Pedido(taller.id, ids[prenda], cant, prio, llegada, venc))
+        if self._inv is not None:       # el ejemplo trae stock: las camisas no alcanzan para los pedidos
+            for prenda, unidades, minimo in D.STOCK:
+                self._inv.guardar_stock(Stock(taller.id, ids[prenda], unidades, minimo))
         robot = self._r.guardar(datos["robot"])
         s0, s1 = D.ESCENARIOS
         e0 = self._e.guardar(Escenario(taller.id, s0[0], s0[1], s0[2], 480, s0[3], s0[4], s0[5], s0[6], "A", True))
