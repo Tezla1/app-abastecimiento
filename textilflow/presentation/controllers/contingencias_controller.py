@@ -2,8 +2,14 @@ from pathlib import Path
 
 from ...application.informe_html import informe_a_html
 from ...domain.entities import MOTIVOS_CIERRE, Cierre
+from .. import theme
 from ..theme import ROJO, TENUE, fmt
 from .base import Controlador, etiqueta_estacion
+
+
+def paleta() -> dict:
+    return dict(fondo=theme.PANEL, texto=theme.TEXTO, tenue=theme.TENUE, borde=theme.BORDE, cabecera=theme.PANEL_2,
+                acento=theme.AZUL, alerta=theme.ROJO)
 
 
 class ContingenciasController(Controlador):
@@ -83,9 +89,9 @@ class ContingenciasController(Controlador):
             if not silencioso:
                 self.vista.error(str(e))
             else:
-                self.vista.navegador.setHtml(f"<p style='color:#6B7A90'>{e}</p>")
+                self.vista.navegador.setHtml(f"<p style='color:{theme.TENUE}'>{e}</p>")
             return
-        self._html = informe_a_html(inf)
+        self._html = informe_a_html(inf, paleta())
         self.vista.mostrar_informe(self._html)
 
     def _exportar(self, ruta: str) -> None:

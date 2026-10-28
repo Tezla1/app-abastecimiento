@@ -23,6 +23,9 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(f"{NOMBRE} v{VERSION} · Optimización de procesos industriales e intralogística")
         self.setWindowIcon(logo_icono())
         self.resize(1360, 840)
+        self.armar(paginas)
+
+    def armar(self, paginas: Sequence[tuple]) -> None:
         raiz = QWidget()
         raiz.setObjectName("raiz")
         self.setCentralWidget(raiz)

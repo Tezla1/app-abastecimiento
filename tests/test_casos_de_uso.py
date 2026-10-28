@@ -386,6 +386,7 @@ def test_informe_de_cierre(demo):
     inf = app.informe_cierres.execute(esc.id)
     assert inf.nivel in ("ALTO", "MEDIO", "BAJO") and inf.rutas and inf.recomendaciones
     assert any(r[0] == "COSTURA" for r in inf.reasignaciones)
+    assert "Ruta alternativa" in informe_a_html(inf)
     html = informe_a_html(inf)
     assert "Falla de maquinaria" in html and "Se quemó el motor" in html and "CO2" in html
 

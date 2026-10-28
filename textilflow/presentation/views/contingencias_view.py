@@ -54,8 +54,8 @@ class ContingenciasView(PageView):
         fila.addWidget(self.btn_exportar)
         cl.addLayout(fila)
         self.navegador = QTextBrowser()
-        self.navegador.setStyleSheet("background: #FFFFFF; border: 1px solid #C9D3E4; border-radius: 8px;")
-        self.navegador.setHtml("<p style='color:#6B7A90'>Registre un cierre y el informe aparece aquí.</p>")
+        self.navegador.setStyleSheet(f"background: {theme.PANEL}; border: 1px solid {theme.BORDE}; border-radius: 8px;")
+        self.navegador.setHtml(f"<p style='color:{theme.TENUE}'>Registre un cierre y el informe aparece aquí.</p>")
         cl.addWidget(self.navegador, 1)
         self.cuerpo.addWidget(caja, 1)
 

@@ -216,7 +216,7 @@ def test_contingencias_cerrar_recalcula_y_genera_informe(ui):
     p.btn_guardar.click()
     assert not ui.errores
     assert p.tabla.rowCount() == 1
-    assert "IMPACTO" in c.vista.navegador.toPlainText()
+    assert "Ruta alternativa" in c.vista.navegador.toPlainText()
     assert "CO" in ui.ctx.cerrados()
     nodos, _ = __import__("textilflow.presentation.controllers.base", fromlist=["x"]).construir_red(
         ui.c.layout, ui.ctx.taller_id, cerrados=ui.ctx.cerrados())
@@ -244,7 +244,9 @@ def test_cambio_de_tema_reconstruye_la_ventana(qapp):
     c.demo.execute()
     ap = Aplicacion(c, qapp)
     theme.aplicar("oscuro")
+    ventana = ap.controlador.ventana
     ap.alternar_tema()
+    assert ap.controlador.ventana is ventana
     assert theme.tema_actual() == "claro" and theme.BG == "#F1F4FA"
     assert ap.controlador.ventana.btn_tema.text().strip() == "Tema oscuro"
     ap.alternar_tema()

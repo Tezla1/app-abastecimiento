@@ -39,7 +39,7 @@ POLITICAS_OPC = list(POLITICAS.items())
 
 
 class AplicacionController:
-    def __init__(self, c: Container):
+    def __init__(self, c: Container, ventana=None):
         self.ctx = AppContext()
         self._c = c
         v = {
@@ -84,7 +84,13 @@ class AplicacionController:
             ("Guía y acerca de", theme.TURQUESA, v["guia"]),
         ]
         self._indice_req = [n for n, *_ in paginas].index("Requerimientos y normativas")
-        self.ventana = MainWindow(paginas)
+        if ventana is None:
+            self.ventana = MainWindow(paginas)
+        else:
+            for senal in (ventana.pagina_cambiada, ventana.taller_elegido, ventana.alertas_solicitadas, ventana.tema_solicitado):
+                senal.disconnect()
+            ventana.armar(paginas)
+            self.ventana = ventana
         self.ventana.pagina_cambiada.connect(self._pagina_cambio)
         self.ventana.taller_elegido.connect(self.ctx.activar)
         self.ventana.alertas_solicitadas.connect(lambda: self.ventana.ir_a(self._indice_req))
@@ -136,25 +142,20 @@ class Aplicacion:
         theme.aplicar(str(self._ajustes.value("tema", "oscuro")))
         self.controlador = None
         self._montar()
+        self.controlador.ventana.show()
 
-    def _montar(self, taller_id=None, pagina: int = 0, geometria=None) -> None:
+    def _montar(self, taller_id=None, pagina: int = 0, ventana=None) -> None:
         self._qapp.setStyleSheet(theme.hoja_de_estilo())
-        self.controlador = AplicacionController(self._c)
+        self.controlador = AplicacionController(self._c, ventana)
         v = self.controlador.ventana
         v.tema_solicitado.connect(self.alternar_tema)
         self.controlador.iniciar(taller_id)
         if pagina:
             v.ir_a(pagina)
-        if geometria is not None:
-            v.setGeometry(geometria)
-        v.show()
 
     def alternar_tema(self) -> None:
         viejo = self.controlador
-        taller, pagina, geom = viejo.ctx.taller_id, viejo.ventana.pagina_actual(), viejo.ventana.geometry()
         nuevo = "claro" if theme.tema_actual() == "oscuro" else "oscuro"
         self._ajustes.setValue("tema", nuevo)
         theme.aplicar(nuevo)
-        viejo.ventana.hide()
-        viejo.ventana.deleteLater()
-        self._montar(taller, pagina, geom)
+        self._montar(viejo.ctx.taller_id, viejo.ventana.pagina_actual(), viejo.ventana)
