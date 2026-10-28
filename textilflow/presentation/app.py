@@ -6,9 +6,9 @@ from PyQt6.QtWidgets import QApplication, QFileDialog, QMessageBox, QWidget
 
 from .. import registro
 from . import tareas
-from ..container import Container
+from ..container import Contenedor
 from . import theme
-from .context import AppContext
+from .context import ContextoApp
 from ..domain.entities import MOTIVOS_CIERRE, POLITICAS
 from .controllers.base import COMPRAS_OPC, FUNCIONES_OPC, ORIGENES_OPC, TIPOS_OPC
 from .controllers.comparacion_controller import ComparacionController
@@ -25,7 +25,7 @@ from .controllers.robot_controller import RobotController
 from .controllers.simulacion_controller import SimulacionController
 from .controllers.taller_controller import TallerController
 from .controllers.validacion_controller import ValidacionController
-from .main_window import MainWindow
+from .ventana_principal import VentanaPrincipal
 from .views.comparacion_view import ComparacionView
 from .views.contingencias_view import ContingenciasView
 from .views.dashboard_view import DashboardView
@@ -45,7 +45,6 @@ POLITICAS_OPC = list(POLITICAS.items())
 
 
 class _Paginas:
-    """Lista perezosa de controladores: cada página (vista + controlador) se construye la primera vez que se pide."""
 
     def __init__(self, fabricas, al_construir):
         self._fabricas = fabricas
@@ -71,8 +70,8 @@ class _Paginas:
 
 
 class AplicacionController:
-    def __init__(self, c: Container, ventana=None):
-        self.ctx = AppContext()
+    def __init__(self, c: Contenedor, ventana=None):
+        self.ctx = ContextoApp()
         self._c = c
         ctx = self.ctx
 
@@ -115,7 +114,7 @@ class AplicacionController:
         self.controladores = _Paginas(fabricas, self._pagina_lista)
         paginas = [(n, col, QWidget()) for n, col in nombres]
         if ventana is None:
-            self.ventana = MainWindow(paginas)
+            self.ventana = VentanaPrincipal(paginas)
         else:
             for senal in (ventana.pagina_cambiada, ventana.taller_elegido, ventana.alertas_solicitadas, ventana.tema_solicitado):
                 senal.disconnect()
@@ -126,7 +125,6 @@ class AplicacionController:
         self.ventana.alertas_solicitadas.connect(lambda: self.ventana.ir_a(self._indice_req))
         self.ctx.proveedor_cerrados = c.cierres.cerrados
         self.ctx.cierres_cambiaron.connect(self._actualizar_alertas)
-        # las alertas se actualizan solas al guardar datos (con una pequeña espera por si llegan varios cambios seguidos)
         self._temporizador_alertas = QTimer(self.ventana)
         self._temporizador_alertas.setSingleShot(True)
         self._temporizador_alertas.setInterval(250 if not os.environ.get("TEXTILFLOW_SINCRONO") else 0)
@@ -136,7 +134,6 @@ class AplicacionController:
         self.ctx.talleres_cambiaron.connect(self._recargar_talleres)
 
     def _pagina_lista(self, i: int, vista) -> None:
-        """Pone la vista recién construida en el lugar de su marcador."""
         if self.ventana is not None:
             self.ventana.poner_pagina(i, vista)
 
@@ -147,7 +144,7 @@ class AplicacionController:
     def iniciar(self, taller_id=None) -> None:
         talleres = self._c.talleres.listar()
         self.ctx.taller_id = taller_id if taller_id in {t.id for t in talleres} else (talleres[0].id if talleres else None)
-        self._recargar_talleres()          # ya refresca la página visible
+        self._recargar_talleres()
 
     def _recargar_talleres(self) -> None:
         talleres = self._c.talleres.listar()
@@ -177,46 +174,41 @@ class AplicacionController:
 
 
 class Aplicacion:
-    def __init__(self, c: Container, qapp):
+    def __init__(self, c: Contenedor, qapp):
         self._c, self._qapp = c, qapp
         self._ajustes = QSettings("TextilFlow", "TextilFlow")
         theme.aplicar(str(self._ajustes.value("tema", "oscuro")))
         self.controlador = None
-        # la ventana aparece enseguida y los datos se cargan justo después (en las pruebas se carga en el acto)
         self._montar(diferir=not tareas.SINCRONO)
         self.controlador.ventana.antes_de_cerrar = self._antes_de_cerrar
-        # respaldo automático cada 5 minutos si hubo cambios (se conservan los 3 últimos)
         self._cambios_en_respaldo = 0
         self._timer_respaldo = QTimer()
         self._timer_respaldo.setInterval(5 * 60 * 1000)
         self._timer_respaldo.timeout.connect(self.respaldar_si_hay_cambios)
         if c.respaldos is not None and c.respaldos.activo:
             self._timer_respaldo.start()
-            # siempre debe existir un respaldo reciente: si el último tiene más de 1 hora (o no hay), se crea uno al abrir
             lista = c.respaldos.listar()
             if not lista or (datetime.now() - lista[0][1]).total_seconds() > 3600:
                 try:
                     c.respaldos.crear()
-                except Exception as e:               # noqa: BLE001
+                except Exception as e:
                     registro.registrar("No se pudo crear el respaldo inicial", e)
         self.controlador.ventana.show()
 
-    # --- respaldo y cierre -------------------------------------------------------------------------------
     def respaldar_si_hay_cambios(self) -> None:
         r = self._c.respaldos
         if r is None or not r.activo or tareas.hay_tarea_activa():
-            return                      # no se toca la base mientras un hilo de trabajo la está usando
+            return
         total = self._c.db.conn.total_changes
         if total == self._cambios_en_respaldo:
             return
         try:
             r.crear()
             self._cambios_en_respaldo = total
-        except Exception as e:                       # noqa: BLE001 — un respaldo fallido no debe interrumpir el trabajo
+        except Exception as e:
             registro.registrar("No se pudo crear el respaldo automático", e)
 
     def _antes_de_cerrar(self) -> bool:
-        """Pregunta, como Word, si se quiere guardar el proyecto con nombre. Devuelve False para no cerrar."""
         v = self.controlador.ventana
         if self._c.db.cambios_sin_guardar() > 0:
             caja = QMessageBox(v)
@@ -251,7 +243,7 @@ class Aplicacion:
             ruta += ".rlr"
         try:
             self._c.datos.exportar_proyecto(ruta)
-        except Exception as e:                       # noqa: BLE001
+        except Exception as e:
             registro.registrar("No se pudo guardar el proyecto al cerrar", e)
             d = registro.describir(type(e), e, e.__traceback__)
             QMessageBox.warning(ventana, "No se pudo guardar", f"{d['titulo']}: {d['que']}\n{d['resumen']}")
@@ -261,7 +253,6 @@ class Aplicacion:
 
     def _montar(self, taller_id=None, pagina: int = 0, ventana=None, diferir: bool = False) -> None:
         if ventana is not None and self.controlador is not None:
-            # se libera primero el contenido anterior para que reaplicar los estilos sea barato
             self.controlador.ventana.vaciar()
             self.controlador.ctx.deleteLater()
         self._qapp.setStyleSheet(theme.hoja_de_estilo())
@@ -283,8 +274,6 @@ class Aplicacion:
             self.controlador.iniciar(taller_id)
 
     def alternar_tema(self) -> None:
-        """Cambia el tema sin construir de nuevo las 14 páginas: la ventana conserva su marco y solo se
-        vuelve a crear la página visible; las demás se construyen al visitarlas (ya con la paleta nueva)."""
         viejo = self.controlador
         v = viejo.ventana
         taller, pagina = viejo.ctx.taller_id, v.pagina_actual()

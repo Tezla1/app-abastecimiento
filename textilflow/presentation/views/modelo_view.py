@@ -5,11 +5,11 @@ from PyQt6.QtWidgets import QComboBox, QFrame, QHBoxLayout, QLabel, QPushButton,
 
 from .. import theme
 from ..textos import FORMULA_VARIACION
-from ..widgets.common import DataTable, PageView
+from ..widgets.common import TablaDatos, VistaPagina
 from ..widgets.adaptable import FilaAdaptable
 
 
-class ModeloView(PageView):
+class ModeloView(VistaPagina):
     calcular_solicitado = pyqtSignal(int)
 
     def __init__(self):
@@ -31,19 +31,19 @@ class ModeloView(PageView):
         self.resumen.setWordWrap(True)
         self.cuerpo.addWidget(self.resumen)
 
-        self.tabla_ind = DataTable(["Indicador", "Valor", "Fórmula"], estirar=2)
+        self.tabla_ind = TablaDatos(["Indicador", "Valor", "Fórmula"], estirar=2)
         self.tabla_ind.setFixedHeight(220)
         self.cuerpo.addWidget(self.tabla_ind)
         sub0 = QLabel("Carga ofrecida analítica  ρ = Σ(unidades × min/unidad × factor) / (puestos × turno)")
         sub0.setStyleSheet("font-size: 14px; font-weight: 700;")
         self.cuerpo.addWidget(sub0)
-        self.tabla_rho = DataTable(["Área", "Puestos", "Trabajo ofrecido (min)", "ρ %", "Lectura"], estirar=4)
+        self.tabla_rho = TablaDatos(["Área", "Puestos", "Trabajo ofrecido (min)", "ρ %", "Lectura"], estirar=4)
         self.tabla_rho.setFixedHeight(190)
         self.cuerpo.addWidget(self.tabla_rho)
         sub = QLabel("Traslados del escenario (cada lote que se mueve entre dos áreas)")
         sub.setStyleSheet("font-size: 14px; font-weight: 700;")
         self.cuerpo.addWidget(sub)
-        self.tabla_reg = DataTable(["Pedido", "Lote", "Desde → Hacia", "Atendido", "Espera (min)", "Recorrido (min)",
+        self.tabla_reg = TablaDatos(["Pedido", "Lote", "Desde → Hacia", "Atendido", "Espera (min)", "Recorrido (min)",
                                     "Distancia (m)", "Viajes", "Detalle"], estirar=8)
         self.cuerpo.addWidget(self.tabla_reg, 1)
         nota = QLabel(f"Comparación entre escenarios: {FORMULA_VARIACION}  (ver «Comparación experimental»).")

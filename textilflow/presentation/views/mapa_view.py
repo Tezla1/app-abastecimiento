@@ -2,8 +2,8 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (QComboBox, QFrame, QHBoxLayout, QLabel, QPushButton, QSlider, QVBoxLayout)
 
 from .. import theme
-from ..widgets.common import DataTable, PageView
-from ..widgets.line_chart import LineChart
+from ..widgets.common import TablaDatos, VistaPagina
+from ..widgets.grafico_lineas import GraficoLineas
 from ..widgets.mapa_operativo import MODOS_CALOR, MapaOperativo
 from ..widgets.adaptable import FilaAdaptable
 
@@ -11,7 +11,7 @@ VELOCIDADES = [("×0.1", 0.1), ("×0.25", 0.25), ("×0.5", 0.5), ("×1", 1), ("�
                ("×60", 60), ("×150", 150), ("×400", 400)]
 
 
-class MapaView(PageView):
+class MapaView(VistaPagina):
     simular_solicitado = pyqtSignal(int)
     pedido_cambiado = pyqtSignal()
     modo_cambiado = pyqtSignal(str)
@@ -83,7 +83,7 @@ class MapaView(PageView):
         izq.addWidget(caja, 3)
         caja2 = QFrame(); caja2.setObjectName("tarjeta")
         c2 = QVBoxLayout(caja2)
-        self.grafico = LineChart("Lotes en el sistema, completados y esperando (cursor = instante actual)", "min")
+        self.grafico = GraficoLineas("Lotes en el sistema, completados y esperando (cursor = instante actual)", "min")
         self.grafico.setMinimumHeight(140)
         c2.addWidget(self.grafico)
         izq.addWidget(caja2, 1)
@@ -99,12 +99,12 @@ class MapaView(PageView):
         self.info_nodo.setWordWrap(True)
         self.info_nodo.setObjectName("tenue")
         dl.addWidget(self.info_nodo)
-        self.tabla_rutas = DataTable(["Ped.", "Prenda · rama", "Camino", "m", "Lotes", "Unid."], estirar=2)
+        self.tabla_rutas = TablaDatos(["Ped.", "Prenda · rama", "Camino", "m", "Lotes", "Unid."], estirar=2)
         dl.addWidget(self.tabla_rutas, 2)
         t2 = QLabel("Estado en este instante")
         t2.setStyleSheet(f"font-size: 14px; font-weight: 700; border-left: 3px solid {theme.AZUL}; padding-left: 8px;")
         dl.addWidget(t2)
-        self.tabla_areas = DataTable(["Área", "En cola", "En proceso", "Util. turno %"], estirar=0)
+        self.tabla_areas = TablaDatos(["Área", "En cola", "En proceso", "Util. turno %"], estirar=0)
         dl.addWidget(self.tabla_areas, 2)
         self.estado_global = QLabel("")
         self.estado_global.setWordWrap(True)

@@ -27,7 +27,6 @@ class ObtenerAlertas:
             return ordenar(out)
         for e in escenarios:
             if simuladas_solo and not self._reg.list_by_escenario(e.id):
-                # sin simular todavía: anticipo los cuellos con la carga ofrecida (cálculo analítico)
                 carga = analisis.carga_ofrecida(ctx.estaciones_efectivas(), ctx.tipos, ctx.rutas, ctx.pedidos,
                                                 e.tiempo_observacion_min, e.factor_demanda_pct)
                 out += alertas_prediccion(ctx.par, e, ctx.estaciones_efectivas(), carga)

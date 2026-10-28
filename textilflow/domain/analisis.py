@@ -51,7 +51,6 @@ def analizar_estaciones(res: ResultadoProceso, estaciones: Iterable[Estacion],
     return out
 
 
-# miro la peor de las dos medidas, la simulada o la analítica
 def carga_de(e: EstadoEstacion) -> float:
     return max(e.utilizacion_pct, e.carga_ofrecida_pct or 0.0)
 
@@ -59,7 +58,6 @@ def carga_de(e: EstadoEstacion) -> float:
 def cuello_de_botella(estados: list[EstadoEstacion], umbral_pct: float = 85.0) -> Optional[EstadoEstacion]:
     if not estados:
         return None
-    # si hay empate gana la que más hace esperar
     peor = max(estados, key=lambda s: (carga_de(s), s.espera_prom_min))
     return peor if carga_de(peor) >= umbral_pct else None
 

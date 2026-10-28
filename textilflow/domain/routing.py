@@ -50,7 +50,6 @@ def ruta_mas_corta(conexiones: Iterable[Conexion], origen: str, destino: str,
         d, nodo = heapq.heappop(cola)
         if nodo == destino:
             break
-        # entrada vieja de la cola, ya hay un camino mejor
         if d > dist.get(nodo, float("inf")):
             continue
         for t in adj.get(nodo, []):
@@ -126,7 +125,6 @@ def nodos_criticos(codigos: Iterable[str], conexiones: Iterable[Conexion]) -> di
     base = _componentes(v)
     out = {}
     for n in codigos:
-        # si al quitar el nodo la red se parte, ese nodo es crítico
         partes = _componentes(v, ignorar_nodo=n)
         if partes > base:
             out[n] = partes

@@ -17,7 +17,7 @@ class MapaController(Controlador):
         self._nodo = None
         self._estaciones: list[Estacion] = []
         self._ult_tablas = 0.0
-        self._obsoleto = False          # los cierres cambiaron después de simular
+        self._obsoleto = False
         self._cerrados_sim: frozenset = frozenset()
         ctx.cierres_cambiaron.connect(self._cierres_cambiaron)
         v = vista
@@ -49,8 +49,6 @@ class MapaController(Controlador):
             self._resultado = self._anim = None
             self.vista.mapa.cargar_animacion(None)
         if self._resultado is not None and (self._obsoleto or self._cerrados_sim != self.ctx.cerrados()):
-            # la animación mostrada se simuló con otros cierres: se vuelve a simular para que el flujo respete
-            # las áreas cerradas actuales (antes seguía mostrando el recorrido viejo pasando por un área cerrada)
             self._obsoleto = False
             self._simular(self._resultado.escenario.id, aviso="Los cierres cambiaron: se simuló de nuevo el escenario. ")
             return
@@ -105,7 +103,6 @@ class MapaController(Controlador):
         v.slider.blockSignals(False)
         h, mnt = divmod(int(t), 60)
         v.reloj.setText(f"t = {t:6.1f} min  ({h:02d}:{mnt:02d} h)")
-        # durante la reproducción las tablas y el gráfico se refrescan 4 veces por segundo, no en cada cuadro
         ahora = time.monotonic()
         if v.mapa.reproduciendo and t < self._anim.t_fin and ahora - self._ult_tablas < 0.25:
             return

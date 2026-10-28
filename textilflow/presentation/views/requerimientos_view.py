@@ -3,12 +3,12 @@ from PyQt6.QtWidgets import (QComboBox, QDoubleSpinBox, QFrame, QHBoxLayout, QLa
                              QTabWidget, QVBoxLayout, QWidget)
 
 from .. import theme
-from ..widgets.common import DataTable, KpiCard, PageView
+from ..widgets.common import TablaDatos, TarjetaKpi, VistaPagina
 from ..widgets.barras_flota import BarrasFlota
 from ..widgets.adaptable import FilaAdaptable, FlujoLayout
 
 
-class RequerimientosView(PageView):
+class RequerimientosView(VistaPagina):
     analizar_solicitado = pyqtSignal(int, int)
     guardar_parametro = pyqtSignal(str, float)
     restaurar_parametros = pyqtSignal()
@@ -37,30 +37,30 @@ class RequerimientosView(PageView):
         self.cuerpo.addWidget(self.resumen)
 
         self.tabs = QTabWidget()
-        self.tabs.tabBar().setUsesScrollButtons(True)      # en ventanas angostas las pestañas se desplazan en vez de ensanchar la página
+        self.tabs.tabBar().setUsesScrollButtons(True)
         self.tabs.tabBar().setExpanding(False)
-        self.t_criticos = DataTable(["Severidad", "Tipo", "Elemento", "Motivo"], estirar=3)
+        self.t_criticos = TablaDatos(["Severidad", "Tipo", "Elemento", "Motivo"], estirar=3)
         self.tabs.addTab(self.t_criticos, "Componentes críticos")
         d = QWidget(); dl = QVBoxLayout(d); dl.setContentsMargins(0, 0, 0, 0)
-        self.t_ramas = DataTable(["Prenda", "Rama", "%", "Camino físico", "Distancia m", "Transporte min"], estirar=3)
+        self.t_ramas = TablaDatos(["Prenda", "Rama", "%", "Camino físico", "Distancia m", "Transporte min"], estirar=3)
         dl.addWidget(self.t_ramas, 2)
         self.lbl_recorridos = QLabel("")
         self.lbl_recorridos.setWordWrap(True)
         dl.addWidget(self.lbl_recorridos)
-        self.t_recursos = DataTable(["Recurso", "Viajes cargados", "Distancia m", "Ocupado min"], estirar=None)
+        self.t_recursos = TablaDatos(["Recurso", "Viajes cargados", "Distancia m", "Ocupado min"], estirar=None)
         dl.addWidget(self.t_recursos, 1)
         self.tabs.addTab(d, "Distancias y recorridos")
         e = QWidget(); el = QVBoxLayout(e); el.setContentsMargins(0, 0, 0, 0)
         fila = FlujoLayout()
-        self.k_reco = KpiCard("Equipos recomendados", "#1B7A57")
-        self.k_anal = KpiCard("Estimación analítica", "#1F4E9E")
-        self.k_viajes = KpiCard("Viajes cargados del turno", "#6B43A8")
-        self.k_dist = KpiCard("Distancia total del turno", "#B8701A")
+        self.k_reco = TarjetaKpi("Equipos recomendados", "#1B7A57")
+        self.k_anal = TarjetaKpi("Estimación analítica", "#1F4E9E")
+        self.k_viajes = TarjetaKpi("Viajes cargados del turno", "#6B43A8")
+        self.k_dist = TarjetaKpi("Distancia total del turno", "#B8701A")
         for k in (self.k_reco, self.k_anal, self.k_viajes, self.k_dist):
             fila.addWidget(k)
         el.addLayout(fila)
         medio = FilaAdaptable()
-        self.t_barrido = DataTable(["Equipos", "Util. %", "Espera min", "Lotes ok %", "Lead time", "Cierre min",
+        self.t_barrido = TablaDatos(["Equipos", "Util. %", "Espera min", "Lotes ok %", "Lead time", "Cierre min",
                                     "A tiempo %", "Cumple"], estirar=None)
         medio.addWidget(self.t_barrido, 3)
         caja = QFrame(); caja.setObjectName("tarjeta")
@@ -69,14 +69,14 @@ class RequerimientosView(PageView):
         cl.addWidget(self.g_barrido)
         medio.addWidget(caja, 2)
         el.addLayout(medio, 2)
-        self.t_viajes = DataTable(["Prenda", "kg/u", "Lote (u)", "Lote kg", "u/viaje", "Viajes por traslado",
+        self.t_viajes = TablaDatos(["Prenda", "kg/u", "Lote (u)", "Lote kg", "u/viaje", "Viajes por traslado",
                                    "Lotes", "Traslados/lote", "Viajes estimados"], estirar=None)
         el.addWidget(self.t_viajes, 1)
         self.notas = QLabel("")
         self.notas.setWordWrap(True)
         el.addWidget(self.notas)
         self.tabs.addTab(e, "Equipos y viajes")
-        self.t_norma = DataTable(["Estado", "Regla", "Detalle", "Fuente", "Verificada"], estirar=2)
+        self.t_norma = TablaDatos(["Estado", "Regla", "Detalle", "Fuente", "Verificada"], estirar=2)
         self.tabs.addTab(self.t_norma, "Normativa")
         p = QWidget(); pl = QVBoxLayout(p); pl.setContentsMargins(0, 0, 0, 0)
         aviso = QLabel("Cada parámetro indica su fuente y si fue contrastado con el texto de la norma. Los marcados «No» son "
@@ -84,7 +84,7 @@ class RequerimientosView(PageView):
         aviso.setWordWrap(True)
         aviso.setObjectName("tenue")
         pl.addWidget(aviso)
-        self.t_params = DataTable(["Clave", "Valor", "Unidad", "Descripción", "Fuente", "Verificado"], estirar=3)
+        self.t_params = TablaDatos(["Clave", "Valor", "Unidad", "Descripción", "Fuente", "Verificado"], estirar=3)
         pl.addWidget(self.t_params, 1)
         ed = QFrame(); ed.setObjectName("tarjeta")
         edl = FilaAdaptable(ed)
@@ -97,7 +97,7 @@ class RequerimientosView(PageView):
         edl.addStretch(1)
         pl.addWidget(ed)
         self.tabs.addTab(p, "Parámetros normativos")
-        self.t_alertas = DataTable(["Nivel", "Código", "Alerta", "Detalle", "Posible solución"], estirar=3)
+        self.t_alertas = TablaDatos(["Nivel", "Código", "Alerta", "Detalle", "Posible solución"], estirar=3)
         self.t_alertas.texto_largo((2, 3, 4), (3, 3, 5))
         self.tabs.addTab(self.t_alertas, "Alertas")
         cue = QWidget()
@@ -106,7 +106,7 @@ class RequerimientosView(PageView):
         self.nota_cuellos.setWordWrap(True)
         self.nota_cuellos.setStyleSheet(f"color: {theme.TENUE};")
         cl.addWidget(self.nota_cuellos)
-        self.t_cuellos = DataTable(["Nivel", "Tipo", "Dónde", "Escenario", "Qué pasa", "Posible solución"], estirar=4)
+        self.t_cuellos = TablaDatos(["Nivel", "Tipo", "Dónde", "Escenario", "Qué pasa", "Posible solución"], estirar=4)
         self.t_cuellos.texto_largo((4, 5), (3, 5))
         cl.addWidget(self.t_cuellos, 1)
         self.tabs.addTab(cue, "Cuellos de botella")

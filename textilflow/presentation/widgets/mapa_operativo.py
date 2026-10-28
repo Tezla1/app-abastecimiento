@@ -11,7 +11,7 @@ from ..viewmodels import AnimacionVM, ArcoVM, NodoVM
 
 ESCALA = 22.0
 RADIO = 18.0
-PASO_MS = 50            # 20 cuadros por segundo; el avance se mide con el reloj, no con el número de cuadros
+PASO_MS = 50
 
 ZONAS = {
     "ABASTECIMIENTO": ("ABASTECIMIENTO", "#F2A33A"),
@@ -27,7 +27,6 @@ _PALABRAS_ZONA = [("ACABADO", ("planch", "empaq", "acabad", "etiquet")),
                   ("SALIDA", ("despach", "control", "calidad"))]
 
 
-# las zonas se deducen del nombre del área; lo que no calza va a PROCESO
 def zona_de(n) -> str:
     if n.funcion == "ALMACEN" or n.funcion == "BASE":
         return "ABASTECIMIENTO"
@@ -244,7 +243,6 @@ class MapaOperativo(QGraphicsView):
         return self._timer.isActive()
 
     def set_velocidad(self, min_por_s: float) -> None:
-        # el mínimo es muy lento a propósito, para seguir un recorrido
         self._velocidad = max(0.01, float(min_por_s))
 
     def set_modo_calor(self, modo: str) -> None:
@@ -264,7 +262,6 @@ class MapaOperativo(QGraphicsView):
         if not self._anim:
             self.pausar()
             return
-        # tiempo real transcurrido (tope 0,25 s): en un PC lento se saltan cuadros pero la velocidad no cambia
         dt = min(self._reloj.restart() / 1000.0, 0.25)
         nuevo = self._t + self._velocidad * dt
         if nuevo >= self._anim.t_fin:
@@ -300,7 +297,6 @@ class MapaOperativo(QGraphicsView):
         a = self._anim
         for k, it in self._arcos.items():
             if a and self._modo == "pasadas":
-                # cuántos pasos por este arco ya empezaron
                 n = bisect.bisect_right(self._inicios_arco.get(k, []), t)
                 x = n / self._max_arco
             elif not a and self._estatico:
@@ -312,7 +308,7 @@ class MapaOperativo(QGraphicsView):
                 x = None
             clave = None if x is None else round(x, 3)
             if self._cache_arco.get(k, "?") == clave:
-                continue                            # el arco no cambió desde el cuadro anterior
+                continue
             self._cache_arco[k] = clave
             if x is None:
                 it.setPen(QPen(QColor(theme.TRAZO), 2))
@@ -344,7 +340,7 @@ class MapaOperativo(QGraphicsView):
             q, o = cola.get(cod, 0), ocup.get(cod, 0)
             clave_nodo = (relleno.rgba(), borde.rgba(), seleccionado, q, o)
             if self._cache_nodo.get(cod) == clave_nodo:
-                continue                            # sin cambios visibles en este nodo
+                continue
             self._cache_nodo[cod] = clave_nodo
             c.setBrush(QBrush(relleno))
             c.setPen(QPen(QColor(theme.RESALTE) if seleccionado else borde, 4 if seleccionado else 3))
@@ -390,7 +386,6 @@ class MapaOperativo(QGraphicsView):
         return pts[-1], kg if cargado else 0.0
 
     def hideEvent(self, e) -> None:
-        # fuera de pantalla (otra página o ventana minimizada) la animación se detiene: no gasta procesador
         if self._timer.isActive():
             self._pausado_por_oculto = True
             self._timer.stop()

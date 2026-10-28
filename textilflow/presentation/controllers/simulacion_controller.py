@@ -14,7 +14,6 @@ def filas_alertas(alertas):
 
 
 def filas_cuellos(alertas):
-    """Tabla de cuellos de botella: dónde está, de qué tipo es y cómo resolverlo."""
     cuellos = cuellos_de_botella(alertas)
     filas = [[a.nivel, TIPO_CUELLO[a.codigo], a.titulo.replace("Cuello de botella en ", "")
               .replace("Posible cuello de botella en ", ""), a.escenario or "—", a.detalle, a.solucion or "—"]
@@ -146,7 +145,6 @@ class SimulacionController(Controlador):
             cv = None if not x.media else (x.desv or 0) / abs(x.media) * 100
             if x.desv:
                 todas_iguales = False
-            # umbrales a ojo, solo para dar una idea rápida
             if cv is None or cv < 0.05:
                 nivel, color = "Siempre igual", VERDE
             elif cv < 3:

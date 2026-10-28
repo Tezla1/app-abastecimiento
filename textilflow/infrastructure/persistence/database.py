@@ -96,7 +96,6 @@ def _es_esquema_antiguo(ruta: str) -> bool:
         try:
             version = c.execute("PRAGMA user_version").fetchone()[0]
             hay_datos = c.execute("SELECT count(*) FROM sqlite_master WHERE type='table'").fetchone()[0] > 0
-            # base vacía no cuenta como antigua
             return hay_datos and version < ESQUEMA_BD
         finally:
             c.close()
@@ -114,8 +113,6 @@ class Database:
                 n += 1
                 self.respaldo_v1 = f"{ruta}.v1.{n}.bak"
             shutil.move(ruta, self.respaldo_v1)
-        # check_same_thread=False: las operaciones largas corren en un hilo de trabajo (ver presentation/tareas.py);
-        # mientras corren, un diálogo modal impide que la interfaz use la base al mismo tiempo
         self.conn = sqlite3.connect(ruta, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA foreign_keys = ON")
@@ -125,7 +122,6 @@ class Database:
         self._marca = self.conn.total_changes
 
     def cambios_sin_guardar(self) -> int:
-        """Filas modificadas desde la última marca (al abrir o al guardar un proyecto con nombre)."""
         return self.conn.total_changes - self._marca
 
     def marcar_guardado(self) -> None:

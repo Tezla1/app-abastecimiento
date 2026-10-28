@@ -1,5 +1,4 @@
 PALETAS = {
-    # modo oscuro con tonos de Windows 11: grises neutros (no azulados), tarjetas ligeramente más claras que el fondo
     "oscuro": dict(BG="#202020", PANEL="#2B2B2B", PANEL_2="#363636", BORDE="#404040", TEXTO="#F3F3F3",
                    LIENZO="#1B1B1B", TRAZO="#7A7A7A", TRAZO_OFF="#4A4A4A", FILA_ALT="#262626", RESALTE="#FFD166",
                    RUTA="#D0D0D0", DOC_TITULO="#F3F3F3", DOC_TEXTO="#D0D0D0", DOC_ENLACE="#60CDFF", DOC_CODIGO="#FFD166",
@@ -29,7 +28,6 @@ COLOR_FUNCION = {
 }
 
 COLOR_ESTADO = {"PASS": VERDE, "WARNING": NARANJA, "FAIL": ROJO}
-# nombre que ve el usuario (los códigos internos PASS/WARNING/FAIL no cambian)
 ESTADO_ES = {"PASS": "APROBADO", "WARNING": "ADVERTENCIA", "FAIL": "FALLA"}
 COLOR_NIVEL = {"CRÍTICA": ROJO, "ALTA": NARANJA, "MEDIA": DORADO, "INFO": TENUE}
 COLOR_RECURSOS = ["#5CC8FF", "#FF7AC6", "#B6F36A", "#FFD166", "#C49BFF", "#FF9F6B", "#6BE3B2", "#F2F2F2"]

@@ -1,4 +1,3 @@
-"""Ventana de error: reemplaza el cierre silencioso de PyQt6 ante excepciones no controladas."""
 import sys
 import threading
 import time
@@ -11,7 +10,6 @@ from .. import registro
 
 
 class _Puente(QObject):
-    """Lleva al hilo de la ventana los errores ocurridos en hilos de trabajo."""
     error = pyqtSignal(object, object, object)
 
 
@@ -21,7 +19,6 @@ _mostrando = False
 
 
 def mostrar(d: dict, parent=None) -> str:
-    """Muestra el cuadro de error y devuelve 'seguir' o 'cerrar'."""
     caja = QMessageBox(parent)
     caja.setIcon(QMessageBox.Icon.Warning)
     caja.setWindowTitle("TextilFlow · " + d["titulo"])
@@ -55,7 +52,6 @@ def _manejar(tipo, exc, tb) -> None:
     registro.registrar(f"Error no controlado en {d['donde']}", exc)
     app = QApplication.instance()
     clave, t = _ultimo
-    # el mismo error repetido en menos de 2 s (p. ej. dentro de un temporizador) no vuelve a abrir el cuadro
     if app is None or _mostrando or (clave == d["resumen"] and time.monotonic() - t < 2.0):
         return
     _ultimo = (d["resumen"], time.monotonic())
@@ -69,7 +65,6 @@ def _manejar(tipo, exc, tb) -> None:
 
 
 def instalar() -> None:
-    """Instala el manejador global de errores (hilo principal y hilos de trabajo)."""
     global _puente
     _puente = _Puente()
     _puente.error.connect(_manejar, Qt.ConnectionType.QueuedConnection)

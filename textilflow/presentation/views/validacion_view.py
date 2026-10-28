@@ -2,11 +2,11 @@ from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton
 
 from .. import theme
-from ..widgets.common import DataTable, KpiCard, PageView
+from ..widgets.common import TablaDatos, TarjetaKpi, VistaPagina
 from ..widgets.adaptable import FlujoLayout
 
 
-class ValidacionView(PageView):
+class ValidacionView(VistaPagina):
     ejecutar_solicitado = pyqtSignal()
 
     def __init__(self):
@@ -14,9 +14,9 @@ class ValidacionView(PageView):
                          "Verificación transversal del proyecto antes de declarar aptitud para simulación, comparación y reporte.",
                          theme.DORADO)
         fila = FlujoLayout()
-        self.k_pass = KpiCard("APROBADO", "#1B7A57")
-        self.k_warn = KpiCard("ADVERTENCIA", "#B8701A")
-        self.k_fail = KpiCard("FALLA", "#8C3A44")
+        self.k_pass = TarjetaKpi("APROBADO", "#1B7A57")
+        self.k_warn = TarjetaKpi("ADVERTENCIA", "#B8701A")
+        self.k_fail = TarjetaKpi("FALLA", "#8C3A44")
         for k in (self.k_pass, self.k_warn, self.k_fail):
             fila.addWidget(k)
         self.boton = QPushButton("Ejecutar validación integral")
@@ -26,7 +26,7 @@ class ValidacionView(PageView):
         self.veredicto = QLabel("Pulse «Ejecutar validación integral».")
         self.veredicto.setWordWrap(True)
         self.cuerpo.addWidget(self.veredicto)
-        self.tabla = DataTable(["Estado", "Código", "Área", "Hallazgo", "Corregir en"], estirar=3)
+        self.tabla = TablaDatos(["Estado", "Código", "Área", "Hallazgo", "Corregir en"], estirar=3)
         self.cuerpo.addWidget(self.tabla, 1)
         criterio = QLabel("Criterio científico: se distinguen integridad de datos, factibilidad geométrica, "
                           "comparabilidad y datos aún no validados. Una ADVERTENCIA no es una FALLA, pero debe documentarse.")

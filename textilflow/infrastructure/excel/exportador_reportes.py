@@ -3,7 +3,7 @@ import csv
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 
-from ...application.ports import ReportExporter
+from ...application.ports import ExportadorReportes
 
 
 def _celda_segura(v):
@@ -12,7 +12,7 @@ def _celda_segura(v):
     return v
 
 
-class ArchivoReportExporter(ReportExporter):
+class ExportadorReportesArchivo(ExportadorReportes):
     def exportar_csv(self, ruta: str, filas: list[dict]) -> None:
         if not filas:
             raise ValueError("No hay filas para exportar.")

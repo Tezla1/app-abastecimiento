@@ -6,7 +6,7 @@ from ...domain.analisis import analizar_estaciones, indicadores_proceso, series_
 from ..dto import (DetalleIndicadores, ResultadoComparacion, ResultadoReplicas, ResultadoSimulacion)
 from ..errors import ErrorDeNegocio
 from ..progreso import Progreso, avisar
-from ..ports import EscenarioRepository, RegistroRepository, ReportExporter
+from ..ports import EscenarioRepository, RegistroRepository, ExportadorReportes
 from .contexto import CargadorContexto
 from .nucleo import analizar, calc_de, correr, exigir_simulable, simular_completo
 
@@ -31,7 +31,7 @@ class EjecutarSimulacion:
             raise ErrorDeNegocio("Seleccione un escenario guardado para simular.")
         r = simular_completo(self._ctx.cargar(esc.taller_id), esc)
         if guardar:
-            r = copy.copy(r)          # el resultado puede venir de la caché: no se modifica el original
+            r = copy.copy(r)
             self._reg.replace_for_escenario(esc.id, r.registros)
             r.registros = self._reg.list_by_escenario(esc.id)
             r.indicadores = calc_de(esc, r.registros)
@@ -139,7 +139,7 @@ def _filas_proceso(rb: ResultadoSimulacion, ra: ResultadoSimulacion) -> list[dic
 
 
 class ExportarReporte:
-    def __init__(self, comparar: CompararEscenarios, exportador: ReportExporter):
+    def __init__(self, comparar: CompararEscenarios, exportador: ExportadorReportes):
         self._comparar = comparar
         self._exp = exportador
 

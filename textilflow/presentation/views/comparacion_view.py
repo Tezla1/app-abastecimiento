@@ -2,18 +2,18 @@ from PyQt6.QtWidgets import QFrame, QLabel, QVBoxLayout
 
 from .. import theme
 from ..textos import FORMULA_VARIACION
-from ..widgets.common import DataTable, PageView
-from ..widgets.line_chart import LineChart
-from ..widgets.par_escenarios import ParEscenariosBar
+from ..widgets.common import TablaDatos, VistaPagina
+from ..widgets.grafico_lineas import GraficoLineas
+from ..widgets.par_escenarios import BarraParEscenarios
 from ..widgets.tarjetas_comparacion import TarjetasComparacion
 
 
-class ComparacionView(PageView):
+class ComparacionView(VistaPagina):
     def __init__(self):
         super().__init__("Comparación experimental",
                          f"Control experimental y trazabilidad: indicadores de dos escenarios del mismo taller. {FORMULA_VARIACION}",
                          theme.MORADO)
-        self.barra = ParEscenariosBar("Comparar S0 vs S1")
+        self.barra = BarraParEscenarios("Comparar S0 vs S1")
         self.cuerpo.addWidget(self.barra)
         self.veredicto = QLabel("Elija dos escenarios simulados y pulse «Comparar».")
         self.veredicto.setWordWrap(True)
@@ -24,16 +24,16 @@ class ComparacionView(PageView):
         self.tarjetas = TarjetasComparacion()
         self.cuerpo.addWidget(self.tarjetas)
 
-        self.tabla = DataTable(["Indicador", "Base", "Alternativo", "Variación (%)"], estirar=0)
+        self.tabla = TablaDatos(["Indicador", "Base", "Alternativo", "Variación (%)"], estirar=0)
         self.tabla.setFixedHeight(190)
         self.cuerpo.addWidget(self.tabla)
-        self.tabla_proceso = DataTable(["Indicador del proceso completo", "Base", "Alternativo", "Variación (%)"], estirar=0)
+        self.tabla_proceso = TablaDatos(["Indicador del proceso completo", "Base", "Alternativo", "Variación (%)"], estirar=0)
         self.tabla_proceso.setFixedHeight(190)
         self.cuerpo.addWidget(self.tabla_proceso)
         caja0 = QFrame()
         caja0.setObjectName("tarjeta")
         c0 = QVBoxLayout(caja0)
-        self.g_avance = LineChart("Lotes completados en el tiempo", "min")
+        self.g_avance = GraficoLineas("Lotes completados en el tiempo", "min")
         c0.addWidget(self.g_avance)
         self.cuerpo.addWidget(caja0, 1)
 

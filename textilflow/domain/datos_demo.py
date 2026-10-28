@@ -47,7 +47,6 @@ PEDIDOS = [
     ("Camisa", 250, 3, 100, 470),
 ]
 
-# unidades en el almacén y stock mínimo por prenda (las camisas no alcanzan para los 550 pedidos)
 STOCK = [
     ("Camisa", 400, 50),
     ("Pantalón", 250, 30),

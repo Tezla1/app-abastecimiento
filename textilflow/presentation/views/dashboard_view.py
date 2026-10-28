@@ -1,23 +1,23 @@
 from PyQt6.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QVBoxLayout
 
 from .. import theme
-from ..widgets.common import KpiCard, PageView
-from ..widgets.common import DataTable
+from ..widgets.common import TarjetaKpi, VistaPagina
+from ..widgets.common import TablaDatos
 from ..widgets.mapa_operativo import MapaOperativo
 from ..widgets.adaptable import FilaAdaptable, FlujoLayout
 
 
-class DashboardView(PageView):
+class DashboardView(VistaPagina):
     def __init__(self):
         super().__init__("Dashboard de operaciones e investigación",
                          "Intralogística · Optimización · Simulación · Investigación aplicada", theme.AZUL)
         fila = FlujoLayout()
-        self.k_talleres = KpiCard("Talleres", "#1F4E9E", self)
-        self.k_estaciones = KpiCard("Áreas", "#1B7A57", self)
-        self.k_conexiones = KpiCard("Conexiones", "#B8701A", self)
-        self.k_pedidos = KpiCard("Pedidos", "#6B43A8", self)
-        self.k_escenarios = KpiCard("Escenarios", "#187A7E", self)
-        self.k_alertas = KpiCard("Alertas", "#8C3A44", self)
+        self.k_talleres = TarjetaKpi("Talleres", "#1F4E9E", self)
+        self.k_estaciones = TarjetaKpi("Áreas", "#1B7A57", self)
+        self.k_conexiones = TarjetaKpi("Conexiones", "#B8701A", self)
+        self.k_pedidos = TarjetaKpi("Pedidos", "#6B43A8", self)
+        self.k_escenarios = TarjetaKpi("Escenarios", "#187A7E", self)
+        self.k_alertas = TarjetaKpi("Alertas", "#8C3A44", self)
         for k in (self.k_talleres, self.k_estaciones, self.k_conexiones, self.k_pedidos, self.k_escenarios, self.k_alertas):
             fila.addWidget(k)
         self.cuerpo.addLayout(fila)
@@ -67,7 +67,7 @@ class DashboardView(PageView):
         ta2 = QLabel("Alertas principales")
         ta2.setStyleSheet("font-size: 14px; font-weight: 700;")
         alb.addWidget(ta2)
-        self.tabla_alertas = DataTable(["Nivel", "Alerta"], estirar=1)
+        self.tabla_alertas = TablaDatos(["Nivel", "Alerta"], estirar=1)
         alb.addWidget(self.tabla_alertas)
         derecha.addWidget(al_box, 1)
 

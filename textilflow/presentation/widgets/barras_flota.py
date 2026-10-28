@@ -13,7 +13,6 @@ LEYENDA = [("#4F8FE8", "Equipos de sobra"), (theme.VERDE, "Carga adecuada"),
 
 
 def color_ocupacion(pct: float, objetivo: float) -> str:
-    # por encima de 90 % ya no queda margen para imprevistos
     if pct > 90:
         return theme.ROJO
     if pct > objetivo:

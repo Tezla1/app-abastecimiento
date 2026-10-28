@@ -1,7 +1,3 @@
-"""Registro de errores en archivo (textilflow.log) y descripción en lenguaje claro de las excepciones.
-
-No depende de Qt: lo usan tanto la ventana de error como los bloques que antes ignoraban errores en silencio.
-"""
 import logging
 import os
 import platform
@@ -16,7 +12,6 @@ _logger = None
 
 
 def carpeta_datos() -> Path:
-    """Carpeta de datos del usuario (~/.textilflow); se puede cambiar con la variable TEXTILFLOW_HOME."""
     return Path(os.environ.get("TEXTILFLOW_HOME") or (Path.home() / ".textilflow"))
 
 
@@ -36,7 +31,7 @@ def _log() -> logging.Logger:
             h.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
             _logger.addHandler(h)
         except OSError:
-            _logger.addHandler(logging.NullHandler())      # sin permisos de escritura: no se registra, pero no se rompe nada
+            _logger.addHandler(logging.NullHandler())
     return _logger
 
 
@@ -45,7 +40,6 @@ def info(texto: str) -> None:
 
 
 def registrar(contexto: str, exc: BaseException | None = None) -> None:
-    """Guarda en el log un error que se maneja en silencio, indicando dónde ocurrió."""
     if exc is None:
         _log().error(contexto)
     else:
@@ -53,7 +47,6 @@ def registrar(contexto: str, exc: BaseException | None = None) -> None:
 
 
 def _donde(tb) -> str:
-    """Último punto del propio programa por donde pasó el error: «archivo · función (línea N)»."""
     marcos = [f for f in traceback.extract_tb(tb) if "textilflow" in f.filename.replace("\\", "/")]
     f = marcos[-1] if marcos else (traceback.extract_tb(tb)[-1] if tb else None)
     if f is None:
@@ -63,7 +56,6 @@ def _donde(tb) -> str:
 
 
 def describir(tipo, exc, tb) -> dict:
-    """Convierte una excepción en: título, qué pasó (claro), qué se puede hacer, dónde, detalle técnico."""
     msg = str(exc)
     sugerencia = "Puede continuar trabajando. Si el problema se repite, envíe el detalle técnico de abajo."
     if isinstance(exc, sqlite3.OperationalError) and "locked" in msg.lower():
@@ -106,6 +98,5 @@ def describir(tipo, exc, tb) -> dict:
 
 
 def informe_texto(d: dict) -> str:
-    """Texto listo para copiar y pegar al reportar el error."""
     return (f"{NOMBRE} v{VERSION} · {platform.platform()} · Python {platform.python_version()}\n"
             f"{d['titulo']}\nQué pasó: {d['que']}\nDónde: {d['donde']}\nTécnico: {d['resumen']}\n\n{d['detalle']}")

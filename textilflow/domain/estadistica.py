@@ -8,7 +8,6 @@ _T95 = [12.706, 4.303, 3.182, 2.776, 2.571, 2.447, 2.365, 2.306, 2.262, 2.228, 2
 
 
 def t_critico_95(gl: int) -> float:
-    # pasados 30 grados de libertad la t casi es la normal
     return _T95[gl - 1] if 1 <= gl <= 30 else 1.96
 
 

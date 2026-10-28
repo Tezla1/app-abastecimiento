@@ -5,7 +5,7 @@ from typing import Optional
 from ...domain import analisis
 from ...domain.entities import MOTIVOS_CIERRE, Cierre
 from ..errors import ErrorDeNegocio
-from ..ports import CierreRepository, EscenarioRepository, EstacionRepository, ReportExporter
+from ..ports import CierreRepository, EscenarioRepository, EstacionRepository, ExportadorReportes
 from .contexto import CargadorContexto
 from .nucleo import analizar, correr, exigir_simulable
 from .talleres import exigir_valido
@@ -206,7 +206,7 @@ class InformeCierres:
 
 
 class ExportarContingencias:
-    def __init__(self, cierres: GestionarCierres, informe: InformeCierres, exportador: ReportExporter):
+    def __init__(self, cierres: GestionarCierres, informe: InformeCierres, exportador: ExportadorReportes):
         self._cie, self._inf, self._exp = cierres, informe, exportador
 
     def execute(self, taller_id: int, escenario_id: int, ruta: str) -> int:

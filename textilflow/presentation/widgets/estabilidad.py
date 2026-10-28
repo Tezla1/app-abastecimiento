@@ -37,7 +37,6 @@ class Estabilidad(QWidget):
         p.setFont(QFont("Segoe UI", 9))
         p.setPen(QColor(theme.TENUE))
         p.drawText(QRectF(8, 24, w - 16, 36), Qt.TextFlag.TextWordWrap, self._mensaje)
-        # las filas arrancan debajo de la explicación
         y = 66
         for nombre, valor, rango, nivel, color, fraccion in self._filas:
             p.setPen(QColor(theme.TEXTO))

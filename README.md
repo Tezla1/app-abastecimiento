@@ -1,4 +1,4 @@
-# TextilFlow 4.0.7d · optimización de procesos industriales e intralogística (PyQt6)
+# TextilFlow 4.0.7j · optimización de procesos industriales e intralogística (PyQt6)
 
 ![Mapa operativo](docs/img/02_mapa_operativo_nodo_B.png)
 
@@ -7,51 +7,120 @@ lo simula con eventos discretos y responde qué componentes son críticos, qué 
 viajes hacen falta, y si se respetan las prioridades. Mantiene el modelo matemático de `calculos.py` (sin modificar) y está
 organizada en **MVC + arquitectura limpia**.
 
-## Ejecutar
+## Requisitos
 
-```bash
-pip install -r requirements.txt
-python main.py                      # datos en ~/.textilflow/textilflow.db (1.ª vez carga el caso de ejemplo)
-python main.py --db :memory:        # sesión sin guardar
-python -m pytest                    # 76 pruebas
-python tools/ejercicio_practico.py  # ejercicio práctico con N réplicas → docs/EJERCICIO_PRACTICO.md
+* Python 3.11 o superior (probado con 3.13).
+* Windows, Linux o macOS con entorno gráfico.
+* Dependencias: `PyQt6`, `pandas`, `openpyxl`, `pytest` y `matplotlib` (esta última solo para `tools/ejercicio_practico.py`).
+
+## Instalación y ejecución
+
+Abra una terminal en la carpeta del proyecto (la que contiene `main.py`).
+
+**Windows (PowerShell o CMD)**
+
+```bat
+python -m venv .venv
+.venv\Scripts\activate
+python -m pip install -r requirements.txt
+python main.py
 ```
 
-Si existe una base de datos de la versión 1, se **conserva** como `*.v1.bak` y se crea una nueva (el modelo cambió).
+**Linux y macOS**
 
-## Crear el .exe (Windows)
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python main.py
+```
 
-Doble clic en `construir_exe.bat` (necesita Python 3.11+ instalado). Genera `dist\TextilFlow.exe`, un solo archivo que se puede copiar a otro computador.
+En la primera ejecución se crea la base de datos y se carga el taller de ejemplo «Confecciones Andina».
+Las siguientes veces se abre el último estado guardado. Para salir del entorno virtual: `deactivate`.
 
-## Cambios de la 4.0.7d (beta)
+### Opciones de arranque
 
-Ventana de error descriptiva, respaldos automáticos y aviso al guardar, tareas largas con progreso, arranque más rápido,
-animación que se pausa y páginas adaptables. Detalle y cómo funciona cada cambio: **CAMBIOS_4.0.7i.md**.
-
-## Qué hay de nuevo en 4.0
-
-| Necesidad | Dónde |
+| Comando | Qué hace |
 |---|---|
-| **Cerrar un área** (falla de maquinaria, mantenimiento, falta de personal…) con motivo, hora de inicio y de reapertura | **Contingencias y cierres** |
-| Recalcular rutas y volver a simular todos los escenarios al instante | automático al guardar el cierre |
-| **Informe** de por qué se cerró y qué cambió (impacto, rutas nuevas, trabajo sin terminar, recomendaciones), se genera en Excel con fecha y hora de cada cierre | **Contingencias y cierres** |
-| Áreas cerradas con ✕ roja | Mapa operativo, Dashboard, Layout |
-| **Tema claro / oscuro** | botón en la barra superior |
+| `python main.py` | Abre el programa con la base de datos por defecto. |
+| `python main.py --db ruta/mi_taller.db` | Usa otro archivo de base de datos SQLite. |
+| `python main.py --db :memory:` | Sesión temporal: no guarda nada en disco. |
+| `python main.py --help` | Muestra la ayuda de los parámetros. |
 
-![Contingencias](docs/img/12_contingencias_informe.png)
+Si se abre una segunda ventana con la misma base de datos, el programa avisa y no la abre.
 
-## Qué había de nuevo en 2.0
+### Dónde se guardan los datos
 
-| Necesidad | Dónde |
+En la carpeta `.textilflow` del usuario (en Windows, `C:\Users\<usuario>\.textilflow`):
+
+* `textilflow.db`: base de datos del proyecto.
+* `respaldos/`: los 3 últimos respaldos automáticos.
+* `textilflow.log`: registro de errores, útil para reportar un problema.
+
+Para usar otra carpeta, defina la variable de entorno `TEXTILFLOW_HOME` antes de abrir el programa
+(Windows: `set TEXTILFLOW_HOME=D:\datos`; Linux y macOS: `export TEXTILFLOW_HOME=/ruta`).
+Si existe una base de datos de la versión 1, se conserva como `*.v1.bak` y se crea una nueva.
+
+## Pruebas
+
+```bash
+python -m pytest              # las 102 pruebas
+python -m pytest -q           # salida resumida
+python -m pytest tests/test_casos_de_uso.py -k inventario    # solo las pruebas que contienen «inventario»
+```
+
+En un servidor sin pantalla: `QT_QPA_PLATFORM=offscreen python -m pytest` (Windows: `set QT_QPA_PLATFORM=offscreen`).
+
+## Ejercicio práctico con réplicas
+
+```bash
+python tools/ejercicio_practico.py
+```
+
+Simula el taller de ejemplo con N réplicas y genera `docs/EJERCICIO_PRACTICO.md`, un CSV y un gráfico.
+
+## Crear el ejecutable (.exe) en Windows
+
+Con Python 3.11+ instalado, en la carpeta del proyecto:
+
+```bat
+construir_exe.bat
+```
+
+También puede hacer doble clic en el archivo. Genera `dist\TextilFlow.exe`, **un solo archivo** que se puede copiar a otro
+computador sin instalar Python. El script usa `--onefile --noupx` y excluye los módulos de Qt que no se usan para que el
+archivo pese menos y abra más rápido.
+
+## Pantallas principales
+
+| Pantalla | Para qué sirve |
 |---|---|
-| Componentes críticos, distancias, equipos y viajes, normativa | **Requerimientos y normativas** |
-| Escenarios / condiciones base, simulación, **N réplicas** con IC 95 % | **Escenarios y simulación** |
-| Almacén = inicio, Despacho = fin; más áreas; cada prenda con varias **ramas** (corte / bordado / planchado…) | **Layout y movimientos → Áreas, Prendas, Rutas, Pedidos** |
-| Pulsar un área y ver las rutas que usarán los lotes, por pedido | **Mapa operativo** |
-| **Mapa de calor dinámico** (se acumula con el tiempo), colas y ocupación animadas | **Mapa operativo**, Dashboard |
-| Alertas (cuello de botella, pedido tarde, flota saturada, norma…) | insignia 🔔 superior, Escenarios, Requerimientos |
-| Versión y logo | barra lateral, título de la ventana, **Guía y acerca de** |
-| Explicación del funcionamiento | pestaña **Guía** y [docs/FUNCIONAMIENTO.md](docs/FUNCIONAMIENTO.md) |
+| Dashboard | Resumen del taller, mapa de calor, indicadores y alertas principales. |
+| Caracterización del taller | Área, operadores y jornada. |
+| Layout y movimientos | Estaciones, conexiones, prendas, rutas de proceso, pedidos, **inventario** y **compras**, y vista 2D. |
+| Modelo matemático | Variables y fórmulas de `calculos.py`. |
+| Diseño conceptual del robot | Perfiles de robot y compatibilidad con los pasillos. |
+| Escenarios y simulación | Escenarios manual y con robots, simulación y réplicas con IC 95 %. |
+| Mapa operativo | Animación de lotes, colas, ocupación y rutas por área. |
+| Requerimientos y normativas | Componentes críticos, distancias, equipos y viajes, normativa, **alertas** y **cuellos de botella**. |
+| Comparación experimental | S0 frente a S1 con sus indicadores. |
+| Resultados y reportes | Exportación a Excel. |
+| Contingencias y cierres | Cierre de áreas, recálculo de rutas e informe de impacto. |
+| Validación integral | Verificaciones de coherencia de los datos y del modelo. |
+| Data Manager | Importar y exportar Excel, proyecto `.rlr`, respaldos y datos de ejemplo. |
+| Guía y acerca de | Explicación del funcionamiento y versión. |
+
+La barra superior muestra la insignia de alertas (se recalcula sola al guardar datos), el cambio de tema claro u oscuro,
+el taller activo y el estado del programa.
+
+## Alertas, cuellos de botella e inventario
+
+* Cada alerta trae su **posible solución**: configuración, normativa, cierres de área, simulación e inventario.
+* Requerimientos y normativas → **Cuellos de botella** lista los cuellos de más a menos grave, con tipo, lugar y cómo resolverlos.
+* Layout y movimientos → **Inventario**: unidades en almacén y stock mínimo por prenda. Si el taller se queda sin unidades o no
+  alcanzan para los pedidos, se genera la alerta y el operador usa **Generar aviso de compra**.
+* Layout y movimientos → **Compras**: la solicitud pasa de Pendiente a Pedida y Recibida (suma al inventario);
+  **Copiar aviso para Compras** deja el mensaje listo para enviar.
 
 ## Cómo funciona (resumen)
 
@@ -78,18 +147,26 @@ Confirme los no verificados antes de citarlos. La factibilidad del robot por anc
 ## Arquitectura
 
 ```
-presentation (MVC)   views/ (PyQt6, pasivas) ←→ controllers/ → casos de uso      widgets/ (mapa, gráficos, logo SVG)
-application          use_cases/, ports.py (interfaces), dto.py
-domain               entities, calculos, routing, simulacion, analisis, normativa, alertas, estadistica, validacion, datos_demo
-infrastructure       persistence/ (SQLite, esquema v2), excel/ (openpyxl), archive/ (.rlr v2)
-container.py         raíz de composición
+presentacion (MVC)   views/ (PyQt6, pasivas) ←→ controllers/ → casos de uso      widgets/ (mapa, gráficos, logo SVG)
+aplicación           use_cases/, ports.py (interfaces), dto.py
+dominio              entities, calculos, routing, simulacion, analisis, normativa, alertas, estadistica, validacion, datos_demo
+infraestructura      persistence/ (SQLite), excel/ (openpyxl), archive/ (proyecto .rlr)
+contenedor           container.py (raíz de composición)
 ```
 
-`domain` no importa Qt, SQLite ni openpyxl; `application` solo conoce los puertos. Las vistas reciben tuplas y view-models, no entidades.
+`domain` no importa Qt, SQLite ni openpyxl; `application` solo conoce los puertos. Las vistas reciben tuplas y modelos de vista,
+no entidades. Los nombres de carpetas del código (`presentation`, `application`, `domain`, `infrastructure`) siguen el
+patrón de arquitectura limpia.
 
 ## Límites del modelo
 
 * Datos del ejemplo **sintéticos**: validan el software, no son mediciones.
 * No modela averías, baterías ni cruces entre recursos en un mismo pasillo.
+* El stock no se descuenta durante la simulación: las alertas de inventario comparan las unidades con los pedidos registrados.
+* La importación y exportación a Excel todavía no incluye el inventario (sí viaja en el proyecto `.rlr` y en los respaldos).
 * El transporte manual y el AMR solo se diferencian por velocidad, capacidad y ancho requerido; si el transporte no es la restricción
   (como en el ejemplo, donde lo es Bordado), cambiar de S0 a S1 apenas mueve el resultado. El programa lo señala en vez de ocultarlo.
+
+## Historial de cambios
+
+El detalle de cada versión y cómo funciona cada cambio está en **CAMBIOS_4.0.7j.md** (copia en `docs/`).

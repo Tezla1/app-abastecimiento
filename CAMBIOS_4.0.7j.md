@@ -1,9 +1,19 @@
+# TextilFlow 4.0.7j
+
+## Código limpio, README con comandos y nombres en español
+- **Código sin comentarios:** se quitaron los comentarios `#` y los docstrings de todos los archivos `.py` (código, pruebas y herramientas) y los comentarios del `.bat` y de `requirements.txt`. Se verificó que el programa es idéntico (mismo árbol sintáctico) y que las 102 pruebas pasan.
+- **README:** requisitos, instalación con entorno virtual (Windows, Linux y macOS), cómo ejecutar, opciones `--db` y `--help`, dónde se guardan los datos, pruebas, ejercicio práctico y cómo crear el `.exe`.
+- **Sin mezcla de idiomas:** el rótulo «ROUTE ANALYSIS» pasa a «ANÁLISIS DE RUTA»; clases y módulos con nombre mezclado se renombraron (`DataTable`→`TablaDatos`, `KpiCard`→`TarjetaKpi`, `PageView`→`VistaPagina`, `CrudPanel`→`PanelCrud`, `LineChart`→`GraficoLineas`, `LayoutCanvas`→`LienzoLayout`, `MainWindow`→`VentanaPrincipal`, `ParEscenariosBar`→`BarraParEscenarios`, `ReportExporter`→`ExportadorReportes`, `AppContext`→`ContextoApp`, `Container`→`Contenedor`, y los módulos correspondientes).
+- Se mantienen en inglés solo los términos que el proyecto decidió conservar: Dashboard, Data Manager, Lead time, Robot, `● READY`, Stock, y los nombres de patrones de arquitectura (`Repository`, `Gateway`, `Controller`, `View`).
+
+---
+
 # TextilFlow 4.0.7i
 
 ## Alertas en tiempo real y tabla de alertas más legible
 - **Alertas en tiempo real:** la insignia 🔔 de la barra superior se recalcula sola cuando se guarda o elimina algo en Layout y movimientos (inventario, compras, pedidos, rutas, estaciones…). Antes solo se actualizaba al cambiar de pantalla. Se espera 0,25 s por si llegan varios cambios seguidos, para no gastar procesador de más.
 - **Tablas de alertas y cuellos de botella:** la columna «Posible solución» recibe más ancho que las demás, así las filas ya no quedan tan altas.
-- Técnico: señal `alertas_obsoletas` en `AppContext`, temporizador en `AplicacionController`, `DataTable.texto_largo(columnas, pesos)`. 102 tests.
+- Técnico: señal `alertas_obsoletas` en `ContextoApp`, temporizador en `AplicacionController`, `TablaDatos.texto_largo(columnas, pesos)`. 102 tests.
 
 ---
 
@@ -56,7 +66,7 @@ Pedido: avisar cuando el taller se queda sin unidades, qué hacer y que el opera
   Ej.: «Área (m²)» → «Área total de producción en metros cuadrados (m²): largo × ancho del piso útil. Ej.: 20 m × 12 m = 240 m².»
 - Cubre los 61 campos de Caracterización del taller, Layout y movimientos (estaciones, conexiones, prendas, rutas, pedidos), Diseño del robot, Escenarios y simulación, y Contingencias y cierres.
 - Los textos de las listas (origen de datos, función, tipo, política) describen las opciones reales del programa.
-- Técnico: nuevo campo `ayuda` en `CampoSpec` (`viewmodels.py`); `crud_panel.py` lo asigna como tooltip del campo y de su etiqueta. Un test verifica que ningún campo quede sin ayuda.
+- Técnico: nuevo campo `ayuda` en `CampoSpec` (`viewmodels.py`); `panel_crud.py` lo asigna como tooltip del campo y de su etiqueta. Un test verifica que ningún campo quede sin ayuda.
 
 ---
 
@@ -65,7 +75,7 @@ Pedido: avisar cuando el taller se queda sin unidades, qué hacer y que el opera
 ## Formularios compactos (Caracterización, Layout, etc.)
 - Antes: los campos de los formularios laterales se repartían por toda la altura de la tarjeta y quedaban muy separados y abajo.
 - Ahora: los campos quedan juntos arriba (separación de 10 px) y el espacio sobrante queda libre al final, encima de los botones Nuevo / Eliminar / Guardar.
-- Archivo: `presentation/widgets/crud_panel.py` (aplica a todas las pantallas que usan el panel CRUD).
+- Archivo: `presentation/widgets/panel_crud.py` (aplica a todas las pantallas que usan el panel CRUD).
 
 ---
 

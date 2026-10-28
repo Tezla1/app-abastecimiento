@@ -73,7 +73,7 @@ class ContingenciasController(Controlador):
                     hechos += 1
                 except Cancelado:
                     raise
-                except Exception as exc:                  # noqa: BLE001 — se registra y se sigue con el resto
+                except Exception as exc:
                     registro.registrar(f"No se pudo recalcular el escenario «{e.nombre}» tras cambiar los cierres", exc)
             return hechos
 

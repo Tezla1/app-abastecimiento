@@ -1,4 +1,4 @@
-# TextilFlow 4.0.7d · Ejercicio práctico
+# TextilFlow 4.0.7i · Ejercicio práctico
 
 Caso: **Confecciones Andina - Caso Experimental 01** (datos SINTÉTICOS, no son mediciones) · compilación 2026-10 · 30 réplicas por prueba · semillas 100–129.
 
@@ -84,8 +84,8 @@ Las dos costuras son idénticas, por eso el efecto es pequeño. El balanceo impo
 | 60 % | 34/34 | 100 | 389 | Bordado (53 %) | 1 |
 | 80 % | 41/43 | 95 | 464 | Bordado (70 %) | 4 |
 | 100 % | 46/52 | 88 | 478 | Bordado (88 %) | 7 |
-| 120 % | 53/62 | 85 | 477 | Bordado (106 %) | 7 |
-| 140 % | 54/74 | 73 | 481 | Bordado (123 %) | 9 |
+| 120 % | 53/62 | 85 | 477 | Bordado (106 %) | 10 |
+| 140 % | 54/74 | 73 | 481 | Bordado (123 %) | 10 |
 
 
 ## Prueba 7 · Qué pasa si se agrega un segundo puesto de Bordado (30 réplicas, S0)

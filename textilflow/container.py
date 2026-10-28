@@ -20,7 +20,7 @@ from .application.use_cases.talleres import GestionarTalleres
 from .application.use_cases.validacion import ValidarProyecto
 from .infrastructure.archive.rlr_archive import RlrArchive
 from .infrastructure.excel.openpyxl_gateway import OpenpyxlGateway
-from .infrastructure.excel.report_exporter import ArchivoReportExporter
+from .infrastructure.excel.exportador_reportes import ExportadorReportesArchivo
 from .infrastructure.persistence.database import Database
 from .infrastructure.persistence import sqlite_repositories as R
 from .infrastructure.respaldos import Respaldos
@@ -28,7 +28,7 @@ from . import registro
 
 
 @dataclass
-class Container:
+class Contenedor:
     db: Database
     talleres: GestionarTalleres
     layout: GestionarLayout
@@ -55,7 +55,7 @@ class Container:
     respaldos: Respaldos = None
 
 
-def construir(ruta_db: str = ":memory:") -> Container:
+def construir(ruta_db: str = ":memory:") -> Contenedor:
     db = Database(ruta_db)
     r_taller, r_est, r_con = R.SqliteTallerRepository(db), R.SqliteEstacionRepository(db), R.SqliteConexionRepository(db)
     r_tip, r_rut, r_ped = R.SqliteTipoPrendaRepository(db), R.SqliteRutaProcesoRepository(db), R.SqlitePedidoRepository(db)
@@ -78,21 +78,20 @@ def construir(ruta_db: str = ":memory:") -> Container:
     cierres = GestionarCierres(r_cie, r_est)
     informe_cierres = InformeCierres(r_esc, ctx)
     datos = GestionarDatos(talleres, layout, procesos, OpenpyxlGateway(), R.SqliteSnapshotRepository(db), RlrArchive())
-    # los respaldos automáticos solo se hacen con una base en disco (no con :memory:)
     carpeta_resp = None if ruta_db == ":memory:" else registro.carpeta_datos() / "respaldos"
     respaldos = Respaldos(carpeta_resp, datos.exportar_proyecto, datos.restaurar_proyecto)
-    return Container(
+    return Contenedor(
         db=db, talleres=talleres, layout=layout, procesos=procesos, parametros=parametros, robots=robots,
         escenarios=escenarios, simulacion=simulacion, replicas=EjecutarReplicas(r_esc, ctx),
         requerimientos=AnalizarRequerimientos(r_esc, ctx), alertas=alertas, rutas=ConsultarRutasNodo(),
         indicadores=CalcularIndicadores(r_esc, r_reg), comparacion=comparacion,
-        reporte=ExportarReporte(comparacion, ArchivoReportExporter()),
+        reporte=ExportarReporte(comparacion, ExportadorReportesArchivo()),
         validacion=ValidarProyecto(r_taller, r_est, r_con, r_tip, r_rut, r_ped, r_rob, r_esc, r_reg, r_par),
         dashboard=ObtenerDashboard(r_taller, r_est, r_con, r_tip, r_rut, r_ped, r_esc, r_reg, alertas, ctx),
         datos=datos,
         demo=CargarDatosDemo(talleres, layout, procesos, robots, escenarios, simulacion, parametros, inventario),
         inventario=inventario,
         cierres=cierres, informe_cierres=informe_cierres,
-        exportar_contingencias=ExportarContingencias(cierres, informe_cierres, ArchivoReportExporter()),
+        exportar_contingencias=ExportarContingencias(cierres, informe_cierres, ExportadorReportesArchivo()),
         respaldos=respaldos,
     )

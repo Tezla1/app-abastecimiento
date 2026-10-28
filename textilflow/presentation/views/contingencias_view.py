@@ -3,13 +3,13 @@ from PyQt6.QtWidgets import QComboBox, QFileDialog, QFrame, QHBoxLayout, QLabel,
 
 from .. import theme
 from ..viewmodels import CampoSpec
-from ..widgets.common import DataTable, PageView
-from ..widgets.crud_panel import CrudPanel
+from ..widgets.common import TablaDatos, VistaPagina
+from ..widgets.panel_crud import PanelCrud
 from ..widgets.mapa_operativo import MapaOperativo
 from ..widgets.adaptable import FilaAdaptable
 
 
-class ContingenciasView(PageView):
+class ContingenciasView(VistaPagina):
     exportar_solicitado = pyqtSignal(str, int)
     ruta_elegida = pyqtSignal(int)
 
@@ -27,7 +27,7 @@ class ContingenciasView(PageView):
             CampoSpec("bloquea_paso", "Bloquea el paso", "check", defecto=True, ayuda="Marcado: el área cerrada también bloquea el paso del material por ella. Desmarcado: solo deja de procesar."),
             CampoSpec("vigente", "Cierre activo", "check", defecto=True, ayuda="Marcado: el cierre se aplica en las simulaciones. Desmarque para ignorarlo sin borrarlo."),
         ]
-        self.panel = CrudPanel("Registrar cierre", "Cierres registrados del taller", campos,
+        self.panel = PanelCrud("Registrar cierre", "Cierres registrados del taller", campos,
                                ["ID", "Área", "Motivo", "Desde", "Reapertura", "Estado"], theme.ROJO, 420, estirar=2)
         self.panel.set_opciones("motivo", motivos)
         self.panel.setMinimumHeight(350)
@@ -59,7 +59,7 @@ class ContingenciasView(PageView):
         self.mapa.setMinimumHeight(260)
         cuerpo.addWidget(self.mapa, 3)
         der = QVBoxLayout()
-        self.tabla_rutas = DataTable(["Prenda · rama", "Ruta de respaldo"], estirar=1)
+        self.tabla_rutas = TablaDatos(["Prenda · rama", "Ruta de respaldo"], estirar=1)
         der.addWidget(self.tabla_rutas, 1)
         self.leyenda = QLabel("✕ área cerrada · línea amarilla: ruta de respaldo · naranja punteada: ruta normal bloqueada")
         self.leyenda.setObjectName("tenue")

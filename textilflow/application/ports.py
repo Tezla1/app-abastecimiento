@@ -129,7 +129,7 @@ class ProyectoArchive(ABC):
     def leer(self, ruta: str) -> dict: ...
 
 
-class ReportExporter(ABC):
+class ExportadorReportes(ABC):
     @abstractmethod
     def exportar_csv(self, ruta: str, filas: list[dict]) -> None: ...
 

@@ -16,7 +16,7 @@ def _es_numero(valor) -> bool:
         return False
 
 
-class KpiCard(QFrame):
+class TarjetaKpi(QFrame):
     def __init__(self, titulo: str, color: str, parent=None):
         super().__init__(parent)
         self.setObjectName("tarjeta")
@@ -38,7 +38,7 @@ class KpiCard(QFrame):
         self._nota.setText(nota)
 
 
-class DataTable(QTableWidget):
+class TablaDatos(QTableWidget):
     fila_seleccionada = pyqtSignal(object)
 
     def __init__(self, encabezados: Sequence[str], parent=None, estirar: Optional[int] = None):
@@ -58,9 +58,6 @@ class DataTable(QTableWidget):
         self._ajustar_filas = False
 
     def texto_largo(self, columnas: Sequence[int], pesos: Optional[Sequence[float]] = None) -> None:
-        """Columnas con texto largo: se reparten el ancho y el texto baja de renglón en vez de cortarse.
-
-        Con `pesos` el reparto no es parejo: la columna con más texto recibe más ancho (filas menos altas)."""
         self._pesos = dict(zip(columnas, pesos)) if pesos else {}
         for c in columnas:
             self.horizontalHeader().setSectionResizeMode(
@@ -125,7 +122,7 @@ class DataTable(QTableWidget):
         self.fila_seleccionada.emit(self.id_seleccionado())
 
 
-class PageView(QWidget):
+class VistaPagina(QWidget):
 
     def __init__(self, titulo: str, subtitulo: str, acento: str, parent=None):
         super().__init__(parent)

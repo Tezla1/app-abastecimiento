@@ -14,7 +14,7 @@ from .widgets.iconos import icono as icono_seccion
 from .widgets.logo import logo_icono, logo_pixmap
 
 
-class MainWindow(QMainWindow):
+class VentanaPrincipal(QMainWindow):
     pagina_cambiada = pyqtSignal(int)
     taller_elegido = pyqtSignal(object)
     alertas_solicitadas = pyqtSignal()
@@ -29,7 +29,6 @@ class MainWindow(QMainWindow):
             self._ajustar_a_pantalla()
         self.armar(paginas)
 
-    # Aplicacion asigna aquí una función que decide si se puede cerrar (pregunta si guardar); None = cerrar sin preguntar
     antes_de_cerrar = None
 
     def closeEvent(self, ev) -> None:
@@ -44,11 +43,10 @@ class MainWindow(QMainWindow):
             a = QSettings("TextilFlow", "TextilFlow")
             a.setValue("geometria", self.saveGeometry())
             a.setValue("maximizada", self.isMaximized())
-        except Exception:                                    # noqa: BLE001 — recordar el tamaño es opcional
+        except Exception:
             pass
 
     def restaurar_geometria(self) -> bool:
-        """Recupera tamaño y posición de la última sesión, solo si siguen cabiendo en alguna pantalla conectada."""
         a = QSettings("TextilFlow", "TextilFlow")
         g = a.value("geometria")
         if g is None or not self.restoreGeometry(g):
@@ -61,7 +59,6 @@ class MainWindow(QMainWindow):
         return True
 
     def _ajustar_a_pantalla(self) -> None:
-        """Tamaño inicial: el habitual, pero nunca mayor que el área útil de la pantalla; queda centrada."""
         pantalla = QGuiApplication.primaryScreen()
         if pantalla is None:
             self.resize(1360, 840)
@@ -110,7 +107,6 @@ class MainWindow(QMainWindow):
         for i, (etiqueta, color, widget) in enumerate(paginas):
             b = QPushButton(f" {etiqueta}")
             b.setObjectName("nav")
-            # el icono toma el color de la sección
             b.setIcon(icono_seccion(etiqueta, color))
             b.setIconSize(QSize(20, 20))
             b.setCheckable(True)
@@ -182,11 +178,9 @@ class MainWindow(QMainWindow):
         super().resizeEvent(ev)
         if hasattr(self, "_etiquetas"):
             self._aplicar_compacto(self.width() < 980)
-            # ancho útil de las páginas = ventana − menú lateral − márgenes − barra de desplazamiento
             FilaAdaptable.actualizar(self.width() - (64 if self._compacto else 256) - 48 - 14)
 
     def _aplicar_compacto(self, compacto: bool) -> None:
-        """En ventanas angostas el menú lateral queda solo con iconos y la cabecera se abrevia."""
         if compacto == self._compacto:
             return
         self._compacto = compacto
@@ -200,12 +194,9 @@ class MainWindow(QMainWindow):
         self._pintar_alertas()
 
     def poner_pagina(self, i: int, widget: QWidget) -> None:
-        """Sustituye el marcador de la página i por la vista real (construcción perezosa)."""
         marcador = self._pila.widget(i)
         actual = self._pila.currentIndex()
         self._pila.removeWidget(marcador)
-        # cada página va dentro de un área desplazable: si la ventana es más chica que la página,
-        # aparecen barras de desplazamiento en vez de recortar el contenido
         area = QScrollArea()
         area.setObjectName("desplazable")
         area.setWidgetResizable(True)
@@ -216,7 +207,6 @@ class MainWindow(QMainWindow):
         marcador.deleteLater()
 
     def vaciar(self) -> None:
-        """Quita las páginas y el marco actuales antes de armar los nuevos."""
         viejo = self.takeCentralWidget()
         if viejo is not None:
             viejo.hide()
@@ -228,7 +218,6 @@ class MainWindow(QMainWindow):
         self.pagina_cambiada.emit(i)
 
     def seleccionar(self, i: int) -> None:
-        """Marca la página i sin emitir señales (no la construye todavía)."""
         self._grupo.button(i).setChecked(True)
         self._pila.setCurrentIndex(i)
 

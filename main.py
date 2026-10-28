@@ -22,8 +22,8 @@ def main() -> int:
     app.setApplicationName(NOMBRE)
     app.setApplicationVersion(VERSION)
     app.setWindowIcon(logo_icono())
-    idioma.instalar(app)                  # botones y diálogos estándar de Qt en español
-    errores.instalar()                    # a partir de aquí un error inesperado muestra un cuadro en vez de cerrar el programa
+    idioma.instalar(app)
+    errores.instalar()
     registro.info(f"Inicio de {NOMBRE} {VERSION}")
 
     instancia = InstanciaUnica()
@@ -31,7 +31,6 @@ def main() -> int:
         Path(args.db).parent.mkdir(parents=True, exist_ok=True)
         if not instancia.tomar():
             return 1
-        # datos de cuando el programa se llamaba INTRABOT
         antigua = Path.home() / ".intrabot" / "intrabot.db"
         if not Path(args.db).exists() and antigua.exists():
             import shutil
@@ -45,10 +44,10 @@ def main() -> int:
     restaurado = arranque.ofrecer_recuperacion(contenedor)
     if not restaurado and not contenedor.talleres.listar():
         contenedor.demo.execute()
-    contenedor.db.marcar_guardado()           # lo anterior no cuenta como «cambios sin guardar»
+    contenedor.db.marcar_guardado()
     contenedor.respaldos.marcar_abierta()
 
-    aplicacion = Aplicacion(contenedor, app)  # noqa: F841 — debe seguir viva mientras corre la aplicación
+    aplicacion = Aplicacion(contenedor, app)
     codigo = app.exec()
     contenedor.respaldos.marcar_cerrada()
     contenedor.db.close()

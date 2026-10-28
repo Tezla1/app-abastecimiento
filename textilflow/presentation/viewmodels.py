@@ -29,7 +29,7 @@ class CampoSpec:
     decimales: int = 2
     defecto: object = None
     placeholder: str = ""
-    ayuda: str = ""          # texto emergente: qué se debe escribir, unidad y ejemplo
+    ayuda: str = ""
 
 
 @dataclass

@@ -432,17 +432,16 @@ def test_cache_de_simulacion_se_reutiliza_y_se_invalida_al_cambiar_los_datos(dem
     esc = app.escenarios.listar(taller.id)[0]
     a = app.simulacion.execute(esc.id, False)
     b = app.simulacion.execute(esc.id, False)
-    assert a is b                                    # mismos datos: no se vuelve a simular
+    assert a is b
     app.cierres.guardar(Cierre(taller.id, "C", "FALLA_MAQUINARIA", "", 0.0, 0.0, True, True))
     c = app.simulacion.execute(esc.id, False)
-    assert c is not a                                # cambió la base: se simula de nuevo con el cierre
+    assert c is not a
     assert sum(l.estado == "fallido" for l in c.proceso.lotes) > sum(l.estado == "fallido" for l in a.proceso.lotes)
-    d = app.simulacion.execute(esc.id, True)         # guardar no altera el resultado que está en la caché
+    d = app.simulacion.execute(esc.id, True)
     assert d is not c and c.registros is not d.registros
 
 
 def test_toda_alerta_trae_posible_solucion(demo):
-    """Configuración, normativa, cierres y simulación: ninguna alerta (salvo informativas) queda sin solución."""
     from textilflow.domain.alertas import Alerta, TIPO_CUELLO, cuellos_de_botella
     app, taller = demo
     _cerrar(app, taller, "CO", desde_min=0, hasta_min=0)
@@ -475,7 +474,7 @@ def test_demo_trae_stock_y_alerta_de_camisas_que_no_alcanzan(demo):
     s = next(x for x in app.inventario.listar_stock(taller.id) if x.tipo_prenda_id == camisa.id)
     b = app.inventario.balance(taller.id, s)
     assert (s.unidades, b["demanda"], b["falta"]) == (400, 550, 150)
-    assert b["sugerida"] == 200          # 150 que faltan + 50 de mínimo
+    assert b["sugerida"] == 200
     a = next(x for x in app.alertas.execute(taller.id) if x.codigo == "STOCK-INSUF")
     assert a.elemento == "Camisa" and "200" in a.solucion and a.solucion
 
@@ -489,10 +488,9 @@ def test_taller_sin_unidades_genera_alerta_critica_y_aviso_de_compra(demo):
     a = next(x for x in app.alertas.execute(taller.id) if x.codigo == "STOCK-AGOTADO")
     assert a.nivel == "CRÍTICA" and a.elemento == "Pantalón"
     aviso = app.inventario.generar_aviso(taller.id, pant.id)
-    assert aviso.estado == "PENDIENTE" and aviso.cantidad == 230      # 200 de pedidos + 30 de mínimo
+    assert aviso.estado == "PENDIENTE" and aviso.cantidad == 230
     codigos = {x.codigo for x in app.alertas.execute(taller.id)}
     assert "COMPRA-PENDIENTE" in codigos
-    # con la compra en camino la alerta baja a MEDIA y ya no pide comprar más
     a = next(x for x in app.alertas.execute(taller.id) if x.codigo == "STOCK-AGOTADO")
     assert a.nivel == "MEDIA" and "en compra" in a.detalle
     with pytest.raises(ErrorDeNegocio):

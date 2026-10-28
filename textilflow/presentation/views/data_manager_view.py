@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLab
                              QPushButton, QVBoxLayout)
 
 from .. import theme
-from ..widgets.common import PageView
+from ..widgets.common import VistaPagina
 from ..widgets.adaptable import FilaAdaptable
 
 
@@ -27,7 +27,7 @@ def _tarjeta(titulo: str, detalle: str, boton: str, estilo: str = "") -> tuple:
     return f, b
 
 
-class DataManagerView(PageView):
+class DataManagerView(VistaPagina):
     plantilla_solicitada = pyqtSignal(str)
     importar_solicitado = pyqtSignal(str)
     exportar_solicitado = pyqtSignal(str)
@@ -116,7 +116,6 @@ class DataManagerView(PageView):
             self.ejemplo_archivo_solicitado.emit(ruta)
 
     def elegir_respaldo(self, etiquetas: list) -> int:
-        """Muestra la lista de respaldos y devuelve el índice elegido (-1 si cancela)."""
         from PyQt6.QtWidgets import QInputDialog
         texto, ok = QInputDialog.getItem(self, "Respaldos automáticos", "Elija el respaldo a restaurar:", etiquetas, 0, False)
         return etiquetas.index(texto) if ok and texto in etiquetas else -1

@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import QWidget
 from .. import theme
 
 
-class LineChart(QWidget):
+class GraficoLineas(QWidget):
     def __init__(self, titulo: str = "", etiqueta_x: str = "min", etiqueta_y: str = "", parent=None):
         super().__init__(parent)
         self.titulo, self.etiqueta_x, self.etiqueta_y = titulo, etiqueta_x, etiqueta_y

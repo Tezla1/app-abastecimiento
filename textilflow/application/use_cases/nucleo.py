@@ -23,7 +23,7 @@ class Contexto:
     robots: list = field(default_factory=list)
     par: dict = field(default_factory=dict)
     cierres: list = field(default_factory=list)
-    version: int = 0          # versión de los datos (cambia con cada escritura en la base); 0 = no usar caché
+    version: int = 0
 
     def vigentes(self) -> list:
         return [c for c in self.cierres if c.vigente]
@@ -121,8 +121,6 @@ def _clave(ctx: Contexto, esc: Escenario):
 
 
 def simular_completo(ctx: Contexto, esc: Escenario) -> ResultadoSimulacion:
-    """Simula y analiza un escenario. El resultado se guarda en una caché pequeña mientras los datos no cambien:
-    el Dashboard, las alertas y el mapa piden el mismo escenario varias veces y no hace falta repetir la simulación."""
     exigir_simulable(ctx)
     if not ctx.version:
         return analizar(ctx, esc, correr(ctx, esc))

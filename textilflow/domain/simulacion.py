@@ -192,7 +192,6 @@ class _Motor:
         self.rec = [_Recurso(i + 1, p.nodo_inicial) for i in range(p.num_recursos)]
         self.pendientes: list[_Tarea] = []
         self.heap: list = []
-        # desempata los eventos que caen en el mismo minuto
         self.seq = itertools.count()
         self.ids = itertools.count(1)
         self.rr: dict[str, int] = {}
@@ -220,7 +219,6 @@ class _Motor:
     def ruta(self, a: str, b: str) -> Optional[Ruta]:
         excluir = self.sin_paso(self.ahora)
         clave = (a, b, excluir)
-        # las mismas rutas se piden muchas veces, mejor guardarlas
         if clave not in self.cache:
             self.cache[clave] = ruta_mas_corta(self.con, a, b, self.p.ancho_requerido_m, excluir)
         return self.cache[clave]
@@ -300,7 +298,6 @@ class _Motor:
         miembros = abiertos
         if len(miembros) == 1:
             return miembros[0]
-        # sin balanceo (o al arrancar) se reparte por turnos
         if not self.p.balanceo or es_inicio:
             i = self.rr.get(token, 0)
             self.rr[token] = i + 1
@@ -314,7 +311,6 @@ class _Motor:
             espera = self.estado[code].comprometido_min / self.est[code].capacidad
             return (r.distancia_m / v / 60.0 + espera, code)
 
-        # gana el que llegue antes contando la espera que ya tiene encima
         return min(miembros, key=estimado)
 
     def solicitar_siguiente(self, lote: Lote, t: float) -> None:
@@ -377,7 +373,6 @@ class _Motor:
         if t >= self.p.tiempo_observacion_min:
             return
         while self.pendientes and any(r.libre for r in self.rec):
-            # son pocas tareas, ordenar cada vez no pesa
             self.pendientes.sort(key=lambda x: self.clave(x.lote.prioridad, x.listo, x.id))
             tarea = self.pendientes[0]
             lote = tarea.lote
@@ -418,7 +413,6 @@ class _Motor:
 
     def ejecutar(self, tarea: _Tarea, rec: _Recurso, cargada: Ruta, t: float) -> None:
         p, lote = self.p, tarea.lote
-        # cuántas unidades caben en un viaje según el peso
         por_viaje = max(1, int(p.capacidad_kg // lote.peso_unit_kg))
         viajes = math.ceil(lote.unidades / por_viaje)
         restante, cursor, pos, dist_total = lote.unidades, t, rec.pos, 0.0

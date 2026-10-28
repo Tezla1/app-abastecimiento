@@ -6,11 +6,11 @@ from PyQt6.QtWidgets import (QScrollArea, QCheckBox, QComboBox, QDoubleSpinBox, 
                              QWidget)
 
 from ..viewmodels import CampoSpec
-from .common import DataTable
+from .common import TablaDatos
 from .adaptable import FilaAdaptable
 
 
-class CrudPanel(QWidget):
+class PanelCrud(QWidget):
     guardar_solicitado = pyqtSignal(dict)
     eliminar_solicitado = pyqtSignal(int)
     seleccionado = pyqtSignal(int)
@@ -51,7 +51,7 @@ class CrudPanel(QWidget):
                     etiqueta.setToolTip(c.ayuda)
                     etiqueta.setCursor(Qt.CursorShape.WhatsThisCursor)
         marco = QWidget()
-        envoltorio = QVBoxLayout(marco)          # los campos quedan arriba y juntos; el sobrante va al final
+        envoltorio = QVBoxLayout(marco)
         envoltorio.setContentsMargins(0, 4, 0, 0)
         envoltorio.addLayout(formulario)
         envoltorio.addStretch(1)
@@ -73,7 +73,7 @@ class CrudPanel(QWidget):
         for b in (self.btn_nuevo, self.btn_eliminar, self.btn_guardar):
             botones.addWidget(b)
         fl.addLayout(botones)
-        raiz.fijar_ancho(form_box, ancho_form)     # ancho fijo en fila; a todo el ancho cuando se apila
+        raiz.fijar_ancho(form_box, ancho_form)
         raiz.addWidget(form_box)
 
         tabla_box = QFrame()
@@ -82,7 +82,7 @@ class CrudPanel(QWidget):
         cab2 = QLabel(titulo_tabla)
         cab2.setStyleSheet(f"font-size: 14px; font-weight: 700; border-left: 3px solid {acento}; padding-left: 8px;")
         tl.addWidget(cab2)
-        self.tabla = DataTable(encabezados, estirar=estirar)
+        self.tabla = TablaDatos(encabezados, estirar=estirar)
         tl.addWidget(self.tabla)
         raiz.addWidget(tabla_box, 1)
 

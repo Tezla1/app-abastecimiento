@@ -2,11 +2,11 @@ from PyQt6.QtWidgets import QWidget
 
 from .. import theme
 from ..viewmodels import CampoSpec
-from ..widgets.common import PageView
-from ..widgets.crud_panel import CrudPanel
+from ..widgets.common import VistaPagina
+from ..widgets.panel_crud import PanelCrud
 
 
-class TallerView(PageView):
+class TallerView(VistaPagina):
     def __init__(self, origenes: list[tuple]):
         super().__init__("Caracterización del taller",
                          "Registre los datos básicos del taller que alimentarán el layout, el modelo matemático y la simulación.",
@@ -19,7 +19,7 @@ class TallerView(PageView):
             CampoSpec("origen_datos", "Origen de datos", "combo", ayuda="De dónde vienen los datos: «Real» si se midieron en el taller, «Sintético» si son supuestos o de ejemplo, «Diseño / conceptual» si son de una propuesta de diseño."),
             CampoSpec("observaciones", "Observaciones", "multiline", ayuda="Notas libres sobre el taller (condiciones, supuestos, fuente de los datos). Opcional."),
         ]
-        self.panel = CrudPanel("Datos del taller", "Talleres registrados", campos,
+        self.panel = PanelCrud("Datos del taller", "Talleres registrados", campos,
                                ["ID", "Nombre", "Área (m²)", "Operadores", "Jornada (h)", "Origen"],
                                theme.NARANJA, estirar=1)
         self.panel.set_opciones("origen_datos", origenes)

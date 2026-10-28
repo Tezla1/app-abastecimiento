@@ -2,7 +2,7 @@ from typing import Callable, Optional
 
 from ...application.errors import ErrorDeNegocio
 from ...domain.entities import ESTADOS_COMPRA, FUNCIONES, ORIGENES_DATOS, TIPOS_ESCENARIO
-from ..context import AppContext
+from ..context import ContextoApp
 from ..viewmodels import AnimacionVM, ArcoVM, NodoVM
 
 ORIGENES_OPC = list(ORIGENES_DATOS.items())
@@ -13,7 +13,7 @@ COMPRAS_OPC = list(ESTADOS_COMPRA.items())
 
 class Controlador:
 
-    def __init__(self, vista, ctx: AppContext):
+    def __init__(self, vista, ctx: ContextoApp):
         self.vista = vista
         self.ctx = ctx
 
@@ -28,7 +28,6 @@ class Controlador:
         return None
 
     def _en_segundo_plano(self, titulo: str, funcion: Callable, al_terminar: Callable) -> None:
-        """Ejecuta funcion(progreso) en un hilo con barra de progreso y Cancelar; al_terminar(resultado) corre en la ventana."""
         from ..tareas import ejecutar
         ejecutar(self.vista, titulo, funcion, al_terminar, al_fallar=lambda e: self.vista.error(str(e)))
 
@@ -42,7 +41,6 @@ def etiqueta_estacion(e) -> str:
     return f"{e.codigo} · {e.nombre}" if e.nombre else e.codigo
 
 
-# devuelve datos planos para que la vista no toque entidades
 def construir_red(layout, taller_id: Optional[int], resaltar=frozenset(), cerrados=frozenset()):
     if taller_id is None:
         return [], []

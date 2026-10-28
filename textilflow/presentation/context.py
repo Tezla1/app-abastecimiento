@@ -3,11 +3,11 @@ from typing import Optional
 from PyQt6.QtCore import QObject, pyqtSignal
 
 
-class AppContext(QObject):
+class ContextoApp(QObject):
     taller_activo_cambiado = pyqtSignal()
     talleres_cambiaron = pyqtSignal()
     cierres_cambiaron = pyqtSignal()
-    alertas_obsoletas = pyqtSignal()     # los datos cambiaron: hay que recalcular la insignia de alertas
+    alertas_obsoletas = pyqtSignal()
 
     def __init__(self):
         super().__init__()

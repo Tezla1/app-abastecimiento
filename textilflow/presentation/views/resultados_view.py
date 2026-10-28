@@ -2,18 +2,18 @@ from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QPlainTextEdit, QPushButton
 
 from .. import theme
-from ..widgets.common import PageView
-from ..widgets.par_escenarios import ParEscenariosBar
+from ..widgets.common import VistaPagina
+from ..widgets.par_escenarios import BarraParEscenarios
 
 
-class ResultadosView(PageView):
+class ResultadosView(VistaPagina):
     exportar_solicitado = pyqtSignal(int, int, str, str)
 
     def __init__(self):
         super().__init__("Resultados y reportes",
                          "Informe de la comparación entre escenarios, listo para exportar a Excel o CSV.",
                          theme.NARANJA)
-        self.barra = ParEscenariosBar("Generar informe")
+        self.barra = BarraParEscenarios("Generar informe")
         self.cuerpo.addWidget(self.barra)
         self.texto = QPlainTextEdit()
         self.texto.setReadOnly(True)

@@ -4,13 +4,13 @@ from PyQt6.QtWidgets import (QComboBox, QDoubleSpinBox, QFrame, QGridLayout, QHB
 
 from .. import theme
 from ..viewmodels import CampoSpec
-from ..widgets.common import DataTable, PageView
-from ..widgets.crud_panel import CrudPanel
-from ..widgets.layout_canvas import LayoutCanvasConControles
+from ..widgets.common import TablaDatos, VistaPagina
+from ..widgets.panel_crud import PanelCrud
+from ..widgets.lienzo_layout import LienzoLayoutConControles
 from ..widgets.adaptable import FilaAdaptable
 
 
-class LayoutView(PageView):
+class LayoutView(VistaPagina):
     ruta_solicitada = pyqtSignal(str, str, float)
     limpiar_ruta_solicitado = pyqtSignal()
     pestana_cambiada = pyqtSignal()
@@ -22,10 +22,10 @@ class LayoutView(PageView):
                          "Defina las áreas (Almacén → … → Despacho), los pasillos, las prendas con sus ramas de proceso y los pedidos y el inventario del taller activo.",
                          theme.AZUL)
         self.tabs = QTabWidget()
-        self.tabs.tabBar().setUsesScrollButtons(True)      # en ventanas angostas las pestañas se desplazan en vez de ensanchar la página
+        self.tabs.tabBar().setUsesScrollButtons(True)
         self.tabs.tabBar().setExpanding(False)
 
-        self.estaciones = CrudPanel(
+        self.estaciones = PanelCrud(
             "Estación", "Nodos registrados",
             [CampoSpec("codigo", "Código *", placeholder="Ej.: A", ayuda="Código corto y único del área o nodo (letras/números). Ej.: A = Almacén, C = Corte, D = Despacho. Se usa en las rutas de proceso."),
              CampoSpec("nombre", "Nombre", placeholder="Ej.: Almacén", ayuda="Nombre del área o estación. Ej.: Almacén, Corte, Despacho."),
@@ -43,7 +43,7 @@ class LayoutView(PageView):
         n1.setWordWrap(True)
         self.estaciones.insertar_bajo_formulario(n1)
 
-        self.conexiones = CrudPanel(
+        self.conexiones = PanelCrud(
             "Conexión", "Conexiones registradas",
             [CampoSpec("origen", "Origen", "combo", ayuda="Área de donde sale el material por este pasillo."), CampoSpec("destino", "Destino", "combo", ayuda="Área a la que llega el material por este pasillo."),
              CampoSpec("distancia_m", "Distancia (m)", "float", 0, 100_000, 2, ayuda="Longitud real del recorrido entre origen y destino, en metros (m), medida por el pasillo (no en línea recta)."),
@@ -55,7 +55,7 @@ class LayoutView(PageView):
         nota.setWordWrap(True)
         self.conexiones.insertar_bajo_formulario(nota)
 
-        self.prendas = CrudPanel(
+        self.prendas = PanelCrud(
             "Tipo de prenda", "Tipos de confección",
             [CampoSpec("nombre", "Nombre *", placeholder="Ej.: Camisa", ayuda="Nombre del tipo de prenda. Ej.: Camisa, Pantalón. Obligatorio."),
              CampoSpec("peso_unidad_kg", "Peso por unidad (kg)", "float", 0.001, 1000, 3, 0.3, ayuda="Peso de una prenda terminada en kilogramos (kg). Ej.: camisa ≈ 0,3 kg. Sirve para calcular la carga transportada."),
@@ -68,7 +68,7 @@ class LayoutView(PageView):
         n2.setWordWrap(True)
         self.prendas.insertar_bajo_formulario(n2)
 
-        self.rutas = CrudPanel(
+        self.rutas = PanelCrud(
             "Ruta de proceso (rama)", "Ramas de cada prenda",
             [CampoSpec("tipo_prenda_id", "Prenda", "combo", ayuda="Prenda a la que pertenece este registro."),
              CampoSpec("nombre", "Nombre de la rama *", placeholder="Ej.: Con bordado", ayuda="Nombre de esta ruta o rama de la prenda. Ej.: Línea normal, Con bordado. Obligatorio."),
@@ -80,7 +80,7 @@ class LayoutView(PageView):
         self.nota_rutas.setWordWrap(True)
         self.rutas.insertar_bajo_formulario(self.nota_rutas)
 
-        self.pedidos = CrudPanel(
+        self.pedidos = PanelCrud(
             "Pedido", "Pedidos del taller",
             [CampoSpec("tipo_prenda_id", "Prenda", "combo", ayuda="Prenda a la que pertenece este registro."),
              CampoSpec("cantidad", "Cantidad (unidades)", "int", 1, 1_000_000, defecto=100, ayuda="Número de prendas del pedido (entero ≥ 1)."),
@@ -91,7 +91,7 @@ class LayoutView(PageView):
             ["ID", "Prenda", "Cantidad", "Prior.", "Llegada", "Límite", "Datos"], theme.AZUL, estirar=1)
         self.pedidos.set_opciones("origen_datos", origenes)
 
-        self.inventario = CrudPanel(
+        self.inventario = PanelCrud(
             "Unidades en el almacén", "Inventario del taller",
             [CampoSpec("tipo_prenda_id", "Prenda", "combo", ayuda="Prenda de la que se registran las unidades disponibles."),
              CampoSpec("unidades", "Unidades en almacén", "int", 0, 10_000_000, defecto=0,
@@ -109,7 +109,7 @@ class LayoutView(PageView):
         self.inventario.insertar_bajo_formulario(self.nota_inventario)
         self.btn_aviso.clicked.connect(lambda: self.aviso_solicitado.emit(int(self.inventario.widget("tipo_prenda_id").currentData() or 0)))
 
-        self.compras = CrudPanel(
+        self.compras = PanelCrud(
             "Aviso de compra", "Solicitudes de compra",
             [CampoSpec("tipo_prenda_id", "Prenda", "combo", ayuda="Prenda que se debe comprar."),
              CampoSpec("cantidad", "Cantidad (unidades)", "int", 1, 10_000_000, defecto=100, ayuda="Unidades que Compras debe pedir (entero ≥ 1)."),
@@ -144,14 +144,14 @@ class LayoutView(PageView):
         t = QLabel("Vista operacional del layout")
         t.setStyleSheet("font-size: 14px; font-weight: 700;")
         il.addWidget(t)
-        self.mapa = LayoutCanvasConControles()
+        self.mapa = LienzoLayoutConControles()
         il.addWidget(self.mapa, 1)
         lay.addWidget(izq, 3)
 
         der = QFrame()
         der.setObjectName("tarjeta")
         dl = QVBoxLayout(der)
-        titulo = QLabel("ROUTE ANALYSIS")
+        titulo = QLabel("ANÁLISIS DE RUTA")
         titulo.setStyleSheet(f"font-size: 14px; font-weight: 700; border-left: 3px solid {theme.AZUL}; padding-left: 8px;")
         dl.addWidget(titulo)
         g = QGridLayout()
@@ -177,7 +177,7 @@ class LayoutView(PageView):
         self.ruta_resumen = QLabel("Sin ruta activa.")
         self.ruta_resumen.setWordWrap(True)
         dl.addWidget(self.ruta_resumen)
-        self.ruta_tramos = DataTable(["#", "Tramo", "Dist. (m)", "Ancho (m)"], estirar=1)
+        self.ruta_tramos = TablaDatos(["#", "Tramo", "Dist. (m)", "Ancho (m)"], estirar=1)
         dl.addWidget(self.ruta_tramos, 1)
         lay.addWidget(der, 2)
         calc.clicked.connect(lambda: self.ruta_solicitada.emit(

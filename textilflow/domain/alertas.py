@@ -20,10 +20,9 @@ class Alerta:
     detalle: str
     elemento: str = ""
     escenario: str = ""
-    solucion: str = ""        # posible solución, con cifras concretas cuando se pueden calcular
+    solucion: str = ""
 
 
-# alertas que describen un cuello de botella, y el tipo de limitación que señalan
 TIPO_CUELLO = {
     "PRE-CUELLO": "Proceso (previsto)",
     "SIM-CUELLO": "Proceso",
@@ -37,7 +36,6 @@ TIPO_CUELLO = {
 
 
 def cuellos_de_botella(alertas: Iterable[Alerta]) -> list[Alerta]:
-    """Alertas que son cuellos de botella, de la más grave a la menos grave."""
     return [a for a in ordenar(alertas) if a.codigo in TIPO_CUELLO]
 
 
@@ -153,12 +151,10 @@ def alertas_cierres(cierres: Iterable[Cierre], estaciones: list[Estacion]) -> li
 
 
 def balance_stock(s: Stock, pedidos: Iterable[Pedido], solicitudes: Iterable[SolicitudCompra]) -> dict:
-    """Cuentas de una prenda: demanda de los pedidos, lo que ya viene en compra y cuánto conviene comprar."""
     demanda = sum(p.cantidad for p in pedidos if p.tipo_prenda_id == s.tipo_prenda_id)
     abiertas = [c for c in solicitudes if c.tipo_prenda_id == s.tipo_prenda_id and c.estado in ("PENDIENTE", "PEDIDA")]
     en_compra = sum(c.cantidad for c in abiertas)
     falta = max(0, demanda - s.unidades)
-    # se pide lo que falta para cubrir los pedidos y dejar el stock mínimo, descontando lo que ya viene en camino
     sugerida = max(0, demanda + s.stock_minimo - s.unidades - en_compra)
     return dict(demanda=demanda, en_compra=en_compra, falta=falta, sugerida=sugerida,
                 sin_pedir=sum(c.cantidad for c in abiertas if c.estado == "PENDIENTE"))
@@ -166,7 +162,6 @@ def balance_stock(s: Stock, pedidos: Iterable[Pedido], solicitudes: Iterable[Sol
 
 def alertas_stock(stocks: Iterable[Stock], tipos: list[TipoPrenda], pedidos: list[Pedido],
                   solicitudes: list[SolicitudCompra]) -> list[Alerta]:
-    """Avisos de inventario del taller: sin unidades, unidades que no alcanzan para los pedidos y stock bajo."""
     nombres = {t.id: t.nombre for t in tipos}
     out: list[Alerta] = []
     for s in stocks:
@@ -204,7 +199,6 @@ def alertas_stock(stocks: Iterable[Stock], tipos: list[TipoPrenda], pedidos: lis
 
 
 def _puestos_necesarios(capacidad: int, carga_pct: float, objetivo_pct: float) -> int:
-    """Puestos en paralelo con los que la carga quedaría cerca de la utilización objetivo."""
     return max(capacidad + 1, math.ceil(capacidad * carga_pct / max(objetivo_pct, 1.0)))
 
 
@@ -230,7 +224,6 @@ def _solucion_estacion(est: Optional[Estacion], estaciones: list[Estacion], capa
 
 
 def alertas_prediccion(par: dict, esc: Escenario, estaciones: list[Estacion], carga: dict) -> list[Alerta]:
-    """Cuellos probables antes de simular, con la carga ofrecida (cálculo analítico)."""
     out = []
     por_codigo = {e.codigo: e for e in estaciones}
     for codigo, (_, pct) in sorted(carga.items(), key=lambda kv: -kv[1][1]):

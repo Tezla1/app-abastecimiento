@@ -1,19 +1,16 @@
-"""Filas que pasan a columna cuando la ventana es demasiado angosta para ponerlas lado a lado."""
 import weakref
 from typing import Optional
 
 from PyQt6.QtCore import QRect, QSize, Qt
 from PyQt6.QtWidgets import QBoxLayout, QLayout, QWidget
 
-_MAX = 16777215       # QWIDGETSIZE_MAX
+_MAX = 16777215
 
 
 class FilaAdaptable(QBoxLayout):
-    """Como un QHBoxLayout, pero si el ancho disponible no alcanza para el mínimo de sus elementos en fila,
-    los apila en vertical. Así en pantallas chicas no hace falta desplazarse hacia los lados."""
 
     _todas: "weakref.WeakSet" = weakref.WeakSet()
-    _ancho = 100000                                   # ancho disponible conocido (la ventana lo actualiza)
+    _ancho = 100000
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(QBoxLayout.Direction.LeftToRight, parent)
@@ -21,7 +18,6 @@ class FilaAdaptable(QBoxLayout):
         FilaAdaptable._todas.add(self)
 
     def fijar_ancho(self, widget: QWidget, ancho: int) -> None:
-        """Ancho fijo del widget en modo fila; en modo columna se libera para que use todo el ancho."""
         self._fijos.append((widget, ancho))
         widget.setFixedWidth(ancho)
 
@@ -50,7 +46,6 @@ class FilaAdaptable(QBoxLayout):
         self._avisar_al_padre()
 
     def _avisar_al_padre(self) -> None:
-        # los tamaños mínimos quedan en caché en los contenedores (pestañas ocultas incluidas): se les avisa del cambio
         w = self.parentWidget()
         while w is not None and w.objectName() != "pagina":
             w.updateGeometry()
@@ -63,7 +58,6 @@ class FilaAdaptable(QBoxLayout):
                 w.layout().invalidate()
 
     def minimumSize(self):
-        # Qt lo consulta al calcular el tamaño de la página, cuando ya están todos los elementos cargados
         self.evaluar()
         return super().minimumSize()
 
@@ -81,20 +75,15 @@ class FilaAdaptable(QBoxLayout):
 
     @classmethod
     def actualizar(cls, ancho_disponible: int) -> None:
-        """La ventana avisa cuánto ancho útil tienen las páginas; cada fila decide si cabe en horizontal."""
         cls._ancho = ancho_disponible
         for fila in list(cls._todas):
             try:
                 fila.evaluar()
-            except RuntimeError:                      # la fila ya fue destruida
+            except RuntimeError:
                 pass
 
 
 class FlujoLayout(QLayout):
-    """Reparte sus elementos en filas y salta a la siguiente cuando no caben (tarjetas de indicadores, barras de herramientas).
-
-    Su ancho mínimo es el del elemento más ancho, así la página puede achicarse sin desplazamiento horizontal.
-    """
 
     def __init__(self, parent: Optional[QWidget] = None, margen: int = 0, espacio: int = 8):
         super().__init__(parent)
@@ -145,7 +134,6 @@ class FlujoLayout(QLayout):
         fila: list = []
 
         def cerrar_fila() -> None:
-            # los elementos de la fila se reparten el ancho sobrante en partes iguales (como tarjetas del mismo tamaño)
             nonlocal x, y, alto_fila, fila
             if not fila:
                 return

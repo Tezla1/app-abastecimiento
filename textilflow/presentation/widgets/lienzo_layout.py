@@ -12,7 +12,7 @@ ESCALA = 20.0
 RADIO = 17.0
 
 
-class LayoutCanvas(QGraphicsView):
+class LienzoLayout(QGraphicsView):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._escena = QGraphicsScene(self)
@@ -112,11 +112,11 @@ class LayoutCanvas(QGraphicsView):
             self.ajustar()
 
 
-class LayoutCanvasConControles(QWidget):
+class LienzoLayoutConControles(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.canvas = LayoutCanvas()
+        self.canvas = LienzoLayout()
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
         barra = QHBoxLayout()

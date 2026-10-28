@@ -320,7 +320,6 @@ ESTADOS_COMPRA = {
 
 @dataclass
 class Stock:
-    """Unidades disponibles en el almacén del taller para una prenda, y el mínimo que dispara el aviso."""
     taller_id: int
     tipo_prenda_id: int
     unidades: int = 0
@@ -338,7 +337,6 @@ class Stock:
 
 @dataclass
 class SolicitudCompra:
-    """Aviso que el operador genera para que Compras haga el pedido de reposición."""
     taller_id: int
     tipo_prenda_id: int
     cantidad: int

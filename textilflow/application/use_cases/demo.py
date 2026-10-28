@@ -23,7 +23,6 @@ class CargarDatosDemo:
         self._par.listar()
         usados = {t.nombre for t in self._t.listar()}
         nombre, n = NOMBRE_DEMO, 1
-        # si el ejemplo ya está cargado, se crea otra copia numerada
         while nombre in usados:
             n += 1
             nombre = f"{NOMBRE_DEMO} ({n})"
@@ -43,7 +42,7 @@ class CargarDatosDemo:
             self._p.guardar_ruta(RutaProceso(taller.id, ids[prenda], nombre, frac, seq))
         for prenda, cant, prio, llegada, venc in D.PEDIDOS:
             self._p.guardar_pedido(Pedido(taller.id, ids[prenda], cant, prio, llegada, venc))
-        if self._inv is not None:       # el ejemplo trae stock: las camisas no alcanzan para los pedidos
+        if self._inv is not None:
             for prenda, unidades, minimo in D.STOCK:
                 self._inv.guardar_stock(Stock(taller.id, ids[prenda], unidades, minimo))
         robot = self._r.guardar(datos["robot"])
@@ -62,7 +61,6 @@ class CargarDatosDemo:
         inicio = next((e.codigo for e in estaciones if e.funcion == "ALMACEN"), None) or (
             estaciones[0].codigo if estaciones else "")
         _, _, _, v, cap, tc, td = D.ESCENARIOS[0]
-        # regla sencilla: un operario por cada 5 áreas
         n = max(2, -(-len(estaciones) // 5))
         e0 = self._e.guardar(Escenario(taller.id, f"S0 · Manual ({n} operarios)", "MANUAL", n, 480, v, cap, tc, td,
                                        inicio, True))

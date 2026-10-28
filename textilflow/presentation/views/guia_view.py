@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QTextBrowser, QVBoxLayo
 from .. import theme
 from ...version import FECHA, NOMBRE, SUBTITULO, VERSION
 from ..widgets.adaptable import FilaAdaptable
-from ..widgets.common import PageView
+from ..widgets.common import VistaPagina
 from ..widgets.logo import logo_pixmap
 
 def guia_html() -> str:
@@ -73,7 +73,7 @@ una ✕ roja en el mapa y el dashboard.</p>
 """
 
 
-class GuiaView(PageView):
+class GuiaView(VistaPagina):
     def __init__(self):
         super().__init__("Guía y acerca de TextilFlow",
                          "Qué hace el programa, cómo se usa y qué límites tiene.", theme.TURQUESA)

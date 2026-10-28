@@ -4,7 +4,7 @@ from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QComboBox, QFrame, QGridLayout, QLabel, QPushButton
 
 
-class ParEscenariosBar(QFrame):
+class BarraParEscenarios(QFrame):
     ejecutar = pyqtSignal(int, int)
 
     def __init__(self, texto_boton: str, parent=None):

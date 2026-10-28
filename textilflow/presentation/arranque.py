@@ -1,4 +1,3 @@
-"""Arranque seguro: instancia única, apertura de la base de datos con recuperación y avisos al usuario."""
 import shutil
 import sqlite3
 from datetime import datetime
@@ -9,7 +8,7 @@ from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import QMessageBox
 
 from .. import registro
-from ..container import Container, construir
+from ..container import Contenedor, construir
 
 
 def _caja(titulo, texto, icono=QMessageBox.Icon.Warning, detalle="") -> QMessageBox:
@@ -24,7 +23,6 @@ def _caja(titulo, texto, icono=QMessageBox.Icon.Warning, detalle="") -> QMessage
 
 
 class InstanciaUnica:
-    """Impide abrir dos TextilFlow sobre la misma carpeta de datos (se pelearían por el archivo)."""
 
     def __init__(self):
         self._lock = None
@@ -46,15 +44,13 @@ class InstanciaUnica:
             self._lock.unlock()
 
 
-def _revisar(c: Container) -> None:
-    """Falla si el archivo está dañado (aunque SQLite haya logrado abrirlo)."""
+def _revisar(c: Contenedor) -> None:
     ok = c.db.conn.execute("PRAGMA quick_check").fetchone()[0]
     if ok != "ok":
         raise sqlite3.DatabaseError(f"La verificación de integridad devolvió: {ok}")
 
 
-def abrir_contenedor(ruta: str) -> Container | None:
-    """Abre la base de datos. Si falla, explica por qué y ofrece alternativas; devuelve None si el usuario sale."""
+def abrir_contenedor(ruta: str) -> Contenedor | None:
     try:
         c = construir(ruta)
         if ruta != ":memory:":
@@ -96,8 +92,7 @@ def abrir_contenedor(ruta: str) -> Container | None:
             return None
 
 
-def avisar_migracion(c: Container) -> None:
-    """Muestra (en pantalla, no en consola) que una base de la versión 1 se movió a un respaldo."""
+def avisar_migracion(c: Contenedor) -> None:
     if getattr(c.db, "respaldo_v1", ""):
         caja = _caja("Se actualizó el formato de sus datos",
                      "Se encontró una base de datos de una versión muy anterior de TextilFlow, que no es compatible "
@@ -107,8 +102,7 @@ def avisar_migracion(c: Container) -> None:
         caja.exec()
 
 
-def ofrecer_recuperacion(c: Container) -> bool:
-    """Si la sesión anterior no se cerró bien y hay respaldos, ofrece restaurar el más reciente. True si se restauró."""
+def ofrecer_recuperacion(c: Contenedor) -> bool:
     r = c.respaldos
     if not r.sesion_anterior_incorrecta():
         return False
@@ -130,7 +124,7 @@ def ofrecer_recuperacion(c: Container) -> bool:
             r.restaurar(ruta)
             c.db.marcar_guardado()
             return True
-        except Exception as e:                                  # noqa: BLE001 — se informa y se continúa
+        except Exception as e:
             registro.registrar("No se pudo restaurar el respaldo automático", e)
             _caja("No se pudo restaurar", f"El respaldo no se pudo leer: {e}").exec()
     return False

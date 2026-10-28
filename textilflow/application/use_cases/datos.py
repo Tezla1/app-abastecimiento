@@ -117,7 +117,6 @@ class GestionarDatos:
 
     def restaurar_proyecto(self, ruta: str) -> None:
         datos = self._archivo.leer(ruta)
-        # los respaldos de cuando se llamaba INTRABOT siguen sirviendo
         formatos_validos = ("TEXTILFLOW-RLR", "INTRABOT-RLR")
         if datos.get("formato") not in formatos_validos or "tablas" not in datos:
             raise ErrorDeNegocio("El archivo no es un respaldo de proyecto TextilFlow válido.")

@@ -4,7 +4,6 @@ from ..theme import ROJO, VERDE, fmt
 from .base import Controlador
 
 
-# depende del indicador: menos espera es bueno, menos pedidos atendidos no
 def color_variacion(clave: str, v) -> str:
     mejor_si_baja = MEJOR_SI_BAJA.get(clave)
     if v is None or mejor_si_baja is None or v == 0:

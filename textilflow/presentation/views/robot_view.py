@@ -5,12 +5,12 @@ from PyQt6.QtWidgets import QComboBox, QFrame, QHBoxLayout, QLabel, QPushButton,
 
 from .. import theme
 from ..viewmodels import CampoSpec
-from ..widgets.common import PageView
-from ..widgets.crud_panel import CrudPanel
+from ..widgets.common import VistaPagina
+from ..widgets.panel_crud import PanelCrud
 from ..widgets.adaptable import FilaAdaptable
 
 
-class RobotView(PageView):
+class RobotView(VistaPagina):
     evaluar_solicitado = pyqtSignal(int)
 
     def __init__(self, origenes: list[tuple]):
@@ -26,7 +26,7 @@ class RobotView(PageView):
             CampoSpec("radio_giro_m", "Radio de giro (m)", "float", 0, 100, 3, 0.9, ayuda="Radio mínimo de giro en metros (m): espacio que necesita para dar una vuelta. Opcional."),
             CampoSpec("origen_datos", "Origen de datos", "combo", ayuda="«Real» si son de un equipo medido o de ficha técnica, «Sintético» si son supuestos, «Diseño / conceptual» si es una propuesta de diseño."),
         ]
-        self.panel = CrudPanel("Nuevo perfil de robot", "Perfiles de robot registrados", campos,
+        self.panel = PanelCrud("Nuevo perfil de robot", "Perfiles de robot registrados", campos,
                                ["ID", "Nombre", "Cap. kg", "Vel. m/s", "Ancho m", "Radio giro m", "Origen"],
                                theme.TURQUESA, estirar=1)
         self.panel.set_opciones("origen_datos", origenes)

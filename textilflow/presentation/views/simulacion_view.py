@@ -4,14 +4,14 @@ from PyQt6.QtWidgets import (QComboBox, QFrame, QHBoxLayout, QLabel, QPushButton
 
 from .. import theme
 from ..viewmodels import CampoSpec
-from ..widgets.common import DataTable, KpiCard, PageView
-from ..widgets.crud_panel import CrudPanel
+from ..widgets.common import TablaDatos, TarjetaKpi, VistaPagina
+from ..widgets.panel_crud import PanelCrud
 from ..widgets.estabilidad import Estabilidad
-from ..widgets.line_chart import LineChart
+from ..widgets.grafico_lineas import GraficoLineas
 from ..widgets.adaptable import FilaAdaptable, FlujoLayout
 
 
-class SimulacionView(PageView):
+class SimulacionView(VistaPagina):
     ejecutar_solicitado = pyqtSignal(int)
     replicas_solicitadas = pyqtSignal(int, int)
 
@@ -21,7 +21,7 @@ class SimulacionView(PageView):
                          "(Almacén → áreas en paralelo → Despacho), con colas, prioridades y transporte por recursos.",
                          theme.VERDE)
         self.tabs = QTabWidget()
-        self.tabs.tabBar().setUsesScrollButtons(True)      # en ventanas angostas las pestañas se desplazan en vez de ensanchar la página
+        self.tabs.tabBar().setUsesScrollButtons(True)
         self.tabs.tabBar().setExpanding(False)
         campos = [
             CampoSpec("nombre", "Nombre *", placeholder="Ej.: S1 · AMR (2 robots)", ayuda="Nombre del escenario. Ej.: «S1 · AMR (2 robots)». Obligatorio."),
@@ -41,7 +41,7 @@ class SimulacionView(PageView):
             CampoSpec("variabilidad_pct", "Variabilidad de tiempos ± %", "float", 0, 99, 0, 0.0, ayuda="Variación aleatoria ± % aplicada a los tiempos de proceso. 0 % = tiempos exactos; 10 % = cada tiempo varía hasta ±10 %."),
             CampoSpec("semilla", "Semilla aleatoria", "int", 0, 999_999, defecto=1, ayuda="Número que fija la aleatoriedad: la misma semilla da siempre el mismo resultado, lo que permite repetir y comparar."),
         ]
-        self.panel = CrudPanel("Escenario · condiciones base", "Escenarios del taller activo", campos,
+        self.panel = PanelCrud("Escenario · condiciones base", "Escenarios del taller activo", campos,
                                ["ID", "Nombre", "Tipo", "Recursos", "Política", "Demanda %", "Registros"],
                                theme.VERDE, ancho_form=390, estirar=1)
         self.panel.set_opciones("tipo", tipos)
@@ -61,13 +61,13 @@ class SimulacionView(PageView):
         colores = ["#1B7A57", "#1F4E9E", "#6B43A8", "#B8701A", "#8C3A44", "#187A7E"]
         nombres = ["Lotes completados", "Cierre última entrega", "Lead time medio", "Pedidos a tiempo",
                    "Espera por transporte", "Utilización flota"]
-        self.kpis = [KpiCard(n, c) for n, c in zip(nombres, colores)]
+        self.kpis = [TarjetaKpi(n, c) for n, c in zip(nombres, colores)]
         for k in self.kpis:
             fila.addWidget(k)
         rl.addLayout(fila)
         graficos = FilaAdaptable()
-        self.g_wip = LineChart("Lotes en el sistema y completados", "min")
-        self.g_cola = LineChart("Lotes esperando en cada área", "min")
+        self.g_wip = GraficoLineas("Lotes en el sistema y completados", "min")
+        self.g_cola = GraficoLineas("Lotes esperando en cada área", "min")
         for g in (self.g_wip, self.g_cola):
             caja = QFrame(); caja.setObjectName("tarjeta")
             cl = QVBoxLayout(caja); cl.addWidget(g)
@@ -82,7 +82,7 @@ class SimulacionView(PageView):
         nota.setObjectName("tenue")
         la.addWidget(sub)
         la.addWidget(nota)
-        self.tabla = DataTable(["Área", "Puestos", "Util. %", "Carga ρ %", "Espera min", "Espera máx.", "Cola máx.",
+        self.tabla = TablaDatos(["Área", "Puestos", "Util. %", "Carga ρ %", "Espera min", "Espera máx.", "Cola máx.",
                                 "Lotes", "Unid."], estirar=None)
         la.addWidget(self.tabla, 1)
         abajo.addWidget(caja_a, 5)
@@ -94,7 +94,7 @@ class SimulacionView(PageView):
         nota2.setObjectName("tenue")
         lb.addWidget(sub2)
         lb.addWidget(nota2)
-        self.tabla_alertas = DataTable(["Nivel", "Código", "Alerta", "Detalle", "Posible solución"], estirar=3)
+        self.tabla_alertas = TablaDatos(["Nivel", "Código", "Alerta", "Detalle", "Posible solución"], estirar=3)
         self.tabla_alertas.texto_largo((2, 3, 4), (3, 3, 5))
         lb.addWidget(self.tabla_alertas, 1)
         abajo.addWidget(caja_b, 4)
@@ -123,10 +123,10 @@ class SimulacionView(PageView):
         pl.addWidget(self.nota_rep)
         cuerpo = FilaAdaptable()
         izq = QVBoxLayout()
-        self.tabla_stats = DataTable(["Métrica", "n", "Media", "Desv.", "Mín.", "Máx.", "IC 95 % inf.", "IC 95 % sup."],
+        self.tabla_stats = TablaDatos(["Métrica", "n", "Media", "Desv.", "Mín.", "Máx.", "IC 95 % inf.", "IC 95 % sup."],
                                      estirar=0)
         izq.addWidget(self.tabla_stats, 1)
-        self.tabla_runs = DataTable(["Semilla", "Cierre min", "Lead time", "Completados %", "A tiempo %",
+        self.tabla_runs = TablaDatos(["Semilla", "Cierre min", "Lead time", "Completados %", "A tiempo %",
                                      "Espera transp.", "Flota %", "Cola máx."], estirar=None)
         izq.addWidget(self.tabla_runs, 1)
         cuerpo.addLayout(izq, 3)

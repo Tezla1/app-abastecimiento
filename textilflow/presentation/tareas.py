@@ -1,9 +1,3 @@
-"""Operaciones largas en segundo plano con barra de progreso y botón Cancelar.
-
-La interfaz sigue respondiendo (Windows no la marca como «no responde») y el usuario puede cancelar.
-Mientras una tarea corre, el diálogo bloquea el resto de la ventana, de modo que nadie toca la base de datos
-a la vez que el hilo de trabajo.
-"""
 import os
 import sys
 from typing import Callable, Optional
@@ -14,9 +8,8 @@ from PyQt6.QtWidgets import QApplication, QProgressDialog
 from ..application.errors import ErrorDeNegocio
 from ..application.progreso import Cancelado
 
-# En las pruebas automáticas (TEXTILFLOW_SINCRONO=1) las tareas corren en línea, sin hilo ni diálogo.
 SINCRONO = os.environ.get("TEXTILFLOW_SINCRONO") == "1"
-RETRASO_DIALOGO_MS = 400          # si la tarea dura menos que esto, ni siquiera se muestra el diálogo
+RETRASO_DIALOGO_MS = 400
 
 _activas: list = []
 
@@ -49,16 +42,12 @@ class _Hilo(QThread):
             self.listo.emit(self._funcion(self._progreso))
         except Cancelado:
             self.cancelada.emit()
-        except BaseException as e:                     # noqa: BLE001 — se reenvía al hilo de la ventana
+        except BaseException as e:
             self.fallo.emit(type(e), e, e.__traceback__)
 
 
 def ejecutar(parent, titulo: str, funcion: Callable[[Callable], object], al_terminar: Callable[[object], None],
              al_fallar: Optional[Callable[[BaseException], None]] = None, al_cancelar: Optional[Callable[[], None]] = None) -> None:
-    """Corre funcion(progreso) en un hilo. progreso(hecho, total, texto) actualiza la barra y detecta la cancelación.
-
-    al_terminar(resultado) y al_fallar(excepcion) se ejecutan en el hilo de la ventana.
-    """
     def fallar(exc: BaseException, tb=None) -> None:
         if al_fallar is not None and isinstance(exc, ErrorDeNegocio):
             al_fallar(exc)
@@ -74,7 +63,7 @@ def ejecutar(parent, titulo: str, funcion: Callable[[Callable], object], al_term
             if al_cancelar:
                 al_cancelar()
             return
-        except Exception as e:                         # noqa: BLE001
+        except Exception as e:
             fallar(e)
             return
         al_terminar(resultado)

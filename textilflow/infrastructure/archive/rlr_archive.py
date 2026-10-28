@@ -11,8 +11,6 @@ LIMITE_BYTES = 200 * 1024 * 1024
 
 class RlrArchive(ProyectoArchive):
     def escribir(self, ruta: str, datos: dict) -> None:
-        # se escribe en un archivo temporal y luego se renombra: si el programa se cierra a mitad de la
-        # escritura, el archivo anterior queda intacto en vez de quedar a medias
         tmp = f"{ruta}.tmp"
         with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
             z.writestr(NOMBRE_INTERNO, json.dumps(datos, ensure_ascii=False, indent=1))

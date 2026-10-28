@@ -25,10 +25,9 @@ def ui(qapp, monkeypatch):
     c = construir(":memory:")
     ctl = AplicacionController(c)
     errores = []
-    # las páginas se construyen al visitarlas, así que se parchea la clase base y no cada vista
-    from textilflow.presentation.widgets.common import PageView
-    monkeypatch.setattr(PageView, "error", lambda self, m: errores.append(m))
-    monkeypatch.setattr(PageView, "confirmar", lambda self, m: True)
+    from textilflow.presentation.widgets.common import VistaPagina
+    monkeypatch.setattr(VistaPagina, "error", lambda self, m: errores.append(m))
+    monkeypatch.setattr(VistaPagina, "confirmar", lambda self, m: True)
     ctl.iniciar()
     ctl.errores = errores
     ctl.c = c
@@ -168,7 +167,7 @@ def test_replicas_desde_la_interfaz(ui):
 def test_alertas_en_insignia(ui):
     con_demo(ui)
     ui.ventana.show()
-    ui.ventana.resize(1400, 800)  # ventana ancha: la cabecera muestra el texto completo
+    ui.ventana.resize(1400, 800)
     QApplication.processEvents()
     ui.ventana.set_alertas(*ui.ventana._alertas_txt)
     assert "Alertas:" in ui.ventana.insignia.text() and "críticas" in ui.ventana.insignia.text()
@@ -279,7 +278,6 @@ def test_cambio_de_tema_conserva_taller_y_pagina_y_no_reconstruye_todo(qapp):
         ctl = ap.controlador
         assert theme.tema_actual() == "claro"
         assert ctl.ctx.taller_id == taller and ctl.ventana.pagina_actual() == SIM
-        # solo la página visible está construida; las demás esperan a ser visitadas
         assert sum(ctl.controladores.construida(i) for i in range(14)) == 1
         assert len(ctl.ventana.findChildren(object)) <= base * 1.1
         for i in range(14):
@@ -296,7 +294,6 @@ def test_ventana_se_adapta_a_cualquier_tamano(ui):
     con_demo(ui)
     v = ui.ventana
     v.show()
-    # el mínimo que exige la ventana cabe en una pantalla de 800x600
     assert v.minimumSizeHint().width() <= 800 and v.minimumSizeHint().height() <= 600
     for ancho, alto in [(1920, 1080), (1366, 700), (1024, 640), (800, 520), (640, 420)]:
         v.resize(ancho, alto)
@@ -304,9 +301,7 @@ def test_ventana_se_adapta_a_cualquier_tamano(ui):
         for i in range(len(ui.controladores)):
             v.ir_a(i)
         assert (v.width(), v.height()) == (ancho, alto)
-    # cada página vive dentro de un área desplazable (no se recorta: aparecen barras)
     assert all(isinstance(v._pila.widget(i), QScrollArea) for i in range(len(ui.controladores)))
-    # en ventanas angostas el menú queda en modo compacto y vuelve a lo normal al ensanchar
     v.resize(800, 520); QApplication.processEvents()
     assert v._compacto is True
     v.resize(1366, 760); QApplication.processEvents()
@@ -314,14 +309,13 @@ def test_ventana_se_adapta_a_cualquier_tamano(ui):
 
 
 def test_mapa_operativo_respeta_un_area_cerrada_despues_de_simular(ui):
-    """Si se cierra un área después de animar, al volver al mapa se vuelve a simular y nada pasa por ella."""
     from textilflow.domain.entities import Cierre
     con_demo(ui)
     ui.ventana.ir_a(MAPA)
     m = ui.controladores[MAPA]
     esc = ui.c.escenarios.listar(ui.ctx.taller_id)[0]
     m._simular(esc.id)
-    assert any("C" in mv.ruta for mv in m._resultado.proceso.movimientos)      # sin cierres, Corte sí se usa
+    assert any("C" in mv.ruta for mv in m._resultado.proceso.movimientos)
     ui.c.cierres.guardar(Cierre(ui.ctx.taller_id, "C", "FALLA_MAQUINARIA", "", 0.0, 0.0, True, True))
     ui.ctx.cierres_cambiaron.emit()
     ui.ventana.ir_a(CONT)
@@ -335,7 +329,7 @@ def test_cerrar_con_cambios_pregunta_y_permite_cancelar_o_guardar(qapp, monkeypa
     c = construir(":memory:")
     ap = Aplicacion(c, qapp)
     v = ap.controlador.ventana
-    c.demo.execute()                                   # hay cambios sin guardar
+    c.demo.execute()
     assert c.db.cambios_sin_guardar() > 0
     elegido = {}
 
@@ -346,15 +340,12 @@ def test_cerrar_con_cambios_pregunta_y_permite_cancelar_o_guardar(qapp, monkeypa
 
     monkeypatch.setattr(QMessageBox, "exec", falso_exec)
     monkeypatch.setattr(QMessageBox, "clickedButton", lambda self: self._clic)
-    # 1) Cancelar: la ventana NO se cierra
     elegido["boton"] = "Cancelar"
     assert ap._antes_de_cerrar() is False and c.db.cambios_sin_guardar() > 0
-    # 2) Guardar como…: crea el .rlr, marca guardado y deja cerrar
     destino = tmp_path / "mi_proyecto.rlr"
     monkeypatch.setattr(QFileDialog, "getSaveFileName", lambda *a, **k: (str(destino), ""))
     elegido["boton"] = "Guardar como…"
     assert ap._antes_de_cerrar() is True and destino.exists() and c.db.cambios_sin_guardar() == 0
-    # 3) sin cambios no pregunta
     elegido["boton"] = "Cancelar"
     assert ap._antes_de_cerrar() is True
     v.antes_de_cerrar = None
@@ -410,7 +401,6 @@ def test_error_no_controlado_muestra_cuadro_y_no_cierra(qapp, monkeypatch):
     except ZeroDivisionError:
         sys.excepthook(*sys.exc_info())
     assert len(vistos) == 1 and "cero" in vistos[0]["que"] and vistos[0]["donde"]
-    # el mismo error repetido enseguida no abre otro cuadro
     try:
         1 / 0
     except ZeroDivisionError:
@@ -444,13 +434,11 @@ def _esperar(qapp, condicion, ms=20000):
 
 
 def test_tarea_en_segundo_plano_con_progreso_y_cancelar(qapp, monkeypatch):
-    """Con hilo real: la ventana sigue viva, hay avance y se puede cancelar; el resultado llega al terminar."""
     from textilflow.application.progreso import Cancelado
     from textilflow.presentation import tareas
     monkeypatch.setattr(tareas, "SINCRONO", False)
     monkeypatch.setattr(tareas, "RETRASO_DIALOGO_MS", 0)
     import time
-    # termina bien
     salida = {}
     avances = []
 
@@ -464,7 +452,6 @@ def test_tarea_en_segundo_plano_con_progreso_y_cancelar(qapp, monkeypatch):
     assert tareas.hay_tarea_activa()
     assert _esperar(qapp, lambda: "r" in salida) and salida["r"] == "hecho" and avances == [0, 1, 2, 3, 4]
     assert not tareas.hay_tarea_activa()
-    # se cancela
     estado = {}
 
     def largo(progreso):
@@ -476,7 +463,6 @@ def test_tarea_en_segundo_plano_con_progreso_y_cancelar(qapp, monkeypatch):
     qapp.processEvents()
     tareas._activas[0].pedir_cancelar()
     assert _esperar(qapp, lambda: "cancelado" in estado) and "fin" not in estado
-    # un ErrorDeNegocio llega a al_fallar sin cerrar nada
     from textilflow.application.errors import ErrorDeNegocio
     errs = []
 
@@ -509,16 +495,15 @@ def test_animacion_del_mapa_se_pausa_al_salir_de_la_pagina_y_se_reanuda(ui):
     mapa = m.vista.mapa
     QApplication.processEvents()
     assert mapa.reproduciendo
-    ui.ventana.ir_a(DASH)                  # se va a otra página: deja de consumir procesador
+    ui.ventana.ir_a(DASH)
     QApplication.processEvents()
     assert not mapa.reproduciendo
-    ui.ventana.ir_a(MAPA)                  # vuelve: continúa donde iba
+    ui.ventana.ir_a(MAPA)
     QApplication.processEvents()
     assert mapa.reproduciendo
 
 
 def test_ninguna_pagina_desborda_horizontalmente_desde_800_px(ui):
-    """Las filas se apilan en columna y las tarjetas se reparten en varias filas: sin desplazamiento lateral."""
     con_demo(ui)
     v = ui.ventana
     v.show()
@@ -557,7 +542,6 @@ def test_validacion_muestra_estados_en_espanol(ui):
 
 
 def test_todos_los_campos_tienen_ayuda_emergente():
-    """Cada campo de formulario explica qué se debe escribir (unidad, rango, ejemplo)."""
     import re
     import glob
     import os
@@ -589,14 +573,12 @@ def test_inventario_y_compras_en_pantalla(ui):
     assert v.inventario.tabla.rowCount() == 4 and v.compras.tabla.rowCount() == 0
     camisa = next(i for i in range(v.inventario.tabla.rowCount()) if v.inventario.tabla.item(i, 1).text() == "Camisa")
     assert "faltan 150" in v.inventario.tabla.item(camisa, 7).text()
-    # el operador genera el aviso y lo copia para Compras
     v.inventario.widget("tipo_prenda_id").setCurrentIndex(v.inventario.widget("tipo_prenda_id").findText("Camisa"))
     v.aviso_solicitado.emit(v.inventario.widget("tipo_prenda_id").currentData())
     assert v.compras.tabla.rowCount() == 1 and not ui.errores
     v.copiar_aviso_solicitado.emit()
     from PyQt6.QtWidgets import QApplication
     assert "Camisa: 200 unidades" in QApplication.clipboard().text()
-    # sin avisos pendientes pide algo coherente en vez de fallar
     ctl._intentar(lambda: None)
 
 
@@ -614,4 +596,4 @@ def test_la_insignia_de_alertas_se_actualiza_sola_al_guardar(ui):
     v.inventario.btn_guardar.click()
     for _ in range(5):
         QApplication.processEvents()
-    assert ui.ventana.insignia.text() != antes      # sin cambiar de pantalla, aparece la alerta de «sin unidades»
+    assert ui.ventana.insignia.text() != antes
