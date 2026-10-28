@@ -36,12 +36,18 @@ class CrudPanel(QWidget):
         fl.addWidget(cab)
         formulario = QFormLayout()
         formulario.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
+        formulario.setVerticalSpacing(10)
+        formulario.setHorizontalSpacing(12)
+        formulario.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         for c in campos:
             w = self._crear_widget(c)
             self._widgets[c.nombre] = w
             formulario.addRow(c.etiqueta, w)
         marco = QWidget()
-        marco.setLayout(formulario)
+        envoltorio = QVBoxLayout(marco)          # los campos quedan arriba y juntos; el sobrante va al final
+        envoltorio.setContentsMargins(0, 4, 0, 0)
+        envoltorio.addLayout(formulario)
+        envoltorio.addStretch(1)
         marco.setObjectName("formscroll")
         marco.setStyleSheet("QWidget#formscroll { background: transparent; }")
         desplazable = QScrollArea()

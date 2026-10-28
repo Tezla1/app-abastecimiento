@@ -1,3 +1,12 @@
+# TextilFlow 4.0.7e
+
+## Formularios compactos (Caracterización, Layout, etc.)
+- Antes: los campos de los formularios laterales se repartían por toda la altura de la tarjeta y quedaban muy separados y abajo.
+- Ahora: los campos quedan juntos arriba (separación de 10 px) y el espacio sobrante queda libre al final, encima de los botones Nuevo / Eliminar / Guardar.
+- Archivo: `presentation/widgets/crud_panel.py` (aplica a todas las pantallas que usan el panel CRUD).
+
+---
+
 # TextilFlow 4.0.7d · modo oscuro estilo Windows 11 (sobre la 4.0.7c)
 
 - **Paleta oscura nueva** (`theme.py`): grises neutros en lugar del azul marino anterior, como Windows 11:
