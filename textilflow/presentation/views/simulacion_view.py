@@ -95,7 +95,7 @@ class SimulacionView(PageView):
         lb.addWidget(sub2)
         lb.addWidget(nota2)
         self.tabla_alertas = DataTable(["Nivel", "Código", "Alerta", "Detalle", "Posible solución"], estirar=3)
-        self.tabla_alertas.texto_largo((2, 3, 4))
+        self.tabla_alertas.texto_largo((2, 3, 4), (3, 3, 5))
         lb.addWidget(self.tabla_alertas, 1)
         abajo.addWidget(caja_b, 4)
         rl.addLayout(abajo, 3)

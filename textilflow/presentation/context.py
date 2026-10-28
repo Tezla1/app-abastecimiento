@@ -7,6 +7,7 @@ class AppContext(QObject):
     taller_activo_cambiado = pyqtSignal()
     talleres_cambiaron = pyqtSignal()
     cierres_cambiaron = pyqtSignal()
+    alertas_obsoletas = pyqtSignal()     # los datos cambiaron: hay que recalcular la insignia de alertas
 
     def __init__(self):
         super().__init__()

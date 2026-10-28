@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 from PyQt6.QtCore import QSettings, Qt, QTimer
@@ -125,6 +126,12 @@ class AplicacionController:
         self.ventana.alertas_solicitadas.connect(lambda: self.ventana.ir_a(self._indice_req))
         self.ctx.proveedor_cerrados = c.cierres.cerrados
         self.ctx.cierres_cambiaron.connect(self._actualizar_alertas)
+        # las alertas se actualizan solas al guardar datos (con una pequeña espera por si llegan varios cambios seguidos)
+        self._temporizador_alertas = QTimer(self.ventana)
+        self._temporizador_alertas.setSingleShot(True)
+        self._temporizador_alertas.setInterval(250 if not os.environ.get("TEXTILFLOW_SINCRONO") else 0)
+        self._temporizador_alertas.timeout.connect(self._actualizar_alertas)
+        self.ctx.alertas_obsoletas.connect(self._temporizador_alertas.start)
         self.ctx.taller_activo_cambiado.connect(self._taller_cambio)
         self.ctx.talleres_cambiaron.connect(self._recargar_talleres)
 

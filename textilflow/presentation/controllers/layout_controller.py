@@ -147,6 +147,7 @@ class LayoutController(Controlador):
 
     def _tras_cambio(self, panel, mensaje: str) -> None:
         self.refrescar()
+        self.ctx.alertas_obsoletas.emit()
         self.vista.info(mensaje)
 
     def _eliminar(self, caso_uso, id_, panel, mensaje) -> None:

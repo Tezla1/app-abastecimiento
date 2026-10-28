@@ -57,13 +57,34 @@ class DataTable(QTableWidget):
         self.itemSelectionChanged.connect(self._emitir)
         self._ajustar_filas = False
 
-    def texto_largo(self, columnas: Sequence[int]) -> None:
-        """Columnas con texto largo: se reparten el ancho y el texto baja de renglón en vez de cortarse."""
+    def texto_largo(self, columnas: Sequence[int], pesos: Optional[Sequence[float]] = None) -> None:
+        """Columnas con texto largo: se reparten el ancho y el texto baja de renglón en vez de cortarse.
+
+        Con `pesos` el reparto no es parejo: la columna con más texto recibe más ancho (filas menos altas)."""
+        self._pesos = dict(zip(columnas, pesos)) if pesos else {}
         for c in columnas:
-            self.horizontalHeader().setSectionResizeMode(c, QHeaderView.ResizeMode.Stretch)
+            self.horizontalHeader().setSectionResizeMode(
+                c, QHeaderView.ResizeMode.Interactive if self._pesos else QHeaderView.ResizeMode.Stretch)
         self.setWordWrap(True)
         self.setTextElideMode(Qt.TextElideMode.ElideNone)
         self._ajustar_filas = True
+
+    def _repartir_ancho(self) -> None:
+        pesos = getattr(self, "_pesos", None)
+        if not pesos:
+            return
+        cab = self.horizontalHeader()
+        fijo = sum(cab.sectionSize(c) for c in range(self.columnCount()) if c not in pesos)
+        libre = max(self.viewport().width() - fijo, 120 * len(pesos))
+        total = sum(pesos.values())
+        for c, p in pesos.items():
+            cab.resizeSection(c, int(libre * p / total))
+
+    def resizeEvent(self, e) -> None:
+        super().resizeEvent(e)
+        self._repartir_ancho()
+        if self._ajustar_filas:
+            self.resizeRowsToContents()
 
     def set_filas(self, filas: Sequence[Sequence], ids: Optional[Sequence] = None,
                   colores: Optional[Sequence[Optional[str]]] = None) -> None:
@@ -83,6 +104,7 @@ class DataTable(QTableWidget):
                     item.setToolTip(valor)
                 self.setItem(i, j, item)
         self.blockSignals(False)
+        self._repartir_ancho()
         if self._ajustar_filas:
             self.resizeRowsToContents()
         self.clearSelection()

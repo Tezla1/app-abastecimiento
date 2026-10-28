@@ -1,3 +1,12 @@
+# TextilFlow 4.0.7i
+
+## Alertas en tiempo real y tabla de alertas más legible
+- **Alertas en tiempo real:** la insignia 🔔 de la barra superior se recalcula sola cuando se guarda o elimina algo en Layout y movimientos (inventario, compras, pedidos, rutas, estaciones…). Antes solo se actualizaba al cambiar de pantalla. Se espera 0,25 s por si llegan varios cambios seguidos, para no gastar procesador de más.
+- **Tablas de alertas y cuellos de botella:** la columna «Posible solución» recibe más ancho que las demás, así las filas ya no quedan tan altas.
+- Técnico: señal `alertas_obsoletas` en `AppContext`, temporizador en `AplicacionController`, `DataTable.texto_largo(columnas, pesos)`. 102 tests.
+
+---
+
 # TextilFlow 4.0.7h
 
 ## Inventario del taller, alertas de stock y avisos de compra

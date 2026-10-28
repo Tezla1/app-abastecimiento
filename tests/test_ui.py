@@ -598,3 +598,20 @@ def test_inventario_y_compras_en_pantalla(ui):
     assert "Camisa: 200 unidades" in QApplication.clipboard().text()
     # sin avisos pendientes pide algo coherente en vez de fallar
     ctl._intentar(lambda: None)
+
+
+def test_la_insignia_de_alertas_se_actualiza_sola_al_guardar(ui):
+    from PyQt6.QtWidgets import QApplication
+    con_demo(ui)
+    ctl = ui.controladores[LAYOUT]
+    ctl.refrescar()
+    ui._actualizar_alertas()
+    antes = ui.ventana.insignia.text()
+    v = ctl.vista
+    fila = next(i for i in range(v.inventario.tabla.rowCount()) if v.inventario.tabla.item(i, 1).text() == "Pantalón")
+    v.inventario.tabla.selectRow(fila)
+    v.inventario.widget("unidades").setValue(0)
+    v.inventario.btn_guardar.click()
+    for _ in range(5):
+        QApplication.processEvents()
+    assert ui.ventana.insignia.text() != antes      # sin cambiar de pantalla, aparece la alerta de «sin unidades»
