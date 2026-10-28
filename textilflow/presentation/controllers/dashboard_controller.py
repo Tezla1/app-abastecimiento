@@ -26,4 +26,7 @@ class DashboardController(Controlador):
                 top.append(a)
         top = top[:7]
         self.vista.tabla_alertas.set_filas([[a.nivel, a.titulo] for a in top], colores=[COLOR_NIVEL.get(a.nivel) for a in top])
+        for i, a in enumerate(top):    # al pasar el mouse se ve el detalle y la posible solución
+            if a.solucion:
+                self.vista.tabla_alertas.item(i, 1).setToolTip(f"{a.detalle}\n\nPosible solución: {a.solucion}")
         self.vista.dibujar_red(*construir_red(self._layout, self.ctx.taller_id, cerrados=self.ctx.cerrados()), r.trafico_arcos)

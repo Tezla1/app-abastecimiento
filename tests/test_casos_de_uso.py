@@ -439,3 +439,27 @@ def test_cache_de_simulacion_se_reutiliza_y_se_invalida_al_cambiar_los_datos(dem
     assert sum(l.estado == "fallido" for l in c.proceso.lotes) > sum(l.estado == "fallido" for l in a.proceso.lotes)
     d = app.simulacion.execute(esc.id, True)         # guardar no altera el resultado que está en la caché
     assert d is not c and c.registros is not d.registros
+
+
+def test_toda_alerta_trae_posible_solucion(demo):
+    """Configuración, normativa, cierres y simulación: ninguna alerta (salvo informativas) queda sin solución."""
+    from textilflow.domain.alertas import Alerta, TIPO_CUELLO, cuellos_de_botella
+    app, taller = demo
+    _cerrar(app, taller, "CO", desde_min=0, hasta_min=0)
+    alertas = app.alertas.execute(taller.id)
+    assert alertas
+    sin = [a.codigo for a in alertas if not a.solucion]
+    assert not sin, sin
+    assert {"CIERRE", "SIM-CUELLO"} <= {a.codigo for a in alertas}
+    cuellos = cuellos_de_botella(alertas)
+    assert cuellos and all(a.codigo in TIPO_CUELLO for a in cuellos)
+    niveles = [a.nivel for a in cuellos]
+    orden = ["CRÍTICA", "ALTA", "MEDIA", "INFO"]
+    assert niveles == sorted(niveles, key=orden.index)
+
+
+def test_alertas_de_configuracion_traen_solucion(app):
+    from textilflow.domain.alertas import alertas_estaticas
+    alertas = alertas_estaticas([], [], [], [], [])
+    assert {a.codigo for a in alertas} == {"CFG-ALM", "CFG-DES"}
+    assert all(a.solucion for a in alertas)

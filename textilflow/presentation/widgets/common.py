@@ -55,6 +55,15 @@ class DataTable(QTableWidget):
         if estirar is not None:
             self.horizontalHeader().setSectionResizeMode(estirar, QHeaderView.ResizeMode.Stretch)
         self.itemSelectionChanged.connect(self._emitir)
+        self._ajustar_filas = False
+
+    def texto_largo(self, columnas: Sequence[int]) -> None:
+        """Columnas con texto largo: se reparten el ancho y el texto baja de renglón en vez de cortarse."""
+        for c in columnas:
+            self.horizontalHeader().setSectionResizeMode(c, QHeaderView.ResizeMode.Stretch)
+        self.setWordWrap(True)
+        self.setTextElideMode(Qt.TextElideMode.ElideNone)
+        self._ajustar_filas = True
 
     def set_filas(self, filas: Sequence[Sequence], ids: Optional[Sequence] = None,
                   colores: Optional[Sequence[Optional[str]]] = None) -> None:
@@ -70,8 +79,12 @@ class DataTable(QTableWidget):
                     item.setData(Qt.ItemDataRole.UserRole, ids[i])
                 if colores and colores[i] and j == 0:
                     item.setForeground(QColor(colores[i]))
+                if self._ajustar_filas and isinstance(valor, str) and len(valor) > 40:
+                    item.setToolTip(valor)
                 self.setItem(i, j, item)
         self.blockSignals(False)
+        if self._ajustar_filas:
+            self.resizeRowsToContents()
         self.clearSelection()
 
     def id_seleccionado(self):

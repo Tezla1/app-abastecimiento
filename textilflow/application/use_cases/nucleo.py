@@ -100,10 +100,12 @@ def analizar(ctx: Contexto, esc: Escenario, res) -> ResultadoSimulacion:
     estados = analisis.analizar_estaciones(res, ctx.estaciones, carga)
     ind = analisis.indicadores_proceso(res, ctx.pedidos)
     prendas = ctx.prendas_por_pedido()
+    traf = analisis.trafico(res)
     alertas = ordenar(alertas_cierres(ctx.cierres, ctx.estaciones)
-                      + alertas_escenario(ctx.par, esc, res, estados, ind, calc, ctx.pedidos, prendas))
+                      + alertas_escenario(ctx.par, esc, res, estados, ind, calc, ctx.pedidos, prendas,
+                                          ctx.estaciones, traf))
     return ResultadoSimulacion(
-        esc, res, registros, calc, ind, estados, carga, analisis.trafico(res),
+        esc, res, registros, calc, ind, estados, carga, traf,
         analisis.series_tiempo(res, ctx.estaciones), alertas,
         analisis.flota_analitica(res, ctx.par["utilizacion_objetivo_flota_pct"]),
         analisis.resumen_recorridos(res), prendas)

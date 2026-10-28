@@ -2,7 +2,7 @@ from ...domain.normativa import CUMPLE, INCUMPLE
 from .. import theme
 from ..theme import COLOR_NIVEL, NARANJA, ROJO, VERDE, fmt
 from .base import Controlador
-from .simulacion_controller import filas_alertas
+from .simulacion_controller import filas_alertas, filas_cuellos
 
 SEV = {"CRÍTICA": ROJO, "ALTA": NARANJA, "MEDIA": "#D9A21B"}
 ESTADO_COLOR = {CUMPLE: VERDE, INCUMPLE: ROJO}
@@ -24,10 +24,18 @@ class RequerimientosController(Controlador):
         self.vista.set_escenarios([(e.id, e.nombre) for e in esc])
         self._mostrar_parametros()
         if tid:
-            fa, ca = filas_alertas(self._intentar(self._alertas.execute, tid) or [])
+            alertas = self._intentar(self._alertas.execute, tid) or []
+            fa, ca = filas_alertas(alertas)
             self.vista.t_alertas.set_filas(fa, colores=ca)
+            fc, cc = filas_cuellos(alertas)
+            self.vista.t_cuellos.set_filas(fc, colores=cc)
+            self.vista.nota_cuellos.setText(
+                f"{len(fc)} cuello(s) de botella detectado(s), de más a menos grave. Pase el mouse sobre una fila "
+                "para leerla completa." if fc else
+                "No se detectan cuellos de botella. Si aún no simuló los escenarios, simúlelos para confirmarlo.")
         else:
             self.vista.t_alertas.set_filas([])
+            self.vista.t_cuellos.set_filas([])
 
     def _mostrar_parametros(self) -> None:
         self._lista = self._par.listar()

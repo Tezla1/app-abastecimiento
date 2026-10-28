@@ -1,3 +1,20 @@
+# TextilFlow 4.0.7g
+
+## Alertas con posible solución + pestaña «Cuellos de botella»
+- **Todas las alertas ahora traen «Posible solución».** Antes solo las de simulación la tenían; ahora también:
+  - Configuración: Almacén/Despacho no definido, ruta inválida, prenda sin ruta, fracciones ≠ 100 %.
+  - Normativa (pasillos, distancia entre equipos, área por trabajador, holgura del robot, velocidad, carga manual).
+  - Cierres de área (cómo medir el impacto y mitigarlo).
+  - Las de simulación ya incluían cifras concretas (puestos necesarios, tiempo objetivo, recursos de flota).
+- **Nueva pestaña «Cuellos de botella»** en Requerimientos y normativas: lista los cuellos detectados, de más a menos grave, con
+  Tipo (Proceso, Cola, Transporte, Pasillo, Capacidad del turno), Dónde, Escenario, Qué pasa y Posible solución.
+  Incluye los previstos antes de simular (por carga ofrecida).
+- Dónde verlo: insignia 🔔 de la barra superior → Requerimientos → pestañas «Alertas» y «Cuellos de botella»; en el Dashboard,
+  al pasar el mouse sobre una alerta aparece el detalle y la solución.
+- Técnico: `domain/alertas.py` (`TIPO_CUELLO`, `cuellos_de_botella`, `_solucion_norma`), controladores y vista de requerimientos. 95 tests.
+
+---
+
 # TextilFlow 4.0.7f
 
 ## Ayudas emergentes en los formularios

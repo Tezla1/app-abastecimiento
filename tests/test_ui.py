@@ -568,3 +568,14 @@ def test_todos_los_campos_tienen_ayuda_emergente():
         total += len(re.findall(r'CampoSpec\("', fuente))
         assert len(re.findall(r'ayuda="', fuente)) >= len(re.findall(r'CampoSpec\("', fuente)), ruta
     assert total >= 60
+
+
+def test_pestana_cuellos_de_botella_lista_cuellos_con_solucion(ui):
+    con_demo(ui)
+    ctl = ui.controladores[REQ]
+    ctl.refrescar()
+    v = ctl.vista
+    assert v.t_cuellos.rowCount() > 0
+    assert "cuello" in v.nota_cuellos.text()
+    col_solucion = v.t_cuellos.columnCount() - 1
+    assert all(v.t_cuellos.item(i, col_solucion).text() not in ("", "—") for i in range(v.t_cuellos.rowCount()))

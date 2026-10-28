@@ -1,4 +1,5 @@
 from ...application.use_cases.analisis import METRICAS
+from ...domain.alertas import TIPO_CUELLO, cuellos_de_botella
 from ...domain.entities import POLITICAS, TIPOS_ESCENARIO, Escenario
 from ..theme import COLOR_NIVEL, NARANJA, ROJO, VERDE, fmt
 from .base import Controlador, etiqueta_estacion
@@ -7,8 +8,18 @@ PALETA = ["#5CC8FF", "#FF7AC6", "#B6F36A", "#FFD166", "#C49BFF", "#FF9F6B", "#6B
 
 
 def filas_alertas(alertas):
-    filas = [[a.nivel, a.codigo, a.titulo + (f" · {a.escenario}" if a.escenario else ""), a.detalle] for a in alertas]
+    filas = [[a.nivel, a.codigo, a.titulo + (f" · {a.escenario}" if a.escenario else ""), a.detalle,
+              a.solucion or "—"] for a in alertas]
     return filas, [COLOR_NIVEL.get(a.nivel) for a in alertas]
+
+
+def filas_cuellos(alertas):
+    """Tabla de cuellos de botella: dónde está, de qué tipo es y cómo resolverlo."""
+    cuellos = cuellos_de_botella(alertas)
+    filas = [[a.nivel, TIPO_CUELLO[a.codigo], a.titulo.replace("Cuello de botella en ", "")
+              .replace("Posible cuello de botella en ", ""), a.escenario or "—", a.detalle, a.solucion or "—"]
+             for a in cuellos]
+    return filas, [COLOR_NIVEL.get(a.nivel) for a in cuellos]
 
 
 class SimulacionController(Controlador):
