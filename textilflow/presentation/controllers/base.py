@@ -26,6 +26,11 @@ class Controlador:
             self.vista.error(str(e))
         return None
 
+    def _en_segundo_plano(self, titulo: str, funcion: Callable, al_terminar: Callable) -> None:
+        """Ejecuta funcion(progreso) en un hilo con barra de progreso y Cancelar; al_terminar(resultado) corre en la ventana."""
+        from ..tareas import ejecutar
+        ejecutar(self.vista, titulo, funcion, al_terminar, al_fallar=lambda e: self.vista.error(str(e)))
+
     def _exigir_taller(self) -> Optional[int]:
         if self.ctx.taller_id is None:
             self.vista.error("Primero cree o seleccione un taller activo.")

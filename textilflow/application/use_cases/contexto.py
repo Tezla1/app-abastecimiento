@@ -10,10 +10,12 @@ class CargadorContexto:
     def __init__(self, talleres: TallerRepository, estaciones: EstacionRepository,
                  conexiones: ConexionRepository, tipos: TipoPrendaRepository,
                  rutas: RutaProcesoRepository, pedidos: PedidoRepository,
-                 robots: RobotRepository, parametros: ParametroRepository, cierres: CierreRepository):
+                 robots: RobotRepository, parametros: ParametroRepository, cierres: CierreRepository,
+                 version=None):
         self._t, self._est, self._con = talleres, estaciones, conexiones
         self._tipos, self._rut, self._ped = tipos, rutas, pedidos
         self._rob, self._par, self._cie = robots, parametros, cierres
+        self._version = version or (lambda: 0)
 
     def parametros(self) -> dict:
         return normativa.valores(self._par.list_all())
@@ -26,4 +28,4 @@ class CargadorContexto:
             taller, self._est.list_by_taller(taller_id), self._con.list_by_taller(taller_id),
             sorted(self._tipos.list_all(), key=lambda t: t.id or 0),
             self._rut.list_by_taller(taller_id), self._ped.list_by_taller(taller_id),
-            self._rob.list_all(), self.parametros(), self._cie.list_by_taller(taller_id))
+            self._rob.list_all(), self.parametros(), self._cie.list_by_taller(taller_id), self._version())

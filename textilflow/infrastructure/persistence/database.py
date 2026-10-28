@@ -102,12 +102,22 @@ class Database:
                 n += 1
                 self.respaldo_v1 = f"{ruta}.v1.{n}.bak"
             shutil.move(ruta, self.respaldo_v1)
-        self.conn = sqlite3.connect(ruta)
+        # check_same_thread=False: las operaciones largas corren en un hilo de trabajo (ver presentation/tareas.py);
+        # mientras corren, un diálogo modal impide que la interfaz use la base al mismo tiempo
+        self.conn = sqlite3.connect(ruta, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA foreign_keys = ON")
         self.conn.executescript(ESQUEMA)
         self.conn.execute(f"PRAGMA user_version = {int(ESQUEMA_BD)}")
         self.conn.commit()
+        self._marca = self.conn.total_changes
+
+    def cambios_sin_guardar(self) -> int:
+        """Filas modificadas desde la última marca (al abrir o al guardar un proyecto con nombre)."""
+        return self.conn.total_changes - self._marca
+
+    def marcar_guardado(self) -> None:
+        self._marca = self.conn.total_changes
 
     def close(self) -> None:
         self.conn.close()

@@ -5,6 +5,7 @@ from ...domain import analisis, normativa
 from ...domain.entities import Escenario
 from ..dto import FilaBarrido, Requerimientos
 from ..errors import ErrorDeNegocio
+from ..progreso import Progreso, avisar
 from ..ports import EscenarioRepository
 from .contexto import CargadorContexto
 from .nucleo import analizar, correr, exigir_simulable
@@ -43,7 +44,7 @@ class AnalizarRequerimientos:
     def __init__(self, escenarios: EscenarioRepository, ctx: CargadorContexto):
         self._esc, self._ctx = escenarios, ctx
 
-    def execute(self, escenario_id: int, max_recursos: int = 6) -> Requerimientos:
+    def execute(self, escenario_id: int, max_recursos: int = 6, progreso: Progreso = None) -> Requerimientos:
         esc = self._esc.get(escenario_id)
         if esc is None:
             raise ErrorDeNegocio("Seleccione un escenario guardado.")
@@ -60,7 +61,7 @@ class AnalizarRequerimientos:
         ancho = normativa.ancho_requerido_robot(robot, par) if robot else 0.0
         ramas = analisis.distancias_ramas(ctx.estaciones, ctx.conexiones, ctx.tipos, ctx.rutas,
                                           esc.velocidad_ms, ancho, ctx.cerrados(), ctx.sin_paso())
-        barrido = self._barrido(ctx, esc, max(1, min(max_recursos, 12)))
+        barrido = self._barrido(ctx, esc, max(1, min(max_recursos, 12)), progreso)
         objetivo = par["utilizacion_objetivo_flota_pct"]
         mejor_cierre = min((f.makespan_min for f in barrido), default=0)
         mejor_comp = max((f.completados_pct for f in barrido), default=0)
@@ -80,9 +81,10 @@ class AnalizarRequerimientos:
                               viajes_por_prenda(ctx, esc), cumpl, base.estados, notas)
 
     @staticmethod
-    def _barrido(ctx, esc: Escenario, nmax: int) -> list[FilaBarrido]:
+    def _barrido(ctx, esc: Escenario, nmax: int, progreso: Progreso = None) -> list[FilaBarrido]:
         out = []
         for n in range(1, nmax + 1):
+            avisar(progreso, n - 1, nmax, f"Probando una flota de {n} equipo(s) de {nmax}")
             res = correr(ctx, esc, num_recursos=n)
             r = analizar(ctx, replace_n(esc, n), res)
             out.append(FilaBarrido(n, r.indicadores.get("utilizacion_pct"), r.indicadores.get("espera_prom"),

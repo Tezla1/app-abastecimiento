@@ -1,3 +1,5 @@
+import time
+
 from ...domain.entities import Estacion
 from ..theme import COLOR_RECURSOS, fmt
 from .base import Controlador, construir_animacion, construir_red
@@ -14,6 +16,10 @@ class MapaController(Controlador):
         self._anim = None
         self._nodo = None
         self._estaciones: list[Estacion] = []
+        self._ult_tablas = 0.0
+        self._obsoleto = False          # los cierres cambiaron después de simular
+        self._cerrados_sim: frozenset = frozenset()
+        ctx.cierres_cambiaron.connect(self._cierres_cambiaron)
         v = vista
         v.simular_solicitado.connect(self._simular)
         v.pedido_cambiado.connect(self._consultar)
@@ -27,6 +33,9 @@ class MapaController(Controlador):
         v.mapa.terminado.connect(lambda: v.set_jugando(False))
         v.mapa.set_velocidad(float(v.combo_vel.currentData()))
 
+    def _cierres_cambiaron(self) -> None:
+        self._obsoleto = True
+
     def refrescar(self) -> None:
         tid = self.ctx.taller_id
         esc = self._esc.listar(tid) if tid else []
@@ -39,10 +48,16 @@ class MapaController(Controlador):
         if self._resultado is not None and self._resultado.escenario.taller_id != tid:
             self._resultado = self._anim = None
             self.vista.mapa.cargar_animacion(None)
+        if self._resultado is not None and (self._obsoleto or self._cerrados_sim != self.ctx.cerrados()):
+            # la animación mostrada se simuló con otros cierres: se vuelve a simular para que el flujo respete
+            # las áreas cerradas actuales (antes seguía mostrando el recorrido viejo pasando por un área cerrada)
+            self._obsoleto = False
+            self._simular(self._resultado.escenario.id, aviso="Los cierres cambiaron: se simuló de nuevo el escenario. ")
+            return
         if self._resultado is None:
             self.vista.mapa.dibujar(*construir_red(self._layout, tid, cerrados=self.ctx.cerrados()))
 
-    def _simular(self, escenario_id: int) -> None:
+    def _simular(self, escenario_id: int, aviso: str = "") -> None:
         if not escenario_id:
             self.vista.error("Cree y seleccione un escenario en «Escenarios y simulación».")
             return
@@ -50,6 +65,8 @@ class MapaController(Controlador):
         if r is None:
             return
         self._resultado = r
+        self._obsoleto = False
+        self._cerrados_sim = self.ctx.cerrados()
         self._anim = construir_animacion(r, self._estaciones)
         m = self.vista.mapa
         m.dibujar(*construir_red(self._layout, self.ctx.taller_id, cerrados=self.ctx.cerrados()))
@@ -67,7 +84,7 @@ class MapaController(Controlador):
         self._tiempo(0.0)
         self.vista.set_jugando(True)
         m.reproducir()
-        self.vista.info(f"Animando «{r.escenario.nombre}»: {len(r.proceso.movimientos)} movimientos, "
+        self.vista.info(f"{aviso}Animando «{r.escenario.nombre}»: {len(r.proceso.movimientos)} movimientos, "
                         f"{len(r.proceso.lotes)} lotes, cierre en {fmt(r.ind.makespan_min, 0)} min.")
 
     def _alternar(self) -> None:
@@ -88,6 +105,11 @@ class MapaController(Controlador):
         v.slider.blockSignals(False)
         h, mnt = divmod(int(t), 60)
         v.reloj.setText(f"t = {t:6.1f} min  ({h:02d}:{mnt:02d} h)")
+        # durante la reproducción las tablas y el gráfico se refrescan 4 veces por segundo, no en cada cuadro
+        ahora = time.monotonic()
+        if v.mapa.reproduciendo and t < self._anim.t_fin and ahora - self._ult_tablas < 0.25:
+            return
+        self._ult_tablas = ahora
         v.grafico.set_marca(t)
         cola, proc = {}, {}
         for est, lleg, ini, fin in self._anim.visitas:

@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (QScrollArea, QCheckBox, QComboBox, QDoubleSpinBox, 
 
 from ..viewmodels import CampoSpec
 from .common import DataTable
+from .adaptable import FilaAdaptable
 
 
 class CrudPanel(QWidget):
@@ -23,13 +24,12 @@ class CrudPanel(QWidget):
         self._widgets: dict[str, QWidget] = {}
         self._id: Optional[int] = None
 
-        raiz = QHBoxLayout(self)
+        raiz = FilaAdaptable(self)
         raiz.setContentsMargins(0, 0, 0, 0)
         raiz.setSpacing(12)
 
         form_box = QFrame()
         form_box.setObjectName("tarjeta")
-        form_box.setFixedWidth(ancho_form)
         fl = QVBoxLayout(form_box)
         cab = QLabel(titulo_form)
         cab.setStyleSheet(f"font-size: 14px; font-weight: 700; border-left: 3px solid {acento}; padding-left: 8px;")
@@ -60,6 +60,7 @@ class CrudPanel(QWidget):
         for b in (self.btn_nuevo, self.btn_eliminar, self.btn_guardar):
             botones.addWidget(b)
         fl.addLayout(botones)
+        raiz.fijar_ancho(form_box, ancho_form)     # ancho fijo en fila; a todo el ancho cuando se apila
         raiz.addWidget(form_box)
 
         tabla_box = QFrame()

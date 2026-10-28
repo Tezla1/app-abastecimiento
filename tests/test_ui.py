@@ -257,6 +257,7 @@ def test_cambio_de_tema_reconstruye_la_ventana(qapp):
     assert ap.controlador.ventana.btn_tema.text().strip() == "Tema oscuro"
     ap.alternar_tema()
     assert theme.tema_actual() == "oscuro"
+    ap.controlador.ventana.antes_de_cerrar = None
     ap.controlador.ventana.close()
     theme.aplicar("oscuro")
     c.db.close()
@@ -285,6 +286,7 @@ def test_cambio_de_tema_conserva_taller_y_pagina_y_no_reconstruye_todo(qapp):
             ctl.ventana.ir_a(i)
     finally:
         theme.aplicar("oscuro")
+        ap.controlador.ventana.antes_de_cerrar = None
         ap.controlador.ventana.close()
         c.db.close()
 
@@ -309,3 +311,223 @@ def test_ventana_se_adapta_a_cualquier_tamano(ui):
     assert v._compacto is True
     v.resize(1366, 760); QApplication.processEvents()
     assert v._compacto is False and v._grupo.button(0).text().strip() == "Dashboard"
+
+
+def test_mapa_operativo_respeta_un_area_cerrada_despues_de_simular(ui):
+    """Si se cierra un área después de animar, al volver al mapa se vuelve a simular y nada pasa por ella."""
+    from textilflow.domain.entities import Cierre
+    con_demo(ui)
+    ui.ventana.ir_a(MAPA)
+    m = ui.controladores[MAPA]
+    esc = ui.c.escenarios.listar(ui.ctx.taller_id)[0]
+    m._simular(esc.id)
+    assert any("C" in mv.ruta for mv in m._resultado.proceso.movimientos)      # sin cierres, Corte sí se usa
+    ui.c.cierres.guardar(Cierre(ui.ctx.taller_id, "C", "FALLA_MAQUINARIA", "", 0.0, 0.0, True, True))
+    ui.ctx.cierres_cambiaron.emit()
+    ui.ventana.ir_a(CONT)
+    ui.ventana.ir_a(MAPA)
+    assert not any("C" in mv.ruta for mv in m._resultado.proceso.movimientos)
+
+
+def test_cerrar_con_cambios_pregunta_y_permite_cancelar_o_guardar(qapp, monkeypatch, tmp_path):
+    from PyQt6.QtWidgets import QFileDialog, QMessageBox
+    from textilflow.presentation.app import Aplicacion
+    c = construir(":memory:")
+    ap = Aplicacion(c, qapp)
+    v = ap.controlador.ventana
+    c.demo.execute()                                   # hay cambios sin guardar
+    assert c.db.cambios_sin_guardar() > 0
+    elegido = {}
+
+    def falso_exec(self):
+        elegido["texto"] = self.text()
+        botones = {b.text(): b for b in self.buttons()}
+        self._clic = botones[elegido["boton"]]
+
+    monkeypatch.setattr(QMessageBox, "exec", falso_exec)
+    monkeypatch.setattr(QMessageBox, "clickedButton", lambda self: self._clic)
+    # 1) Cancelar: la ventana NO se cierra
+    elegido["boton"] = "Cancelar"
+    assert ap._antes_de_cerrar() is False and c.db.cambios_sin_guardar() > 0
+    # 2) Guardar como…: crea el .rlr, marca guardado y deja cerrar
+    destino = tmp_path / "mi_proyecto.rlr"
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", lambda *a, **k: (str(destino), ""))
+    elegido["boton"] = "Guardar como…"
+    assert ap._antes_de_cerrar() is True and destino.exists() and c.db.cambios_sin_guardar() == 0
+    # 3) sin cambios no pregunta
+    elegido["boton"] = "Cancelar"
+    assert ap._antes_de_cerrar() is True
+    v.antes_de_cerrar = None
+    v.close()
+    c.db.close()
+
+
+def test_respaldos_automaticos_conservan_los_ultimos_3_y_detectan_cierre_incorrecto(tmp_path):
+    import time
+    from textilflow.infrastructure.respaldos import Respaldos
+    c = construir(":memory:")
+    c.demo.execute()
+    r = Respaldos(tmp_path / "resp", c.datos.exportar_proyecto, c.datos.restaurar_proyecto)
+    for _ in range(5):
+        r.crear()
+        time.sleep(1.05)
+    assert len(r.listar()) == 3 and all(f.suffix == ".rlr" for f, _ in r.listar())
+    assert r.listar()[0][1] > r.listar()[-1][1]
+    assert not r.sesion_anterior_incorrecta()
+    r.marcar_abierta()
+    assert r.sesion_anterior_incorrecta()
+    r.marcar_cerrada()
+    assert not r.sesion_anterior_incorrecta()
+    n = len(c.talleres.listar())
+    c.talleres.eliminar(c.talleres.listar()[0].id) if hasattr(c.talleres, "eliminar") else None
+    r.restaurar(r.listar()[0][0])
+    assert len(c.talleres.listar()) == n
+    c.db.close()
+
+
+def test_descripcion_clara_de_errores():
+    import sqlite3
+    from textilflow import registro
+    for exc, palabra in [(sqlite3.OperationalError("database is locked"), "en uso"), (ZeroDivisionError(), "cero"),
+                         (KeyError("x"), "interno"), (MemoryError(), "memoria")]:
+        try:
+            raise exc
+        except Exception as e:
+            d = registro.describir(type(e), e, e.__traceback__)
+        assert palabra.lower() in (d["titulo"] + d["que"] + d["sugerencia"]).lower()
+        assert "test_ui.py" in d["donde"] and d["resumen"].startswith(type(exc).__name__)
+
+
+def test_error_no_controlado_muestra_cuadro_y_no_cierra(qapp, monkeypatch):
+    import sys
+    from textilflow.presentation import errores
+    vistos = []
+    monkeypatch.setattr(errores, "mostrar", lambda d, parent=None: vistos.append(d) or "seguir")
+    monkeypatch.setattr(sys, "excepthook", sys.excepthook)
+    errores.instalar()
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        sys.excepthook(*sys.exc_info())
+    assert len(vistos) == 1 and "cero" in vistos[0]["que"] and vistos[0]["donde"]
+    # el mismo error repetido enseguida no abre otro cuadro
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        sys.excepthook(*sys.exc_info())
+    assert len(vistos) == 1
+
+
+def test_base_danada_ofrece_empezar_de_nuevo_y_conserva_copia(qapp, monkeypatch, tmp_path):
+    from PyQt6.QtWidgets import QMessageBox
+    from textilflow.presentation import arranque
+    ruta = tmp_path / "datos.db"
+    ruta.write_bytes(b"esto no es una base de datos sqlite" * 50)
+
+    def falso_exec(self):
+        self._clic = {b.text(): b for b in self.buttons()}["Empezar con una base nueva"]
+    monkeypatch.setattr(QMessageBox, "exec", falso_exec)
+    monkeypatch.setattr(QMessageBox, "clickedButton", lambda self: self._clic)
+    c = arranque.abrir_contenedor(str(ruta))
+    assert c is not None and len(c.talleres.listar()) == 1
+    assert list(tmp_path.glob("*.danada.bak"))
+    c.db.close()
+
+
+def _esperar(qapp, condicion, ms=20000):
+    import time
+    t = time.monotonic()
+    while not condicion() and time.monotonic() - t < ms / 1000:
+        qapp.processEvents()
+        time.sleep(0.005)
+    return condicion()
+
+
+def test_tarea_en_segundo_plano_con_progreso_y_cancelar(qapp, monkeypatch):
+    """Con hilo real: la ventana sigue viva, hay avance y se puede cancelar; el resultado llega al terminar."""
+    from textilflow.application.progreso import Cancelado
+    from textilflow.presentation import tareas
+    monkeypatch.setattr(tareas, "SINCRONO", False)
+    monkeypatch.setattr(tareas, "RETRASO_DIALOGO_MS", 0)
+    import time
+    # termina bien
+    salida = {}
+    avances = []
+
+    def trabajo(progreso):
+        for i in range(5):
+            progreso(i, 5, f"paso {i}")
+            avances.append(i)
+            time.sleep(0.02)
+        return "hecho"
+    tareas.ejecutar(None, "Prueba", trabajo, lambda r: salida.setdefault("r", r))
+    assert tareas.hay_tarea_activa()
+    assert _esperar(qapp, lambda: "r" in salida) and salida["r"] == "hecho" and avances == [0, 1, 2, 3, 4]
+    assert not tareas.hay_tarea_activa()
+    # se cancela
+    estado = {}
+
+    def largo(progreso):
+        for i in range(1000):
+            progreso(i, 1000, "")
+            time.sleep(0.01)
+        return "nunca"
+    tareas.ejecutar(None, "Largo", largo, lambda r: estado.setdefault("fin", r), al_cancelar=lambda: estado.setdefault("cancelado", True))
+    qapp.processEvents()
+    tareas._activas[0].pedir_cancelar()
+    assert _esperar(qapp, lambda: "cancelado" in estado) and "fin" not in estado
+    # un ErrorDeNegocio llega a al_fallar sin cerrar nada
+    from textilflow.application.errors import ErrorDeNegocio
+    errs = []
+
+    def malo(progreso):
+        raise ErrorDeNegocio("el escenario no es simulable")
+    tareas.ejecutar(None, "Malo", malo, lambda r: None, al_fallar=lambda e: errs.append(str(e)))
+    assert _esperar(qapp, lambda: errs) and "simulable" in errs[0]
+
+
+def test_replicas_reales_en_hilo_dan_el_mismo_resultado_que_en_linea(ui, monkeypatch):
+    from textilflow.presentation import tareas
+    con_demo(ui)
+    ui.ventana.ir_a(SIM)
+    esc = ui.c.escenarios.listar(ui.ctx.taller_id)[0]
+    en_linea = ui.c.replicas.execute(esc.id, 6)
+    monkeypatch.setattr(tareas, "SINCRONO", False)
+    monkeypatch.setattr(tareas, "RETRASO_DIALOGO_MS", 0)
+    c = ui.controladores[SIM]
+    c._ejecutar_replicas(esc.id, 6)
+    assert _esperar(QApplication.instance(), lambda: getattr(c, "_ultimas", None) is not None)
+    assert [f["makespan_min"] for f in c._ultimas.filas] == [f["makespan_min"] for f in en_linea.filas]
+
+
+def test_animacion_del_mapa_se_pausa_al_salir_de_la_pagina_y_se_reanuda(ui):
+    con_demo(ui)
+    ui.ventana.show()
+    ui.ventana.ir_a(MAPA)
+    m = ui.controladores[MAPA]
+    m._simular(ui.c.escenarios.listar(ui.ctx.taller_id)[0].id)
+    mapa = m.vista.mapa
+    QApplication.processEvents()
+    assert mapa.reproduciendo
+    ui.ventana.ir_a(DASH)                  # se va a otra página: deja de consumir procesador
+    QApplication.processEvents()
+    assert not mapa.reproduciendo
+    ui.ventana.ir_a(MAPA)                  # vuelve: continúa donde iba
+    QApplication.processEvents()
+    assert mapa.reproduciendo
+
+
+def test_ninguna_pagina_desborda_horizontalmente_desde_800_px(ui):
+    """Las filas se apilan en columna y las tarjetas se reparten en varias filas: sin desplazamiento lateral."""
+    con_demo(ui)
+    v = ui.ventana
+    v.show()
+    for ancho, alto in [(1366, 700), (1024, 640), (900, 600), (800, 520)]:
+        v.resize(ancho, alto)
+        QApplication.processEvents()
+        disponible = ancho - (64 if ancho < 980 else 256) - 14
+        for i in range(len(ui.controladores)):
+            v.ir_a(i)
+            QApplication.processEvents()
+            minimo = v._pila.widget(i).widget().minimumSizeHint().width()
+            assert minimo <= disponible, f"página {i} necesita {minimo}px y solo hay {disponible}px a {ancho}px de ventana"

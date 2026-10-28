@@ -5,6 +5,7 @@ from .. import theme
 from ..widgets.common import DataTable, PageView
 from ..widgets.line_chart import LineChart
 from ..widgets.mapa_operativo import MODOS_CALOR, MapaOperativo
+from ..widgets.adaptable import FilaAdaptable
 
 VELOCIDADES = [("×0.1", 0.1), ("×0.25", 0.25), ("×0.5", 0.5), ("×1", 1), ("×2", 2), ("×5", 5), ("×20", 20),
                ("×60", 60), ("×150", 150), ("×400", 400)]
@@ -25,7 +26,7 @@ class MapaView(PageView):
                          "mapa de calor se acumula con el tiempo. Pulse un área para ver las rutas que usarán los lotes.",
                          theme.VERDE)
         barra = QFrame(); barra.setObjectName("tarjeta")
-        bl = QHBoxLayout(barra)
+        bl = FilaAdaptable(barra)
         bl.addWidget(QLabel("Escenario:"))
         self.combo_esc = QComboBox(); self.combo_esc.setMinimumWidth(230)
         bl.addWidget(self.combo_esc)
@@ -42,11 +43,12 @@ class MapaView(PageView):
         bl.addWidget(self.btn_simular)
         self.cuerpo.addWidget(barra)
 
-        medio = QHBoxLayout()
+        medio = FilaAdaptable()
         izq = QVBoxLayout()
         caja = QFrame(); caja.setObjectName("tarjeta")
         cl = QVBoxLayout(caja)
         self.mapa = MapaOperativo()
+        self.mapa.setMinimumHeight(320)
         cl.addWidget(self.mapa, 1)
         ctrl = QHBoxLayout()
         self.btn_jugar = QPushButton("▶ Reproducir")

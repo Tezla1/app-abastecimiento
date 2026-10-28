@@ -1,9 +1,11 @@
+import copy
 from dataclasses import replace
 
 from ...domain import calculos, estadistica
 from ...domain.analisis import analizar_estaciones, indicadores_proceso, series_tiempo
 from ..dto import (DetalleIndicadores, ResultadoComparacion, ResultadoReplicas, ResultadoSimulacion)
 from ..errors import ErrorDeNegocio
+from ..progreso import Progreso, avisar
 from ..ports import EscenarioRepository, RegistroRepository, ReportExporter
 from .contexto import CargadorContexto
 from .nucleo import analizar, calc_de, correr, exigir_simulable, simular_completo
@@ -29,6 +31,7 @@ class EjecutarSimulacion:
             raise ErrorDeNegocio("Seleccione un escenario guardado para simular.")
         r = simular_completo(self._ctx.cargar(esc.taller_id), esc)
         if guardar:
+            r = copy.copy(r)          # el resultado puede venir de la caché: no se modifica el original
             self._reg.replace_for_escenario(esc.id, r.registros)
             r.registros = self._reg.list_by_escenario(esc.id)
             r.indicadores = calc_de(esc, r.registros)
@@ -52,7 +55,7 @@ class EjecutarReplicas:
     def __init__(self, escenarios: EscenarioRepository, ctx: CargadorContexto):
         self._esc, self._ctx = escenarios, ctx
 
-    def execute(self, escenario_id: int, n: int) -> ResultadoReplicas:
+    def execute(self, escenario_id: int, n: int, progreso: Progreso = None) -> ResultadoReplicas:
         esc = self._esc.get(escenario_id)
         if esc is None:
             raise ErrorDeNegocio("Seleccione un escenario guardado.")
@@ -62,6 +65,7 @@ class EjecutarReplicas:
         exigir_simulable(ctx)
         filas = []
         for i in range(n):
+            avisar(progreso, i, n, f"Réplica {i + 1} de {n}")
             semilla = esc.semilla + i
             res = correr(ctx, esc, semilla)
             regs = [t for t in res.tareas]

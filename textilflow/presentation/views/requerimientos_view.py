@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import (QComboBox, QDoubleSpinBox, QFrame, QHBoxLayout, QLa
 from .. import theme
 from ..widgets.common import DataTable, KpiCard, PageView
 from ..widgets.barras_flota import BarrasFlota
+from ..widgets.adaptable import FilaAdaptable, FlujoLayout
 
 
 class RequerimientosView(PageView):
@@ -19,7 +20,7 @@ class RequerimientosView(PageView):
                          "y qué normas aplican. Todo se recalcula con la simulación del escenario elegido.",
                          theme.DORADO)
         barra = QFrame(); barra.setObjectName("tarjeta")
-        bl = QHBoxLayout(barra)
+        bl = FilaAdaptable(barra)
         bl.addWidget(QLabel("Escenario de análisis:"))
         self.combo = QComboBox(); self.combo.setMinimumWidth(260)
         bl.addWidget(self.combo)
@@ -36,6 +37,8 @@ class RequerimientosView(PageView):
         self.cuerpo.addWidget(self.resumen)
 
         self.tabs = QTabWidget()
+        self.tabs.tabBar().setUsesScrollButtons(True)      # en ventanas angostas las pestañas se desplazan en vez de ensanchar la página
+        self.tabs.tabBar().setExpanding(False)
         self.t_criticos = DataTable(["Severidad", "Tipo", "Elemento", "Motivo"], estirar=3)
         self.tabs.addTab(self.t_criticos, "Componentes críticos")
         d = QWidget(); dl = QVBoxLayout(d); dl.setContentsMargins(0, 0, 0, 0)
@@ -48,7 +51,7 @@ class RequerimientosView(PageView):
         dl.addWidget(self.t_recursos, 1)
         self.tabs.addTab(d, "Distancias y recorridos")
         e = QWidget(); el = QVBoxLayout(e); el.setContentsMargins(0, 0, 0, 0)
-        fila = QHBoxLayout()
+        fila = FlujoLayout()
         self.k_reco = KpiCard("Equipos recomendados", "#1B7A57")
         self.k_anal = KpiCard("Estimación analítica", "#1F4E9E")
         self.k_viajes = KpiCard("Viajes cargados del turno", "#6B43A8")
@@ -56,7 +59,7 @@ class RequerimientosView(PageView):
         for k in (self.k_reco, self.k_anal, self.k_viajes, self.k_dist):
             fila.addWidget(k)
         el.addLayout(fila)
-        medio = QHBoxLayout()
+        medio = FilaAdaptable()
         self.t_barrido = DataTable(["Equipos", "Util. %", "Espera min", "Lotes ok %", "Lead time", "Cierre min",
                                     "A tiempo %", "Cumple"], estirar=None)
         medio.addWidget(self.t_barrido, 3)
@@ -84,7 +87,7 @@ class RequerimientosView(PageView):
         self.t_params = DataTable(["Clave", "Valor", "Unidad", "Descripción", "Fuente", "Verificado"], estirar=3)
         pl.addWidget(self.t_params, 1)
         ed = QFrame(); ed.setObjectName("tarjeta")
-        edl = QHBoxLayout(ed)
+        edl = FilaAdaptable(ed)
         self.combo_param = QComboBox(); self.combo_param.setMinimumWidth(260)
         self.valor_param = QDoubleSpinBox(); self.valor_param.setRange(0.0001, 100000); self.valor_param.setDecimals(3)
         self.btn_param = QPushButton("Guardar valor"); self.btn_param.setObjectName("primario")

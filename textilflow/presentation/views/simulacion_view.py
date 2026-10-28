@@ -8,6 +8,7 @@ from ..widgets.common import DataTable, KpiCard, PageView
 from ..widgets.crud_panel import CrudPanel
 from ..widgets.estabilidad import Estabilidad
 from ..widgets.line_chart import LineChart
+from ..widgets.adaptable import FilaAdaptable, FlujoLayout
 
 
 class SimulacionView(PageView):
@@ -20,6 +21,8 @@ class SimulacionView(PageView):
                          "(Almacén → áreas en paralelo → Despacho), con colas, prioridades y transporte por recursos.",
                          theme.VERDE)
         self.tabs = QTabWidget()
+        self.tabs.tabBar().setUsesScrollButtons(True)      # en ventanas angostas las pestañas se desplazan en vez de ensanchar la página
+        self.tabs.tabBar().setExpanding(False)
         campos = [
             CampoSpec("nombre", "Nombre *", placeholder="Ej.: S1 · AMR (2 robots)"),
             CampoSpec("tipo", "Tipo", "combo"),
@@ -54,7 +57,7 @@ class SimulacionView(PageView):
         self.resumen = QLabel("Ejecute una simulación para ver sus resultados.")
         self.resumen.setWordWrap(True)
         rl.addWidget(self.resumen)
-        fila = QHBoxLayout()
+        fila = FlujoLayout()
         colores = ["#1B7A57", "#1F4E9E", "#6B43A8", "#B8701A", "#8C3A44", "#187A7E"]
         nombres = ["Lotes completados", "Cierre última entrega", "Lead time medio", "Pedidos a tiempo",
                    "Espera por transporte", "Utilización flota"]
@@ -62,7 +65,7 @@ class SimulacionView(PageView):
         for k in self.kpis:
             fila.addWidget(k)
         rl.addLayout(fila)
-        graficos = QHBoxLayout()
+        graficos = FilaAdaptable()
         self.g_wip = LineChart("Lotes en el sistema y completados", "min")
         self.g_cola = LineChart("Lotes esperando en cada área", "min")
         for g in (self.g_wip, self.g_cola):
@@ -70,7 +73,7 @@ class SimulacionView(PageView):
             cl = QVBoxLayout(caja); cl.addWidget(g)
             graficos.addWidget(caja)
         rl.addLayout(graficos, 2)
-        abajo = QHBoxLayout()
+        abajo = FilaAdaptable()
         caja_a = QFrame(); caja_a.setObjectName("tarjeta")
         la = QVBoxLayout(caja_a)
         sub = QLabel("Estado de las áreas")
@@ -101,7 +104,7 @@ class SimulacionView(PageView):
         pl = QVBoxLayout(rep)
         pl.setContentsMargins(0, 0, 0, 0)
         barra = QFrame(); barra.setObjectName("tarjeta")
-        bl = QHBoxLayout(barra)
+        bl = FilaAdaptable(barra)
         bl.addWidget(QLabel("Escenario:"))
         self.combo_rep = QComboBox()
         bl.addWidget(self.combo_rep, 1)
@@ -117,7 +120,7 @@ class SimulacionView(PageView):
         self.nota_rep.setWordWrap(True)
         self.nota_rep.setObjectName("tenue")
         pl.addWidget(self.nota_rep)
-        cuerpo = QHBoxLayout()
+        cuerpo = FilaAdaptable()
         izq = QVBoxLayout()
         self.tabla_stats = DataTable(["Métrica", "n", "Media", "Desv.", "Mín.", "Máx.", "IC 95 % inf.", "IC 95 % sup."],
                                      estirar=0)

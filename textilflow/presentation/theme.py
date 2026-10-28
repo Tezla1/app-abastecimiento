@@ -78,6 +78,9 @@ QLabel#titulo {{ font-size: 24px; font-weight: 700; }}
 QLabel#subtitulo, QLabel#tenue {{ color: {TENUE}; }}
 QLabel#estado {{ color: {TENUE}; padding: 4px 0; }}
 
+QDialog, QMessageBox, QProgressDialog, QInputDialog {{ background: {BG}; }}
+QProgressBar {{ background: {PANEL_2}; border: 1px solid {BORDE}; border-radius: 6px; text-align: center; min-height: 18px; }}
+QProgressBar::chunk {{ background: {AZUL}; border-radius: 5px; }}
 QFrame#sidebar {{ background: {PANEL}; border-right: 1px solid {BORDE}; }}
 QScrollArea#desplazable, QScrollArea#desplazable > QWidget > QWidget {{ background: {BG}; border: none; }}
 QScrollArea#lateral_scroll, QScrollArea#lateral_scroll > QWidget > QWidget {{ background: {PANEL}; border: none; }}

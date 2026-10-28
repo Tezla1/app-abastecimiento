@@ -424,3 +424,18 @@ def test_exportar_contingencias_a_excel(demo, tmp_path):
     fila = {k: v for k, v in zip(cab, [c.value for c in hoja[4]])}
     assert fila["Área"] == "Costura 1" and fila["Motivo"] == "Falla de maquinaria" and fila["Fecha y hora"][:2] == "20"
     assert wb["Rutas alternativas"]["D4"].value.count("CO2") == 1
+
+
+def test_cache_de_simulacion_se_reutiliza_y_se_invalida_al_cambiar_los_datos(demo):
+    from textilflow.domain.entities import Cierre
+    app, taller = demo
+    esc = app.escenarios.listar(taller.id)[0]
+    a = app.simulacion.execute(esc.id, False)
+    b = app.simulacion.execute(esc.id, False)
+    assert a is b                                    # mismos datos: no se vuelve a simular
+    app.cierres.guardar(Cierre(taller.id, "C", "FALLA_MAQUINARIA", "", 0.0, 0.0, True, True))
+    c = app.simulacion.execute(esc.id, False)
+    assert c is not a                                # cambió la base: se simula de nuevo con el cierre
+    assert sum(l.estado == "fallido" for l in c.proceso.lotes) > sum(l.estado == "fallido" for l in a.proceso.lotes)
+    d = app.simulacion.execute(esc.id, True)         # guardar no altera el resultado que está en la caché
+    assert d is not c and c.registros is not d.registros

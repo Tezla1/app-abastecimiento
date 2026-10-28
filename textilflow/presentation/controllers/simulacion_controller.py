@@ -109,9 +109,10 @@ class SimulacionController(Controlador):
         self.vista.g_wip.set_marca(None)
 
     def _ejecutar_replicas(self, escenario_id: int, n: int) -> None:
-        r = self._intentar(self._replicas.execute, escenario_id, n)
-        if r is None:
-            return
+        self._en_segundo_plano(f"Ejecutando {n} réplicas…",
+                               lambda progreso: self._replicas.execute(escenario_id, n, progreso), self._mostrar_replicas)
+
+    def _mostrar_replicas(self, r) -> None:
         self._ultimas = r
         stats = []
         for k, (nombre, dec) in METRICAS.items():

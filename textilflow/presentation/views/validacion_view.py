@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton
 
 from .. import theme
 from ..widgets.common import DataTable, KpiCard, PageView
+from ..widgets.adaptable import FlujoLayout
 
 
 class ValidacionView(PageView):
@@ -12,7 +13,7 @@ class ValidacionView(PageView):
         super().__init__("Validación integral",
                          "Verificación transversal del proyecto antes de declarar aptitud para simulación, comparación y reporte.",
                          theme.DORADO)
-        fila = QHBoxLayout()
+        fila = FlujoLayout()
         self.k_pass = KpiCard("PASS", "#1B7A57")
         self.k_warn = KpiCard("WARNING", "#B8701A")
         self.k_fail = KpiCard("FAIL", "#8C3A44")

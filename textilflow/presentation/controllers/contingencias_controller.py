@@ -1,3 +1,5 @@
+from ... import registro
+from ...application.progreso import Cancelado
 from ...domain.entities import MOTIVOS_CIERRE, Cierre
 from ..theme import ROJO, TENUE, fmt
 from .base import Controlador, construir_red, etiqueta_estacion
@@ -59,13 +61,27 @@ class ContingenciasController(Controlador):
 
     def _recalcular(self, mensaje: str) -> None:
         tid = self.ctx.taller_id
-        hechos = 0
-        for e in self._esc.listar(tid):
-            try:
-                self._sim.execute(e.id, True)
-                hechos += 1
-            except Exception:
-                pass
+        escenarios = list(self._esc.listar(tid))
+
+        def trabajo(progreso):
+            hechos = 0
+            for i, e in enumerate(escenarios):
+                progreso(i, len(escenarios), f"Recalculando «{e.nombre}» ({i + 1} de {len(escenarios)})")
+                try:
+                    self._sim.execute(e.id, True)
+                    hechos += 1
+                except Cancelado:
+                    raise
+                except Exception as exc:                  # noqa: BLE001 — se registra y se sigue con el resto
+                    registro.registrar(f"No se pudo recalcular el escenario «{e.nombre}» tras cambiar los cierres", exc)
+            return hechos
+
+        def listo(hechos):
+            self._recalculo_terminado(mensaje, hechos)
+
+        self._en_segundo_plano("Recalculando los escenarios con los cierres vigentes…", trabajo, listo)
+
+    def _recalculo_terminado(self, mensaje: str, hechos: int) -> None:
         self.refrescar()
         self.ctx.cierres_cambiaron.emit()
         self.vista.info(f"{mensaje} Se recalcularon rutas y {hechos} escenario(s).")
@@ -79,7 +95,8 @@ class ContingenciasController(Controlador):
         if esc and self.ctx.cerrados():
             try:
                 self._rutas = self._informe.execute(esc).rutas
-            except Exception:
+            except Exception as exc:
+                registro.registrar("No se pudo calcular las rutas de respaldo del informe de cierres", exc)
                 self._rutas = []
         v.tabla_rutas.set_filas([[f"{p} · {r}", b] for p, r, a, b, d0, d1, ok in self._rutas],
                                 list(range(len(self._rutas))),

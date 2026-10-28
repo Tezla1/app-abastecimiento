@@ -1,6 +1,10 @@
-from PyQt6.QtCore import QSettings, Qt
-from PyQt6.QtWidgets import QApplication, QWidget
+from datetime import datetime
 
+from PyQt6.QtCore import QSettings, Qt, QTimer
+from PyQt6.QtWidgets import QApplication, QFileDialog, QMessageBox, QWidget
+
+from .. import registro
+from . import tareas
 from ..container import Container
 from . import theme
 from .context import AppContext
@@ -92,7 +96,7 @@ class AplicacionController:
             f(ContingenciasView, ContingenciasController, list(MOTIVOS_CIERRE.items()),
               serv=("cierres", "informe_cierres", "exportar_contingencias", "simulacion", "escenarios", "layout")),
             f(ValidacionView, ValidacionController, serv=("validacion",)),
-            f(DataManagerView, DataManagerController, serv=("datos", "demo")),
+            f(DataManagerView, DataManagerController, serv=("datos", "demo", "respaldos")),
             f(GuiaView, GuiaController),
         ]
         nombres = [
@@ -135,8 +139,7 @@ class AplicacionController:
     def iniciar(self, taller_id=None) -> None:
         talleres = self._c.talleres.listar()
         self.ctx.taller_id = taller_id if taller_id in {t.id for t in talleres} else (talleres[0].id if talleres else None)
-        self._recargar_talleres()
-        self._refrescar_actual()
+        self._recargar_talleres()          # ya refresca la página visible
 
     def _recargar_talleres(self) -> None:
         talleres = self._c.talleres.listar()
@@ -158,7 +161,8 @@ class AplicacionController:
         tid = self.ctx.taller_id
         try:
             alertas = self._c.alertas.execute(tid) if tid else []
-        except Exception:
+        except Exception as exc:
+            registro.registrar("No se pudieron calcular las alertas del taller activo", exc)
             alertas = []
         self.ventana.set_alertas(len(alertas), sum(a.nivel == "CRÍTICA" for a in alertas),
                                  sum(a.nivel == "ALTA" for a in alertas))
@@ -170,10 +174,84 @@ class Aplicacion:
         self._ajustes = QSettings("TextilFlow", "TextilFlow")
         theme.aplicar(str(self._ajustes.value("tema", "oscuro")))
         self.controlador = None
-        self._montar()
+        # la ventana aparece enseguida y los datos se cargan justo después (en las pruebas se carga en el acto)
+        self._montar(diferir=not tareas.SINCRONO)
+        self.controlador.ventana.antes_de_cerrar = self._antes_de_cerrar
+        # respaldo automático cada 5 minutos si hubo cambios (se conservan los 3 últimos)
+        self._cambios_en_respaldo = 0
+        self._timer_respaldo = QTimer()
+        self._timer_respaldo.setInterval(5 * 60 * 1000)
+        self._timer_respaldo.timeout.connect(self.respaldar_si_hay_cambios)
+        if c.respaldos is not None and c.respaldos.activo:
+            self._timer_respaldo.start()
+            # siempre debe existir un respaldo reciente: si el último tiene más de 1 hora (o no hay), se crea uno al abrir
+            lista = c.respaldos.listar()
+            if not lista or (datetime.now() - lista[0][1]).total_seconds() > 3600:
+                try:
+                    c.respaldos.crear()
+                except Exception as e:               # noqa: BLE001
+                    registro.registrar("No se pudo crear el respaldo inicial", e)
         self.controlador.ventana.show()
 
-    def _montar(self, taller_id=None, pagina: int = 0, ventana=None) -> None:
+    # --- respaldo y cierre -------------------------------------------------------------------------------
+    def respaldar_si_hay_cambios(self) -> None:
+        r = self._c.respaldos
+        if r is None or not r.activo or tareas.hay_tarea_activa():
+            return                      # no se toca la base mientras un hilo de trabajo la está usando
+        total = self._c.db.conn.total_changes
+        if total == self._cambios_en_respaldo:
+            return
+        try:
+            r.crear()
+            self._cambios_en_respaldo = total
+        except Exception as e:                       # noqa: BLE001 — un respaldo fallido no debe interrumpir el trabajo
+            registro.registrar("No se pudo crear el respaldo automático", e)
+
+    def _antes_de_cerrar(self) -> bool:
+        """Pregunta, como Word, si se quiere guardar el proyecto con nombre. Devuelve False para no cerrar."""
+        v = self.controlador.ventana
+        if self._c.db.cambios_sin_guardar() > 0:
+            caja = QMessageBox(v)
+            caja.setIcon(QMessageBox.Icon.Question)
+            caja.setWindowTitle("TextilFlow")
+            caja.setText("<b>¿Guardar el proyecto antes de salir?</b>")
+            caja.setInformativeText("Hizo cambios desde la última vez que guardó (o desde que abrió el programa). "
+                                    "«Guardar como…» crea un archivo .rlr con el nombre que elija.<br><br>"
+                                    "<i>Sus datos también quedan guardados automáticamente dentro de TextilFlow y en los "
+                                    "respaldos automáticos; el archivo con nombre sirve para llevarlo a otro equipo o "
+                                    "volver a este punto.</i>")
+            guardar = caja.addButton("Guardar como…", QMessageBox.ButtonRole.AcceptRole)
+            caja.addButton("No guardar", QMessageBox.ButtonRole.DestructiveRole)
+            cancelar = caja.addButton("Cancelar", QMessageBox.ButtonRole.RejectRole)
+            caja.setDefaultButton(guardar)
+            caja.setEscapeButton(cancelar)
+            caja.exec()
+            b = caja.clickedButton()
+            if b is cancelar:
+                return False
+            if b is guardar and not self._guardar_proyecto(v):
+                return False
+        self.respaldar_si_hay_cambios()
+        return True
+
+    def _guardar_proyecto(self, ventana) -> bool:
+        ruta, _ = QFileDialog.getSaveFileName(ventana, "Guardar proyecto", f"proyecto_{datetime.now():%Y-%m-%d}.rlr",
+                                              "Proyecto TextilFlow (*.rlr)")
+        if not ruta:
+            return False
+        if not ruta.lower().endswith(".rlr"):
+            ruta += ".rlr"
+        try:
+            self._c.datos.exportar_proyecto(ruta)
+        except Exception as e:                       # noqa: BLE001
+            registro.registrar("No se pudo guardar el proyecto al cerrar", e)
+            d = registro.describir(type(e), e, e.__traceback__)
+            QMessageBox.warning(ventana, "No se pudo guardar", f"{d['titulo']}: {d['que']}\n{d['resumen']}")
+            return False
+        self._c.db.marcar_guardado()
+        return True
+
+    def _montar(self, taller_id=None, pagina: int = 0, ventana=None, diferir: bool = False) -> None:
         if ventana is not None and self.controlador is not None:
             # se libera primero el contenido anterior para que reaplicar los estilos sea barato
             self.controlador.ventana.vaciar()
@@ -184,7 +262,17 @@ class Aplicacion:
         v.tema_solicitado.connect(self.alternar_tema)
         if pagina:
             v.seleccionar(pagina)
-        self.controlador.iniciar(taller_id)
+        if diferir:
+            v.estado.setText("● CARGANDO…")
+            ctl = self.controlador
+
+            def cargar() -> None:
+                if self.controlador is ctl:
+                    ctl.iniciar(taller_id)
+                    v.estado.setText("● READY")
+            QTimer.singleShot(0, cargar)
+        else:
+            self.controlador.iniciar(taller_id)
 
     def alternar_tema(self) -> None:
         """Cambia el tema sin construir de nuevo las 14 páginas: la ventana conserva su marco y solo se

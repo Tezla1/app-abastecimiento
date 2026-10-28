@@ -7,6 +7,7 @@ from .. import theme
 from ..viewmodels import CampoSpec
 from ..widgets.common import PageView
 from ..widgets.crud_panel import CrudPanel
+from ..widgets.adaptable import FilaAdaptable
 
 
 class RobotView(PageView):
@@ -37,7 +38,7 @@ class RobotView(PageView):
         t = QLabel("Evaluación preliminar robot ↔ taller activo")
         t.setStyleSheet(f"font-size: 14px; font-weight: 700; border-left: 3px solid {theme.TURQUESA}; padding-left: 8px;")
         cl.addWidget(t)
-        fila = QHBoxLayout()
+        fila = FilaAdaptable()
         fila.addWidget(QLabel("Robot:"))
         self.combo = QComboBox()
         fila.addWidget(self.combo, 1)

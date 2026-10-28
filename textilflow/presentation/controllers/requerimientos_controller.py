@@ -56,9 +56,10 @@ class RequerimientosController(Controlador):
         if not escenario_id:
             self.vista.error("Cree un escenario en «Escenarios y simulación» primero.")
             return
-        r = self._intentar(self._req.execute, escenario_id, n_max)
-        if r is None:
-            return
+        self._en_segundo_plano("Analizando requerimientos y probando tamaños de flota…",
+                               lambda progreso: self._req.execute(escenario_id, n_max, progreso), self._mostrar)
+
+    def _mostrar(self, r) -> None:
         v = self.vista
         v.t_criticos.set_filas([[c.severidad, c.tipo, c.elemento, c.motivo] for c in r.criticos],
                                colores=[SEV.get(c.severidad) for c in r.criticos])

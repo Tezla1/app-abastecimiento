@@ -7,6 +7,7 @@ from ..viewmodels import CampoSpec
 from ..widgets.common import DataTable, PageView
 from ..widgets.crud_panel import CrudPanel
 from ..widgets.layout_canvas import LayoutCanvasConControles
+from ..widgets.adaptable import FilaAdaptable
 
 
 class LayoutView(PageView):
@@ -19,6 +20,8 @@ class LayoutView(PageView):
                          "Defina las áreas (Almacén → … → Despacho), los pasillos, las prendas con sus ramas de proceso y los pedidos del taller activo.",
                          theme.AZUL)
         self.tabs = QTabWidget()
+        self.tabs.tabBar().setUsesScrollButtons(True)      # en ventanas angostas las pestañas se desplazan en vez de ensanchar la página
+        self.tabs.tabBar().setExpanding(False)
 
         self.estaciones = CrudPanel(
             "Estación", "Nodos registrados",
@@ -98,7 +101,7 @@ class LayoutView(PageView):
 
     def _crear_vista_2d(self) -> QWidget:
         w = QWidget()
-        lay = QHBoxLayout(w)
+        lay = FilaAdaptable(w)
         lay.setContentsMargins(0, 0, 0, 0)
         izq = QFrame()
         izq.setObjectName("tarjeta")

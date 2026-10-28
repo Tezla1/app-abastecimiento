@@ -1,4 +1,5 @@
 import math
+from collections import OrderedDict
 from dataclasses import dataclass, field, replace
 from typing import Optional
 
@@ -22,6 +23,7 @@ class Contexto:
     robots: list = field(default_factory=list)
     par: dict = field(default_factory=dict)
     cierres: list = field(default_factory=list)
+    version: int = 0          # versión de los datos (cambia con cada escritura en la base); 0 = no usar caché
 
     def vigentes(self) -> list:
         return [c for c in self.cierres if c.vigente]
@@ -107,6 +109,27 @@ def analizar(ctx: Contexto, esc: Escenario, res) -> ResultadoSimulacion:
         analisis.resumen_recorridos(res), prendas)
 
 
+_CACHE: "OrderedDict" = OrderedDict()
+_CACHE_MAX = 16
+
+
+def _clave(ctx: Contexto, esc: Escenario):
+    cierres = tuple((c.codigo, c.vigente, c.desde_min, c.hasta_min, c.bloquea_paso) for c in ctx.cierres)
+    return ctx.version, ctx.taller.id, repr(esc), cierres
+
+
 def simular_completo(ctx: Contexto, esc: Escenario) -> ResultadoSimulacion:
+    """Simula y analiza un escenario. El resultado se guarda en una caché pequeña mientras los datos no cambien:
+    el Dashboard, las alertas y el mapa piden el mismo escenario varias veces y no hace falta repetir la simulación."""
     exigir_simulable(ctx)
-    return analizar(ctx, esc, correr(ctx, esc))
+    if not ctx.version:
+        return analizar(ctx, esc, correr(ctx, esc))
+    k = _clave(ctx, esc)
+    if k in _CACHE:
+        _CACHE.move_to_end(k)
+        return _CACHE[k]
+    r = analizar(ctx, esc, correr(ctx, esc))
+    _CACHE[k] = r
+    while len(_CACHE) > _CACHE_MAX:
+        _CACHE.popitem(last=False)
+    return r

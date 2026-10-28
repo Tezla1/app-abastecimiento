@@ -1,7 +1,7 @@
 import bisect
 from typing import Optional, Sequence
 
-from PyQt6.QtCore import QPointF, QRectF, Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import QElapsedTimer, QPointF, QRectF, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QBrush, QColor, QFont, QPainter, QPen
 from PyQt6.QtWidgets import (QGraphicsEllipseItem, QGraphicsLineItem, QGraphicsRectItem, QGraphicsScene,
                              QGraphicsSimpleTextItem, QGraphicsView)
@@ -11,7 +11,7 @@ from ..viewmodels import AnimacionVM, ArcoVM, NodoVM
 
 ESCALA = 22.0
 RADIO = 18.0
-PASO_MS = 40
+PASO_MS = 50            # 20 cuadros por segundo; el avance se mide con el reloj, no con el número de cuadros
 
 ZONAS = {
     "ABASTECIMIENTO": ("ABASTECIMIENTO", "#F2A33A"),
@@ -85,6 +85,11 @@ class MapaOperativo(QGraphicsView):
         self._seleccion: Optional[str] = None
         self._camino_resaltado: list[tuple] = []
         self._press: Optional[QPointF] = None
+        self._reloj = QElapsedTimer()
+        self._pausado_por_oculto = False
+        self._t0_rec: dict[int, list] = {}
+        self._cache_arco: dict = {}
+        self._cache_nodo: dict = {}
         self._timer = QTimer(self)
         self._timer.setInterval(PASO_MS)
         self._timer.timeout.connect(self._tick)
@@ -95,6 +100,7 @@ class MapaOperativo(QGraphicsView):
     def dibujar(self, nodos: Sequence[NodoVM], arcos: Sequence[ArcoVM]) -> None:
         self.pausar()
         self._escena.clear()
+        self._cache_arco.clear(); self._cache_nodo.clear()
         self._arcos.clear(); self._circulos.clear(); self._badges.clear(); self._dist.clear()
         self._resaltes.clear(); self._recursos_items.clear()
         self._nodos = {n.codigo: n for n in nodos}
@@ -191,7 +197,8 @@ class MapaOperativo(QGraphicsView):
             self._escena.removeItem(it)
         self._recursos_items.clear()
         self._anim = anim
-        self._por_recurso.clear(); self._inicios_arco.clear(); self._inicios_kg.clear()
+        self._por_recurso.clear(); self._inicios_arco.clear(); self._inicios_kg.clear(); self._t0_rec.clear()
+        self._cache_arco.clear(); self._cache_nodo.clear()
         self._t = 0.0
         if anim:
             for m in sorted(anim.movimientos, key=lambda m: m[1]):
@@ -200,6 +207,7 @@ class MapaOperativo(QGraphicsView):
                     k = frozenset((a, b))
                     self._inicios_arco.setdefault(k, []).append(m[1])
                     self._inicios_kg.setdefault(k, []).append((m[1], m[5]))
+            self._t0_rec = {r: [m[1] for m in movs] for r, movs in self._por_recurso.items()}
             self._max_arco = max((len(v) for v in self._inicios_arco.values()), default=1)
             self._max_kg = max((sum(kg for _, kg in v) for v in self._inicios_kg.values()), default=1.0) or 1.0
             for r in range(1, anim.recursos + 1):
@@ -225,6 +233,7 @@ class MapaOperativo(QGraphicsView):
             return
         if self._t >= self._anim.t_fin:
             self.set_tiempo(0.0)
+        self._reloj.restart()
         self._timer.start()
 
     def pausar(self) -> None:
@@ -255,7 +264,9 @@ class MapaOperativo(QGraphicsView):
         if not self._anim:
             self.pausar()
             return
-        nuevo = self._t + self._velocidad * PASO_MS / 1000.0
+        # tiempo real transcurrido (tope 0,25 s): en un PC lento se saltan cuadros pero la velocidad no cambia
+        dt = min(self._reloj.restart() / 1000.0, 0.25)
+        nuevo = self._t + self._velocidad * dt
         if nuevo >= self._anim.t_fin:
             self.set_tiempo(self._anim.t_fin)
             self.pausar()
@@ -299,6 +310,10 @@ class MapaOperativo(QGraphicsView):
                 x = sum(kg for tt, kg in lst if tt <= t) / self._max_kg
             else:
                 x = None
+            clave = None if x is None else round(x, 3)
+            if self._cache_arco.get(k, "?") == clave:
+                continue                            # el arco no cambió desde el cuadro anterior
+            self._cache_arco[k] = clave
             if x is None:
                 it.setPen(QPen(QColor(theme.TRAZO), 2))
             else:
@@ -326,9 +341,13 @@ class MapaOperativo(QGraphicsView):
             if n.cerrado:
                 relleno, borde = QColor(theme.TRAZO_OFF), QColor(theme.ROJO)
             seleccionado = cod == self._seleccion
+            q, o = cola.get(cod, 0), ocup.get(cod, 0)
+            clave_nodo = (relleno.rgba(), borde.rgba(), seleccionado, q, o)
+            if self._cache_nodo.get(cod) == clave_nodo:
+                continue                            # sin cambios visibles en este nodo
+            self._cache_nodo[cod] = clave_nodo
             c.setBrush(QBrush(relleno))
             c.setPen(QPen(QColor(theme.RESALTE) if seleccionado else borde, 4 if seleccionado else 3))
-            q, o = cola.get(cod, 0), ocup.get(cod, 0)
             self._badges[cod].setText((f"cola {q}" if q else "") + (" · " if q and o else "") + (f"▶{o}/{cap}" if o and cap else ""))
         for it, kg, r in self._recursos_items:
             pos, carga = self._pos_recurso(r, t)
@@ -350,7 +369,7 @@ class MapaOperativo(QGraphicsView):
         a = self._anim
         if not movs:
             return (self._pos.get(a.inicio) if a else None), 0.0
-        idx = bisect.bisect_right([m[1] for m in movs], t) - 1
+        idx = bisect.bisect_right(self._t0_rec.get(r, []), t) - 1
         if idx < 0:
             return self._pos.get(a.inicio), 0.0
         _, t0, t1, ruta, cargado, kg = movs[idx]
@@ -369,6 +388,21 @@ class MapaOperativo(QGraphicsView):
                 return QPointF(p1.x() + (p2.x() - p1.x()) * f, p1.y() + (p2.y() - p1.y()) * f), (kg if cargado else 0.0)
             objetivo -= d
         return pts[-1], kg if cargado else 0.0
+
+    def hideEvent(self, e) -> None:
+        # fuera de pantalla (otra página o ventana minimizada) la animación se detiene: no gasta procesador
+        if self._timer.isActive():
+            self._pausado_por_oculto = True
+            self._timer.stop()
+        super().hideEvent(e)
+
+    def showEvent(self, e) -> None:
+        super().showEvent(e)
+        if self._pausado_por_oculto:
+            self._pausado_por_oculto = False
+            if self._anim:
+                self._reloj.restart()
+                self._timer.start()
 
     def mousePressEvent(self, e) -> None:
         self._press = e.position()

@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QTextBrowser, QVBoxLayo
 
 from .. import theme
 from ...version import FECHA, NOMBRE, SUBTITULO, VERSION
+from ..widgets.adaptable import FilaAdaptable
 from ..widgets.common import PageView
 from ..widgets.logo import logo_pixmap
 
@@ -77,7 +78,7 @@ class GuiaView(PageView):
         super().__init__("Guía y acerca de TextilFlow",
                          "Qué hace el programa, cómo se usa y qué límites tiene.", theme.TURQUESA)
         cab = QFrame(); cab.setObjectName("tarjeta")
-        cl = QHBoxLayout(cab)
+        cl = FilaAdaptable(cab)
         logo = QLabel()
         logo.setPixmap(logo_pixmap(84))
         cl.addWidget(logo)

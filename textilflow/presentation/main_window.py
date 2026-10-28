@@ -1,6 +1,6 @@
 from typing import Optional, Sequence
 
-from PyQt6.QtCore import QCoreApplication, QEvent, Qt, pyqtSignal
+from PyQt6.QtCore import QCoreApplication, QEvent, QSettings, Qt, pyqtSignal
 from PyQt6.QtWidgets import (QButtonGroup, QComboBox, QFrame, QHBoxLayout, QLabel, QMainWindow,
                              QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget)
 
@@ -9,6 +9,7 @@ from ..version import NOMBRE, SUBTITULO, VERSION
 from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QGuiApplication
 
+from .widgets.adaptable import FilaAdaptable
 from .widgets.iconos import icono as icono_seccion
 from .widgets.logo import logo_icono, logo_pixmap
 
@@ -24,8 +25,40 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(f"{NOMBRE} v{VERSION} · Optimización de procesos industriales e intralogística")
         self.setWindowIcon(logo_icono())
         self.setMinimumSize(640, 420)
-        self._ajustar_a_pantalla()
+        if not self.restaurar_geometria():
+            self._ajustar_a_pantalla()
         self.armar(paginas)
+
+    # Aplicacion asigna aquí una función que decide si se puede cerrar (pregunta si guardar); None = cerrar sin preguntar
+    antes_de_cerrar = None
+
+    def closeEvent(self, ev) -> None:
+        if self.antes_de_cerrar is not None and not self.antes_de_cerrar():
+            ev.ignore()
+            return
+        self.guardar_geometria()
+        super().closeEvent(ev)
+
+    def guardar_geometria(self) -> None:
+        try:
+            a = QSettings("TextilFlow", "TextilFlow")
+            a.setValue("geometria", self.saveGeometry())
+            a.setValue("maximizada", self.isMaximized())
+        except Exception:                                    # noqa: BLE001 — recordar el tamaño es opcional
+            pass
+
+    def restaurar_geometria(self) -> bool:
+        """Recupera tamaño y posición de la última sesión, solo si siguen cabiendo en alguna pantalla conectada."""
+        a = QSettings("TextilFlow", "TextilFlow")
+        g = a.value("geometria")
+        if g is None or not self.restoreGeometry(g):
+            return False
+        visible = any(p.availableGeometry().intersects(self.frameGeometry()) for p in QGuiApplication.screens())
+        if not visible or self.width() < 640 or self.height() < 420:
+            return False
+        if str(a.value("maximizada", "false")).lower() == "true":
+            self.setWindowState(self.windowState() | Qt.WindowState.WindowMaximized)
+        return True
 
     def _ajustar_a_pantalla(self) -> None:
         """Tamaño inicial: el habitual, pero nunca mayor que el área útil de la pantalla; queda centrada."""
@@ -149,6 +182,8 @@ class MainWindow(QMainWindow):
         super().resizeEvent(ev)
         if hasattr(self, "_etiquetas"):
             self._aplicar_compacto(self.width() < 980)
+            # ancho útil de las páginas = ventana − menú lateral − márgenes − barra de desplazamiento
+            FilaAdaptable.actualizar(self.width() - (64 if self._compacto else 256) - 48 - 14)
 
     def _aplicar_compacto(self, compacto: bool) -> None:
         """En ventanas angostas el menú lateral queda solo con iconos y la cabecera se abrevia."""

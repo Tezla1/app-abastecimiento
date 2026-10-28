@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLab
 
 from .. import theme
 from ..widgets.common import PageView
+from ..widgets.adaptable import FilaAdaptable
 
 
 def _tarjeta(titulo: str, detalle: str, boton: str, estilo: str = "") -> tuple:
@@ -34,6 +35,7 @@ class DataManagerView(PageView):
     restaurar_solicitado = pyqtSignal(str)
     demo_solicitado = pyqtSignal()
     ejemplo_archivo_solicitado = pyqtSignal(str)
+    respaldos_solicitados = pyqtSignal()
 
     def __init__(self):
         super().__init__("Data Manager",
@@ -41,7 +43,7 @@ class DataManagerView(PageView):
         t = QLabel("Excel empresarial")
         t.setStyleSheet("font-size: 14px; font-weight: 700;")
         self.cuerpo.addWidget(t)
-        fila = QHBoxLayout()
+        fila = FilaAdaptable()
         c1, b1 = _tarjeta("01 · Crear plantilla Excel", "Genera un libro con las hojas Taller, Nodos, Conexiones y Ordenes_Logisticas.", "Crear plantilla…")
         c2, b2 = _tarjeta("02 · Validar e importar Excel", "Verifica estructura y datos; si hay errores no se importa nada.", "Importar…", "primario")
         c3, b3 = _tarjeta("03 · Exportar datos del taller", "Exporta nodos, conexiones y órdenes del taller activo.", "Exportar…")
@@ -52,7 +54,7 @@ class DataManagerView(PageView):
         t2 = QLabel("Proyecto restaurable (.rlr)")
         t2.setStyleSheet("font-size: 14px; font-weight: 700;")
         self.cuerpo.addWidget(t2)
-        fila2 = QHBoxLayout()
+        fila2 = FilaAdaptable()
         c4, b4 = _tarjeta("Exportar proyecto (.rlr)", "Respaldo completo: talleres, layout, prendas, rutas, pedidos, robots, escenarios, registros y parámetros.", "Exportar…")
         c5, b5 = _tarjeta("Restaurar proyecto (.rlr)", "REEMPLAZA todos los datos actuales por los del respaldo.", "Restaurar…", "peligro")
         c7, b7 = _tarjeta("Cargar ejemplo desde archivo",
@@ -65,10 +67,14 @@ class DataManagerView(PageView):
         t2b = QLabel("Ejemplo integrado")
         t2b.setStyleSheet("font-size: 14px; font-weight: 700;")
         self.cuerpo.addWidget(t2b)
-        fila3 = QHBoxLayout()
+        fila3 = FilaAdaptable()
         c6, b6 = _tarjeta("Datos de ejemplo", "Carga el caso experimental sintético: 9 áreas, 4 prendas, 8 ramas, 5 pedidos, S0 vs S1.", "Cargar ejemplo")
         fila3.addWidget(c6)
-        fila3.addStretch(2)
+        c8, b8 = _tarjeta("Respaldos automáticos (últimos 3)",
+                          "TextilFlow guarda solo un respaldo cada 5 minutos si hubo cambios, y al cerrar. "
+                          "Aquí puede volver a cualquiera de los 3 más recientes.", "Ver y restaurar…")
+        fila3.addWidget(c8)
+        fila3.addStretch(1)
         self.cuerpo.addLayout(fila3)
 
         t3 = QLabel("Información")
@@ -86,6 +92,7 @@ class DataManagerView(PageView):
         b5.clicked.connect(self._restaurar)
         b6.clicked.connect(self.demo_solicitado.emit)
         b7.clicked.connect(self._ejemplo_archivo)
+        b8.clicked.connect(self.respaldos_solicitados.emit)
 
     def info(self, mensaje: str) -> None:
         self.info_texto.appendPlainText(mensaje)
@@ -107,6 +114,12 @@ class DataManagerView(PageView):
                                               str(carpeta if carpeta.is_dir() else Path.home()), "Ejemplo Excel (*.xlsx)")
         if ruta:
             self.ejemplo_archivo_solicitado.emit(ruta)
+
+    def elegir_respaldo(self, etiquetas: list) -> int:
+        """Muestra la lista de respaldos y devuelve el índice elegido (-1 si cancela)."""
+        from PyQt6.QtWidgets import QInputDialog
+        texto, ok = QInputDialog.getItem(self, "Respaldos automáticos", "Elija el respaldo a restaurar:", etiquetas, 0, False)
+        return etiquetas.index(texto) if ok and texto in etiquetas else -1
 
     def _restaurar(self) -> None:
         ruta, _ = QFileDialog.getOpenFileName(self, "Restaurar proyecto", "", "Proyecto TextilFlow (*.rlr)")

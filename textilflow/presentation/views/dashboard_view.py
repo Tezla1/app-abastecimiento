@@ -4,13 +4,14 @@ from .. import theme
 from ..widgets.common import KpiCard, PageView
 from ..widgets.common import DataTable
 from ..widgets.mapa_operativo import MapaOperativo
+from ..widgets.adaptable import FilaAdaptable, FlujoLayout
 
 
 class DashboardView(PageView):
     def __init__(self):
         super().__init__("Operations & Research Dashboard",
                          "Intralogística · Optimización · Simulación · Investigación aplicada", theme.AZUL)
-        fila = QHBoxLayout()
+        fila = FlujoLayout()
         self.k_talleres = KpiCard("Talleres", "#1F4E9E", self)
         self.k_estaciones = KpiCard("Áreas", "#1B7A57", self)
         self.k_conexiones = KpiCard("Conexiones", "#B8701A", self)
@@ -21,7 +22,7 @@ class DashboardView(PageView):
             fila.addWidget(k)
         self.cuerpo.addLayout(fila)
 
-        medio = QHBoxLayout()
+        medio = FilaAdaptable()
         caja = QFrame()
         caja.setObjectName("tarjeta")
         cl = QVBoxLayout(caja)
@@ -32,6 +33,7 @@ class DashboardView(PageView):
         cl.addWidget(t)
         cl.addWidget(s)
         self.mapa = MapaOperativo()
+        self.mapa.setMinimumHeight(300)
         cl.addWidget(self.mapa, 1)
         cl.addWidget(self._leyenda())
         medio.addWidget(caja, 3)

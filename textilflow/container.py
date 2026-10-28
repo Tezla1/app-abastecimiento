@@ -22,6 +22,8 @@ from .infrastructure.excel.openpyxl_gateway import OpenpyxlGateway
 from .infrastructure.excel.report_exporter import ArchivoReportExporter
 from .infrastructure.persistence.database import Database
 from .infrastructure.persistence import sqlite_repositories as R
+from .infrastructure.respaldos import Respaldos
+from . import registro
 
 
 @dataclass
@@ -48,6 +50,7 @@ class Container:
     cierres: GestionarCierres
     informe_cierres: InformeCierres
     exportar_contingencias: ExportarContingencias
+    respaldos: Respaldos = None
 
 
 def construir(ruta_db: str = ":memory:") -> Container:
@@ -57,7 +60,8 @@ def construir(ruta_db: str = ":memory:") -> Container:
     r_rob, r_esc, r_reg = R.SqliteRobotRepository(db), R.SqliteEscenarioRepository(db), R.SqliteRegistroRepository(db)
     r_par, r_cie = R.SqliteParametroRepository(db), R.SqliteCierreRepository(db)
 
-    ctx = CargadorContexto(r_taller, r_est, r_con, r_tip, r_rut, r_ped, r_rob, r_par, r_cie)
+    ctx = CargadorContexto(r_taller, r_est, r_con, r_tip, r_rut, r_ped, r_rob, r_par, r_cie,
+                           version=lambda: db.conn.total_changes + 1)
     talleres = GestionarTalleres(r_taller)
     layout = GestionarLayout(r_est, r_con, r_rut)
     procesos = GestionarProcesos(r_tip, r_rut, r_ped, r_est)
@@ -69,6 +73,10 @@ def construir(ruta_db: str = ":memory:") -> Container:
     alertas = ObtenerAlertas(r_esc, r_reg, ctx)
     cierres = GestionarCierres(r_cie, r_est)
     informe_cierres = InformeCierres(r_esc, ctx)
+    datos = GestionarDatos(talleres, layout, procesos, OpenpyxlGateway(), R.SqliteSnapshotRepository(db), RlrArchive())
+    # los respaldos automáticos solo se hacen con una base en disco (no con :memory:)
+    carpeta_resp = None if ruta_db == ":memory:" else registro.carpeta_datos() / "respaldos"
+    respaldos = Respaldos(carpeta_resp, datos.exportar_proyecto, datos.restaurar_proyecto)
     return Container(
         db=db, talleres=talleres, layout=layout, procesos=procesos, parametros=parametros, robots=robots,
         escenarios=escenarios, simulacion=simulacion, replicas=EjecutarReplicas(r_esc, ctx),
@@ -77,8 +85,9 @@ def construir(ruta_db: str = ":memory:") -> Container:
         reporte=ExportarReporte(comparacion, ArchivoReportExporter()),
         validacion=ValidarProyecto(r_taller, r_est, r_con, r_tip, r_rut, r_ped, r_rob, r_esc, r_reg, r_par),
         dashboard=ObtenerDashboard(r_taller, r_est, r_con, r_tip, r_rut, r_ped, r_esc, r_reg, alertas, ctx),
-        datos=GestionarDatos(talleres, layout, procesos, OpenpyxlGateway(), R.SqliteSnapshotRepository(db), RlrArchive()),
+        datos=datos,
         demo=CargarDatosDemo(talleres, layout, procesos, robots, escenarios, simulacion, parametros),
         cierres=cierres, informe_cierres=informe_cierres,
         exportar_contingencias=ExportarContingencias(cierres, informe_cierres, ArchivoReportExporter()),
+        respaldos=respaldos,
     )

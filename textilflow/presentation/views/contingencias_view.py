@@ -6,6 +6,7 @@ from ..viewmodels import CampoSpec
 from ..widgets.common import DataTable, PageView
 from ..widgets.crud_panel import CrudPanel
 from ..widgets.mapa_operativo import MapaOperativo
+from ..widgets.adaptable import FilaAdaptable
 
 
 class ContingenciasView(PageView):
@@ -38,7 +39,7 @@ class ContingenciasView(PageView):
         caja = QFrame()
         caja.setObjectName("tarjeta")
         cl = QVBoxLayout(caja)
-        fila = QHBoxLayout()
+        fila = FilaAdaptable()
         t = QLabel("Área afectada y ruta de respaldo")
         t.setStyleSheet(f"font-size: 14px; font-weight: 700; border-left: 3px solid {theme.ROJO}; padding-left: 8px;")
         fila.addWidget(t)
@@ -52,7 +53,7 @@ class ContingenciasView(PageView):
         fila.addWidget(self.btn_informe)
         cl.addLayout(fila)
 
-        cuerpo = QHBoxLayout()
+        cuerpo = FilaAdaptable()
         self.mapa = MapaOperativo()
         self.mapa.mostrar_distancias = False
         self.mapa.setMinimumHeight(260)

@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QComboBox, QFrame, QHBoxLayout, QLabel, QPushButton,
 from .. import theme
 from ..textos import FORMULA_VARIACION
 from ..widgets.common import DataTable, PageView
+from ..widgets.adaptable import FilaAdaptable
 
 
 class ModeloView(PageView):
@@ -17,7 +18,7 @@ class ModeloView(PageView):
                          theme.VERDE)
         barra = QFrame()
         barra.setObjectName("tarjeta")
-        bl = QHBoxLayout(barra)
+        bl = FilaAdaptable(barra)
         bl.addWidget(QLabel("Escenario:"))
         self.combo = QComboBox()
         bl.addWidget(self.combo, 1)
