@@ -1,4 +1,4 @@
-# TextilFlow 4.0.7b · optimización de procesos industriales e intralogística (PyQt6)
+# TextilFlow 4.0.7c · optimización de procesos industriales e intralogística (PyQt6)
 
 ![Mapa operativo](docs/img/02_mapa_operativo_nodo_B.png)
 
@@ -23,10 +23,10 @@ Si existe una base de datos de la versión 1, se **conserva** como `*.v1.bak` y 
 
 Doble clic en `construir_exe.bat` (necesita Python 3.11+ instalado). Genera `dist\TextilFlow.exe`, un solo archivo que se puede copiar a otro computador.
 
-## Cambios de la 4.0.7b (beta)
+## Cambios de la 4.0.7c (beta)
 
 Ventana de error descriptiva, respaldos automáticos y aviso al guardar, tareas largas con progreso, arranque más rápido,
-animación que se pausa y páginas adaptables. Detalle y cómo funciona cada cambio: **CAMBIOS_4.0.7b.md**.
+animación que se pausa y páginas adaptables. Detalle y cómo funciona cada cambio: **CAMBIOS_4.0.7c.md**.
 
 ## Qué hay de nuevo en 4.0
 

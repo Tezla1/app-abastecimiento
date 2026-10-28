@@ -9,7 +9,7 @@ from ..widgets.adaptable import FilaAdaptable, FlujoLayout
 
 class DashboardView(PageView):
     def __init__(self):
-        super().__init__("Operations & Research Dashboard",
+        super().__init__("Dashboard de operaciones e investigación",
                          "Intralogística · Optimización · Simulación · Investigación aplicada", theme.AZUL)
         fila = FlujoLayout()
         self.k_talleres = KpiCard("Talleres", "#1F4E9E", self)

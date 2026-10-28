@@ -5,7 +5,7 @@ from pathlib import Path
 from PyQt6.QtWidgets import QApplication
 
 from textilflow import registro
-from textilflow.presentation import arranque, errores
+from textilflow.presentation import arranque, errores, idioma
 from textilflow.presentation.arranque import InstanciaUnica
 from textilflow.presentation.widgets.logo import logo_icono
 from textilflow.version import NOMBRE, VERSION
@@ -22,6 +22,7 @@ def main() -> int:
     app.setApplicationName(NOMBRE)
     app.setApplicationVersion(VERSION)
     app.setWindowIcon(logo_icono())
+    idioma.instalar(app)                  # botones y diálogos estándar de Qt en español
     errores.instalar()                    # a partir de aquí un error inesperado muestra un cuadro en vez de cerrar el programa
     registro.info(f"Inicio de {NOMBRE} {VERSION}")
 

@@ -6,6 +6,7 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt pyinstaller
 python -m PyInstaller --noconfirm --clean --onefile --windowed --noupx --name TextilFlow ^
   --add-data "ejemplos;ejemplos" ^
+  --add-data "assets\qt;assets\qt" ^
   --icon "assets\textilflow.ico" ^
   --hidden-import PyQt6.QtSvg ^
   --exclude-module tkinter ^

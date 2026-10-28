@@ -106,7 +106,7 @@ class LayoutView(PageView):
         izq = QFrame()
         izq.setObjectName("tarjeta")
         il = QVBoxLayout(izq)
-        t = QLabel("Operational Layout View / Vista operacional")
+        t = QLabel("Vista operacional del layout")
         t.setStyleSheet("font-size: 14px; font-weight: 700;")
         il.addWidget(t)
         self.mapa = LayoutCanvasConControles()

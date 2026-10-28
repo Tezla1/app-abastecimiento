@@ -1,3 +1,18 @@
+# TextilFlow 4.0.7c · cambios de idioma (sobre la 4.0.7b)
+
+- **Qt en español:** botones estándar («Sí», «No», «Cancelar», «Aceptar»), «Mostrar los detalles…» y demás textos de los
+  cuadros de diálogo. `presentation/idioma.py` instala `qtbase_es.qm` (incluida en `assets/qt/` y agregada al `.exe` con
+  `--add-data "assets\qt;assets\qt"`; si no la encuentra, usa la de PyQt6).
+- **Dashboard:** el título «Operations & Research Dashboard» ahora es «Dashboard de operaciones e investigación».
+- **Vista del layout:** «Operational Layout View / Vista operacional» ahora es «Vista operacional del layout».
+- **Validación integral:** PASS / WARNING / FAIL se muestran como **APROBADO / ADVERTENCIA / FALLA** (tarjetas, tabla, veredicto
+  y criterio). Los códigos internos no cambian.
+- **Se dejan en inglés a propósito:** «● READY», los nombres de sección («Dashboard», «Data Manager») y «Lead time»
+  (así aparece en la tesis). «Robot» se mantiene.
+- Pruebas nuevas: `test_botones_estandar_de_qt_en_espanol`, `test_validacion_muestra_estados_en_espanol` (91 en total).
+
+---
+
 # TextilFlow 4.0.7b (beta) · qué cambió y cómo funciona
 
 Versión beta sobre la 4.0.7. Los tiempos de abajo se midieron en un equipo de pruebas sin pantalla real (no es Windows);

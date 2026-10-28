@@ -531,3 +531,26 @@ def test_ninguna_pagina_desborda_horizontalmente_desde_800_px(ui):
             QApplication.processEvents()
             minimo = v._pila.widget(i).widget().minimumSizeHint().width()
             assert minimo <= disponible, f"página {i} necesita {minimo}px y solo hay {disponible}px a {ancho}px de ventana"
+
+
+def test_botones_estandar_de_qt_en_espanol(qapp):
+    from PyQt6.QtWidgets import QMessageBox
+    from textilflow.presentation import idioma
+    assert idioma.instalar(qapp)
+    c = QMessageBox()
+    c.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel)
+    c.setDetailedText("detalle")
+    textos = {b.text().replace("&", "") for b in c.buttons()}
+    assert {"Sí", "No", "Cancelar"} <= textos, textos
+    assert any("detalles" in t.lower() for t in textos), textos
+    assert not {"Yes", "Cancel", "Show Details..."} & textos
+
+
+def test_validacion_muestra_estados_en_espanol(ui):
+    con_demo(ui)
+    ui.ventana.ir_a(VAL)
+    ui.controladores[VAL]._ejecutar()
+    v = ui.controladores[VAL].vista
+    assert v.k_pass._titulo.text() == "APROBADO" and v.k_warn._titulo.text() == "ADVERTENCIA" and v.k_fail._titulo.text() == "FALLA"
+    estados = {v.tabla.item(r, 0).text() for r in range(v.tabla.rowCount())}
+    assert estados and estados <= {"APROBADO", "ADVERTENCIA", "FALLA"}
