@@ -1,4 +1,4 @@
-# TextilFlow 4.0.2 · optimización de procesos industriales e intralogística (PyQt6)
+# TextilFlow 4.0.4 · optimización de procesos industriales e intralogística (PyQt6)
 
 ![Mapa operativo](docs/img/02_mapa_operativo_nodo_B.png)
 
@@ -18,6 +18,10 @@ python tools/ejercicio_practico.py  # ejercicio práctico con N réplicas → do
 ```
 
 Si existe una base de datos de la versión 1, se **conserva** como `*.v1.bak` y se crea una nueva (el modelo cambió).
+
+## Crear el .exe (Windows)
+
+Doble clic en `construir_exe.bat` (necesita Python 3.11+ instalado). El programa queda en `dist\TextilFlow\`; se copia la carpeta completa.
 
 ## Qué hay de nuevo en 4.0
 
