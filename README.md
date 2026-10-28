@@ -1,4 +1,4 @@
-# TextilFlow 4.0.1 · optimización de procesos industriales e intralogística (PyQt6)
+# TextilFlow 4.0.2 · optimización de procesos industriales e intralogística (PyQt6)
 
 ![Mapa operativo](docs/img/02_mapa_operativo_nodo_B.png)
 

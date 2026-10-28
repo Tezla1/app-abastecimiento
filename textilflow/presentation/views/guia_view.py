@@ -60,16 +60,6 @@ una ✕ roja en el mapa y el dashboard.</p>
 <h2>Tema claro y oscuro</h2>
 <p>El botón de la barra superior cambia entre tema claro y oscuro; la preferencia se recuerda.</p>
 
-<h2>Ejercicio práctico sugerido</h2>
-<ol>
- <li>Abra <b>Data Manager → Cargar ejemplo</b> (taller sintético «Confecciones Andina»).</li>
- <li>En <b>Escenarios y simulación</b> simule S0 (2 operarios) y observe las alertas: Bordado (1 puesto) concentra la carga.</li>
- <li>En <b>Mapa operativo</b> pulse «Simular y animar»: vea las colas crecer en Bordado y pulse esa área para ver sus rutas.</li>
- <li>Cambie el escenario a <b>FIFO</b> y compare cuánto tarda el pedido urgente (prioridad 1) frente a la política por prioridad.</li>
- <li>En <b>Requerimientos</b> pruebe flotas de 1 a 6 y vea que, tras 2 equipos, agregar más no acelera el cierre: el límite es Bordado, no el transporte.</li>
- <li>En <b>Réplicas</b> use variabilidad 10 % y 30 réplicas para obtener media, desviación e IC 95 %.</li>
-</ol>
-
 <h2>Límites que conviene conocer</h2>
 <ul>
  <li>Los datos del ejemplo son <b>sintéticos</b>: sirven para validar el software, no son mediciones del taller.</li>
