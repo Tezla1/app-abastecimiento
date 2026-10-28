@@ -62,7 +62,7 @@ class AplicacionController:
             RequerimientosController(v["req"], self.ctx, c.escenarios, c.requerimientos, c.alertas, c.parametros),
             ComparacionController(v["comparacion"], self.ctx, c.escenarios, c.comparacion),
             ResultadosController(v["resultados"], self.ctx, c.escenarios, c.comparacion, c.reporte),
-            ContingenciasController(v["cont"], self.ctx, c.cierres, c.informe_cierres, c.simulacion, c.escenarios, c.layout),
+            ContingenciasController(v["cont"], self.ctx, c.cierres, c.informe_cierres, c.exportar_contingencias, c.simulacion, c.escenarios, c.layout),
             ValidacionController(v["validacion"], self.ctx, c.validacion),
             DataManagerController(v["datos"], self.ctx, c.datos, c.demo),
             GuiaController(v["guia"], self.ctx),

@@ -377,7 +377,6 @@ def test_no_se_puede_cerrar_almacen_ni_despacho(demo):
 
 def test_informe_de_cierre(demo):
     from textilflow.application.errors import ErrorDeNegocio
-    from textilflow.application.informe_html import informe_a_html
     app, taller = demo
     esc = _esc0(app, taller)
     with pytest.raises(ErrorDeNegocio):
@@ -386,9 +385,6 @@ def test_informe_de_cierre(demo):
     inf = app.informe_cierres.execute(esc.id)
     assert inf.nivel in ("ALTO", "MEDIO", "BAJO") and inf.rutas and inf.recomendaciones
     assert any(r[0] == "COSTURA" for r in inf.reasignaciones)
-    assert "Ruta alternativa" in informe_a_html(inf)
-    html = informe_a_html(inf)
-    assert "Falla de maquinaria" in html and "Se quemó el motor" in html and "CO2" in html
 
 
 def test_cierres_viajan_en_el_proyecto(demo, tmp_path):
@@ -410,3 +406,21 @@ def test_requerimientos_respetan_el_cierre(demo):
     _cerrar(app, taller, "CO")
     despues = app.requerimientos.execute(esc.id)
     assert antes is not None and despues is not None
+
+
+def test_exportar_contingencias_a_excel(demo, tmp_path):
+    from openpyxl import load_workbook
+    from textilflow.application.errors import ErrorDeNegocio
+    app, taller = demo
+    esc = _esc0(app, taller)
+    ruta = str(tmp_path / "c.xlsx")
+    with pytest.raises(ErrorDeNegocio):
+        app.exportar_contingencias.execute(taller.id, esc.id, ruta)
+    _cerrar(app, taller, "CO", detalle="Se quemó el motor", desde_min=60)
+    assert app.exportar_contingencias.execute(taller.id, esc.id, ruta) == 1
+    wb = load_workbook(ruta)
+    hoja = wb["Contingencias"]
+    cab = [c.value for c in hoja[3]]
+    fila = {k: v for k, v in zip(cab, [c.value for c in hoja[4]])}
+    assert fila["Área"] == "Costura 1" and fila["Motivo"] == "Falla de maquinaria" and fila["Fecha y hora"][:2] == "20"
+    assert wb["Rutas alternativas"]["D4"].value.count("CO2") == 1

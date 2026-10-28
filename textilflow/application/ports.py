@@ -125,3 +125,6 @@ class ReportExporter(ABC):
 
     @abstractmethod
     def exportar_xlsx(self, ruta: str, titulo: str, meta: list[tuple], filas: list[dict]) -> None: ...
+
+    @abstractmethod
+    def exportar_contingencias(self, ruta: str, titulo: str, cierres: list[dict], rutas: list[dict]) -> None: ...

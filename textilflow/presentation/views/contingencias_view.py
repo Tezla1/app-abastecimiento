@@ -1,20 +1,21 @@
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QComboBox, QFileDialog, QFrame, QHBoxLayout, QLabel, QPushButton, QTextBrowser, QVBoxLayout
+from PyQt6.QtWidgets import QComboBox, QFileDialog, QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
 from .. import theme
 from ..viewmodels import CampoSpec
-from ..widgets.common import PageView
+from ..widgets.common import DataTable, PageView
 from ..widgets.crud_panel import CrudPanel
+from ..widgets.mapa_operativo import MapaOperativo
 
 
 class ContingenciasView(PageView):
-    informe_solicitado = pyqtSignal(int)
-    exportar_solicitado = pyqtSignal(str)
+    exportar_solicitado = pyqtSignal(str, int)
+    ruta_elegida = pyqtSignal(int)
 
     def __init__(self, motivos: list[tuple]):
         super().__init__("Contingencias y cierres",
                          "Cierre un área cuando falle una máquina, falte personal o haya mantenimiento. El sistema recalcula "
-                         "rutas y simulaciones solo, y redacta el informe de por qué se cerró y qué cambió.",
+                         "rutas y simulaciones solo, y le muestra aquí qué área quedó afectada y por dónde se desvía el trabajo.",
                          theme.ROJO)
         campos = [
             CampoSpec("codigo", "Área a cerrar *", "combo"),
@@ -28,8 +29,8 @@ class ContingenciasView(PageView):
         self.panel = CrudPanel("Registrar cierre", "Cierres registrados del taller", campos,
                                ["ID", "Área", "Motivo", "Desde", "Reapertura", "Estado"], theme.ROJO, 420, estirar=2)
         self.panel.set_opciones("motivo", motivos)
-        self.panel.setMinimumHeight(320)
-        self.panel.setMaximumHeight(330)
+        self.panel.setMinimumHeight(350)
+        self.panel.setMaximumHeight(370)
         self.panel.widget("hasta_min").setToolTip("0 = el área no reabre durante el turno")
         self.cuerpo.addWidget(self.panel)
         self.cuerpo.addWidget(self.estado)
@@ -38,7 +39,7 @@ class ContingenciasView(PageView):
         caja.setObjectName("tarjeta")
         cl = QVBoxLayout(caja)
         fila = QHBoxLayout()
-        t = QLabel("Informe de contingencia")
+        t = QLabel("Área afectada y ruta de respaldo")
         t.setStyleSheet(f"font-size: 14px; font-weight: 700; border-left: 3px solid {theme.ROJO}; padding-left: 8px;")
         fila.addWidget(t)
         fila.addStretch(1)
@@ -46,21 +47,29 @@ class ContingenciasView(PageView):
         self.combo_escenario = QComboBox()
         self.combo_escenario.setMinimumWidth(260)
         fila.addWidget(self.combo_escenario)
-        self.btn_informe = QPushButton("Generar informe")
+        self.btn_informe = QPushButton("Generar informe (Excel)")
         self.btn_informe.setObjectName("primario")
-        self.btn_exportar = QPushButton("Guardar como HTML…")
-        self.btn_exportar.setEnabled(False)
         fila.addWidget(self.btn_informe)
-        fila.addWidget(self.btn_exportar)
         cl.addLayout(fila)
-        self.navegador = QTextBrowser()
-        self.navegador.setStyleSheet(f"background: {theme.PANEL}; border: 1px solid {theme.BORDE}; border-radius: 8px;")
-        self.navegador.setHtml(f"<p style='color:{theme.TENUE}'>Registre un cierre y el informe aparece aquí.</p>")
-        cl.addWidget(self.navegador, 1)
+
+        cuerpo = QHBoxLayout()
+        self.mapa = MapaOperativo()
+        self.mapa.mostrar_distancias = False
+        self.mapa.setMinimumHeight(260)
+        cuerpo.addWidget(self.mapa, 3)
+        der = QVBoxLayout()
+        self.tabla_rutas = DataTable(["Prenda · rama", "Ruta de respaldo"], estirar=1)
+        der.addWidget(self.tabla_rutas, 1)
+        self.leyenda = QLabel("✕ área cerrada · línea amarilla: ruta de respaldo · naranja punteada: ruta normal bloqueada")
+        self.leyenda.setObjectName("tenue")
+        self.leyenda.setWordWrap(True)
+        der.addWidget(self.leyenda)
+        cuerpo.addLayout(der, 2)
+        cl.addLayout(cuerpo, 1)
         self.cuerpo.addWidget(caja, 1)
 
-        self.btn_informe.clicked.connect(lambda: self.informe_solicitado.emit(self.combo_escenario.currentData() or 0))
-        self.btn_exportar.clicked.connect(self._exportar)
+        self.btn_informe.clicked.connect(self._pedir_archivo)
+        self.tabla_rutas.fila_seleccionada.connect(lambda i: i is not None and self.ruta_elegida.emit(int(i)))
 
     def set_escenarios(self, opciones: list[tuple]) -> None:
         actual = self.combo_escenario.currentData()
@@ -71,11 +80,8 @@ class ContingenciasView(PageView):
         if i >= 0:
             self.combo_escenario.setCurrentIndex(i)
 
-    def mostrar_informe(self, html: str) -> None:
-        self.navegador.setHtml(html)
-        self.btn_exportar.setEnabled(True)
-
-    def _exportar(self) -> None:
-        ruta, _ = QFileDialog.getSaveFileName(self, "Guardar informe", "informe_contingencia.html", "Página web (*.html)")
+    def _pedir_archivo(self) -> None:
+        ruta, _ = QFileDialog.getSaveFileName(self, "Generar informe", "contingencias.xlsx", "Excel (*.xlsx)")
         if ruta:
-            self.exportar_solicitado.emit(ruta)
+            self.exportar_solicitado.emit(ruta if ruta.lower().endswith(".xlsx") else ruta + ".xlsx",
+                                          self.combo_escenario.currentData() or 0)

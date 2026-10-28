@@ -54,8 +54,7 @@ al transporte manual?</p>
 <p>En <b>Contingencias y cierres</b> elija un área (por ejemplo <code>Costura 1</code>), el motivo y, si lo sabe, desde qué minuto
 y hasta cuándo. Al guardar, TextilFlow <b>recalcula solo</b> las rutas y vuelve a simular todos los escenarios del taller:
 el trabajo pasa a las áreas equivalentes abiertas, los pasillos por áreas cerradas se evitan y, si un paso queda sin ninguna
-área disponible, esos lotes se marcan como no terminados con su motivo. El <b>informe</b> compara «sin cierre» contra
-«con cierre», explica qué cambió y recomienda qué hacer; se puede guardar como página web. Las áreas cerradas se ven con
+área disponible, esos lotes se marcan como no terminados con su motivo. Debajo del formulario, un mapa muestra el área afectada y la ruta de respaldo de cada prenda; «Generar informe (Excel)» guarda todas las contingencias con su fecha y hora. Las áreas cerradas se ven con
 una ✕ roja en el mapa y el dashboard.</p>
 
 <h2>Tema claro y oscuro</h2>

@@ -5,7 +5,7 @@ from typing import Optional
 from ...domain import analisis
 from ...domain.entities import MOTIVOS_CIERRE, Cierre
 from ..errors import ErrorDeNegocio
-from ..ports import CierreRepository, EscenarioRepository, EstacionRepository
+from ..ports import CierreRepository, EscenarioRepository, EstacionRepository, ReportExporter
 from .contexto import CargadorContexto
 from .nucleo import analizar, correr, exigir_simulable
 from .talleres import exigir_valido
@@ -17,6 +17,9 @@ class GestionarCierres:
 
     def listar(self, taller_id: int) -> list[Cierre]:
         return sorted(self._cie.list_by_taller(taller_id), key=lambda c: c.id or 0)
+
+    def nombres(self, taller_id: int) -> dict:
+        return {e.codigo: e.nombre or e.codigo for e in self._est.list_by_taller(taller_id)}
 
     def cerrados(self, taller_id: Optional[int]) -> frozenset:
         if taller_id is None:
@@ -200,3 +203,26 @@ class InformeCierres:
 
         return InformeCierre(esc, cerr, nivel, resumen, indicadores, estaciones, reasignaciones, rutas,
                              lista_afectados, nuevas, recs, datetime.now().strftime("%Y-%m-%d %H:%M"))
+
+
+class ExportarContingencias:
+    def __init__(self, cierres: GestionarCierres, informe: InformeCierres, exportador: ReportExporter):
+        self._cie, self._inf, self._exp = cierres, informe, exportador
+
+    def execute(self, taller_id: int, escenario_id: int, ruta: str) -> int:
+        lista = self._cie.listar(taller_id)
+        if not lista:
+            raise ErrorDeNegocio("No hay contingencias registradas para exportar.")
+        nombres = self._cie.nombres(taller_id)
+        cierres = [{"Fecha y hora": c.registrado or "—", "Código": c.codigo, "Área": nombres.get(c.codigo, c.codigo),
+                    "Motivo": MOTIVOS_CIERRE.get(c.motivo, c.motivo), "Detalle": c.detalle or "—",
+                    "Desde (min)": c.desde_min, "Reabre (min)": c.hasta_min if c.hasta_min else "no reabre",
+                    "Bloquea el paso": "Sí" if c.bloquea_paso else "No",
+                    "Estado": "Cerrada" if c.vigente else "Reabierta"} for c in lista]
+        rutas = []
+        if escenario_id and any(c.vigente for c in lista):
+            for pr, r, a, b, d0, d1, ok in self._inf.execute(escenario_id).rutas:
+                rutas.append({"Prenda": pr, "Rama": r, "Ruta normal": a, "Ruta alternativa": b,
+                              "Metros antes": round(d0, 1), "Metros ahora": round(d1, 1) if ok else None})
+        self._exp.exportar_contingencias(ruta, f"Contingencias · generado {datetime.now():%Y-%m-%d %H:%M}", cierres, rutas)
+        return len(cierres)

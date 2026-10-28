@@ -50,3 +50,29 @@ class ArchivoReportExporter(ReportExporter):
         for col in "BCD":
             ws.column_dimensions[col].width = 28
         wb.save(ruta)
+
+    def exportar_contingencias(self, ruta: str, titulo: str, cierres: list[dict], rutas: list[dict]) -> None:
+        wb = Workbook()
+        for i, (nombre, filas, vacio) in enumerate([("Contingencias", cierres, "Sin contingencias registradas."),
+                                                    ("Rutas alternativas", rutas, "Ninguna ruta tuvo que cambiar.")]):
+            ws = wb.active if i == 0 else wb.create_sheet()
+            ws.title = nombre
+            ws["A1"] = titulo
+            ws["A1"].font = Font(bold=True, size=14)
+            if not filas:
+                ws["A3"] = vacio
+                continue
+            columnas = list(filas[0].keys())
+            for j, c in enumerate(columnas, 1):
+                celda = ws.cell(3, j, c)
+                celda.font = Font(bold=True, color="FFFFFF")
+                celda.fill = PatternFill("solid", fgColor="1F3A68")
+                celda.alignment = Alignment(horizontal="center", wrap_text=True)
+                ws.column_dimensions[celda.column_letter].width = max(16, min(48, len(c) + 8))
+            for r, datos in enumerate(filas, 4):
+                for j, c in enumerate(columnas, 1):
+                    celda = ws.cell(r, j, "" if datos[c] is None else _celda_segura(datos[c]))
+                    celda.alignment = Alignment(wrap_text=True, vertical="top")
+                    ancho = ws.column_dimensions[celda.column_letter].width
+                    ws.column_dimensions[celda.column_letter].width = max(ancho, min(60, len(str(datos[c])) + 2))
+        wb.save(ruta)

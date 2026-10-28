@@ -90,6 +90,7 @@ class MapaOperativo(QGraphicsView):
         self._timer.timeout.connect(self._tick)
         self._ajustado = True
         self._estatico: dict = {}
+        self.mostrar_distancias = True
 
     def dibujar(self, nodos: Sequence[NodoVM], arcos: Sequence[ArcoVM]) -> None:
         self.pausar()
@@ -113,6 +114,8 @@ class MapaOperativo(QGraphicsView):
             self._arcos[k] = it
             self._dist[k] = a.distancia_m
             it.setToolTip(f"{a.origen}–{a.destino} · {a.distancia_m:g} m")
+            if not self.mostrar_distancias:
+                continue
             medio = (p1 + p2) / 2
             t = self._escena.addSimpleText(f"{a.distancia_m:g} m")
             t.setFont(QFont("Segoe UI", 8))
@@ -136,7 +139,7 @@ class MapaOperativo(QGraphicsView):
                 x.setZValue(8)
                 x.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
                 c.setToolTip(f"{n.codigo} · {n.nombre}\nCERRADA: no se procesa ni se pasa por aquí")
-            cod = self._escena.addSimpleText(n.codigo)
+            cod = self._escena.addSimpleText("" if n.cerrado else n.codigo)
             f = QFont("Segoe UI", 10); f.setBold(True)
             cod.setFont(f); cod.setBrush(QBrush(QColor("white")))
             cod.setPos(p.x() - cod.boundingRect().width() / 2, p.y() - cod.boundingRect().height() / 2)

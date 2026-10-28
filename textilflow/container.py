@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from .application.use_cases.alertas import ObtenerAlertas
 from .application.use_cases.analisis import (CalcularIndicadores, CompararEscenarios, EjecutarReplicas,
                                              EjecutarSimulacion, ExportarReporte)
-from .application.use_cases.cierres import GestionarCierres, InformeCierres
+from .application.use_cases.cierres import ExportarContingencias, GestionarCierres, InformeCierres
 from .application.use_cases.contexto import CargadorContexto
 from .application.use_cases.dashboard import ObtenerDashboard
 from .application.use_cases.datos import GestionarDatos
@@ -47,6 +47,7 @@ class Container:
     demo: CargarDatosDemo
     cierres: GestionarCierres
     informe_cierres: InformeCierres
+    exportar_contingencias: ExportarContingencias
 
 
 def construir(ruta_db: str = ":memory:") -> Container:
@@ -66,6 +67,8 @@ def construir(ruta_db: str = ":memory:") -> Container:
     simulacion = EjecutarSimulacion(r_esc, r_reg, ctx)
     comparacion = CompararEscenarios(r_esc, r_reg, ctx)
     alertas = ObtenerAlertas(r_esc, r_reg, ctx)
+    cierres = GestionarCierres(r_cie, r_est)
+    informe_cierres = InformeCierres(r_esc, ctx)
     return Container(
         db=db, talleres=talleres, layout=layout, procesos=procesos, parametros=parametros, robots=robots,
         escenarios=escenarios, simulacion=simulacion, replicas=EjecutarReplicas(r_esc, ctx),
@@ -76,5 +79,6 @@ def construir(ruta_db: str = ":memory:") -> Container:
         dashboard=ObtenerDashboard(r_taller, r_est, r_con, r_tip, r_rut, r_ped, r_esc, r_reg, alertas, ctx),
         datos=GestionarDatos(talleres, layout, procesos, OpenpyxlGateway(), R.SqliteSnapshotRepository(db), RlrArchive()),
         demo=CargarDatosDemo(talleres, layout, procesos, robots, escenarios, simulacion, parametros),
-        cierres=GestionarCierres(r_cie, r_est), informe_cierres=InformeCierres(r_esc, ctx),
+        cierres=cierres, informe_cierres=informe_cierres,
+        exportar_contingencias=ExportarContingencias(cierres, informe_cierres, ArchivoReportExporter()),
     )

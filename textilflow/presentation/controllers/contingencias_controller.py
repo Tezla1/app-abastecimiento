@@ -1,29 +1,21 @@
-from pathlib import Path
-
-from ...application.informe_html import informe_a_html
 from ...domain.entities import MOTIVOS_CIERRE, Cierre
-from .. import theme
 from ..theme import ROJO, TENUE, fmt
-from .base import Controlador, etiqueta_estacion
-
-
-def paleta() -> dict:
-    return dict(fondo=theme.PANEL, texto=theme.TEXTO, tenue=theme.TENUE, borde=theme.BORDE, cabecera=theme.PANEL_2,
-                acento=theme.AZUL, alerta=theme.ROJO)
+from .base import Controlador, construir_red, etiqueta_estacion
 
 
 class ContingenciasController(Controlador):
-    def __init__(self, vista, ctx, cierres, informe, simulacion, escenarios, layout):
+    def __init__(self, vista, ctx, cierres, informe, exportar, simulacion, escenarios, layout):
         super().__init__(vista, ctx)
-        self._cierres, self._informe, self._sim = cierres, informe, simulacion
+        self._cierres, self._informe, self._exportar_xlsx, self._sim = cierres, informe, exportar, simulacion
         self._esc, self._layout = escenarios, layout
-        self._html = ""
+        self._rutas = []
         p = vista.panel
         p.seleccionado.connect(self._cargar)
         p.guardar_solicitado.connect(self._guardar)
         p.eliminar_solicitado.connect(self._eliminar)
-        vista.informe_solicitado.connect(self._generar)
         vista.exportar_solicitado.connect(self._exportar)
+        vista.ruta_elegida.connect(self._resaltar)
+        vista.combo_escenario.currentIndexChanged.connect(lambda _: self._mostrar())
 
     def refrescar(self) -> None:
         tid = self.ctx.taller_id
@@ -39,6 +31,7 @@ class ContingenciasController(Controlador):
               fmt(c.hasta_min, 0) if c.hasta_min else "no reabre", "CERRADA" if c.vigente else "reabierta"] for c in cs],
             [c.id for c in cs], [ROJO if c.vigente else TENUE for c in cs])
         self.vista.set_escenarios([(e.id, e.nombre) for e in self._esc.listar(tid)])
+        self._mostrar()
 
     def _cargar(self, id_: int) -> None:
         c = next((x for x in self._cierres.listar(self.ctx.taller_id) if x.id == id_), None)
@@ -76,25 +69,33 @@ class ContingenciasController(Controlador):
         self.refrescar()
         self.ctx.cierres_cambiaron.emit()
         self.vista.info(f"{mensaje} Se recalcularon rutas y {hechos} escenario(s).")
-        if self.vista.combo_escenario.currentData():
-            self._generar(self.vista.combo_escenario.currentData(), silencioso=True)
 
-    def _generar(self, escenario_id: int, silencioso: bool = False) -> None:
-        if not escenario_id:
-            self.vista.error("Cree un escenario en «Escenarios y simulación» para generar el informe.")
-            return
-        try:
-            inf = self._informe.execute(escenario_id)
-        except Exception as e:
-            if not silencioso:
-                self.vista.error(str(e))
-            else:
-                self.vista.navegador.setHtml(f"<p style='color:{theme.TENUE}'>{e}</p>")
-            return
-        self._html = informe_a_html(inf, paleta())
-        self.vista.mostrar_informe(self._html)
+    def _mostrar(self) -> None:
+        tid = self.ctx.taller_id
+        v = self.vista
+        v.mapa.dibujar(*construir_red(self._layout, tid, cerrados=self.ctx.cerrados()))
+        self._rutas = []
+        esc = v.combo_escenario.currentData()
+        if esc and self.ctx.cerrados():
+            try:
+                self._rutas = self._informe.execute(esc).rutas
+            except Exception:
+                self._rutas = []
+        v.tabla_rutas.set_filas([[f"{p} · {r}", b] for p, r, a, b, d0, d1, ok in self._rutas],
+                                list(range(len(self._rutas))),
+                                [None if x[6] else ROJO for x in self._rutas])
+        if self._rutas:
+            v.tabla_rutas.selectRow(0)
+        else:
+            v.mapa.limpiar_resaltes()
 
-    def _exportar(self, ruta: str) -> None:
-        if self._html:
-            Path(ruta).write_text(self._html, encoding="utf-8")
-            self.vista.info(f"Informe guardado en {ruta}")
+    def _resaltar(self, i: int) -> None:
+        if 0 <= i < len(self._rutas):
+            _, _, normal, alterna, _, _, ok = self._rutas[i]
+            caminos = ([alterna.split(" → ")] if ok else []) + [normal.split(" → ")]
+            self.vista.mapa.resaltar_caminos(caminos, 0 if ok else None)
+
+    def _exportar(self, ruta: str, escenario_id: int) -> None:
+        n = self._intentar(self._exportar_xlsx.execute, self.ctx.taller_id, escenario_id, ruta)
+        if n:
+            self.vista.info(f"Informe generado con {n} contingencia(s): {ruta}")

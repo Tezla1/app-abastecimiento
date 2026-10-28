@@ -216,7 +216,7 @@ def test_contingencias_cerrar_recalcula_y_genera_informe(ui):
     p.btn_guardar.click()
     assert not ui.errores
     assert p.tabla.rowCount() == 1
-    assert "Ruta alternativa" in c.vista.navegador.toPlainText()
+    assert c.vista.tabla_rutas.rowCount() > 0 and c.vista.mapa._resaltes
     assert "CO" in ui.ctx.cerrados()
     nodos, _ = __import__("textilflow.presentation.controllers.base", fromlist=["x"]).construir_red(
         ui.c.layout, ui.ctx.taller_id, cerrados=ui.ctx.cerrados())
