@@ -1,3 +1,7 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Núcleo de la simulación. Arma los parámetros a partir del taller y del escenario, corre el motor
+# y guarda el resultado en caché mientras los datos no cambien, para no repetir cálculos.
+
 import math
 from collections import OrderedDict
 from dataclasses import dataclass, field, replace

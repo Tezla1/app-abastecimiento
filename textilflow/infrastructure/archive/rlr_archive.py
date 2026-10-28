@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Guarda y lee el proyecto completo como un .rlr (un zip con los datos en JSON). La escritura es atómica para no dejar archivos a medias.
+
 import json
 import os
 import zipfile

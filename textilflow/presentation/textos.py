@@ -1,8 +1,11 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Fórmulas y textos fijos que se muestran en las pantallas del modelo matemático y la comparación.
+
 FORMULAS = {
-    "tiempo_abastecimiento_prom": "media(espera + recorrido) de las traslados atendidos",
-    "distancia_total": "Σ distancia_m de las traslados atendidos",
-    "distancia_prom": "media(distancia_m) de las traslados atendidos",
-    "espera_prom": "media(tiempo de espera) de las traslados atendidos",
+    "tiempo_abastecimiento_prom": "media(espera + recorrido) de los traslados atendidos",
+    "distancia_total": "Σ distancia_m de los traslados atendidos",
+    "distancia_prom": "media(distancia_m) de los traslados atendidos",
+    "espera_prom": "media(tiempo de espera) de los traslados atendidos",
     "utilizacion_pct": "Σ tiempo de recorrido / (T observación × N recursos) × 100",
     "solicitudes_atendidas_pct": "atendidos / total de traslados × 100",
 }

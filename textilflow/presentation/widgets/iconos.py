@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Iconos SVG de la barra lateral, dibujados en código y pintados con el color del tema.
+
 from PyQt6.QtCore import QByteArray, Qt
 from PyQt6.QtGui import QIcon, QImage, QPainter, QPixmap
 from PyQt6.QtSvg import QSvgRenderer

@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Crear, validar y borrar escenarios de simulación.
+
 from ...domain.entities import Escenario
 from ..errors import ErrorDeNegocio
 from ..ports import EscenarioRepository, EstacionRepository, RobotRepository

@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Controlador de Resultados y reportes: resumen comparativo y exportación a Excel.
+
 from ..textos import DECIMALES, FORMULA_VARIACION, MEJOR_SI_BAJA
 from ..theme import fmt
 from .base import Controlador

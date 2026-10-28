@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Interfaces que la aplicación necesita del exterior: repositorios, lector de Excel, exportador de reportes y archivo de proyecto.
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Generic, Optional, TypeVar

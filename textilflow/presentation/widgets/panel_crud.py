@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Panel de formulario y tabla para crear, editar y borrar registros. Lo usan casi todas las pantallas de datos.
+
 from typing import Optional, Sequence
 
 from PyQt6.QtCore import Qt, pyqtSignal

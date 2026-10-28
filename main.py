@@ -1,3 +1,10 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Punto de entrada de TextilFlow. Todo el arranque pasa por aquí: lee los parámetros de la línea
+# de comandos, crea la aplicación Qt, instala el idioma y el aviso de errores, bloquea una segunda
+# ventana, abre la base de datos, ofrece recuperar un respaldo si la sesión anterior se cortó,
+# carga el taller de ejemplo la primera vez y deja la ventana principal corriendo.
+# Se ejecuta con: python main.py (opción --db para usar otro archivo, o :memory: para no guardar).
+
 import argparse
 import sys
 from pathlib import Path

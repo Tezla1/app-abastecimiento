@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Junta los datos del Dashboard: totales del taller, indicadores, alertas principales, tránsito por pasillo y actividad reciente.
+
 from typing import Optional
 
 from ..dto import ResumenDashboard

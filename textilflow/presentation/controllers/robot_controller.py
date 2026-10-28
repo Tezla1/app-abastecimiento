@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Controlador del diseño conceptual del robot: perfiles y compatibilidad con los pasillos.
+
 from ...domain.entities import ORIGENES_DATOS, Robot
 from ..theme import fmt
 from .base import Controlador

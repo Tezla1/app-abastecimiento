@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Página del diseño conceptual del robot.
+
 from typing import Sequence
 
 from PyQt6.QtCore import pyqtSignal

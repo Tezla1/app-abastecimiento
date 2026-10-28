@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Disposiciones que se acomodan al ancho disponible: una fila que pasa a columna y un flujo de tarjetas que baja de renglón.
+
 import weakref
 from typing import Optional
 

@@ -1,3 +1,7 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Genera assets/textilflow.ico y el PNG de 256 px a partir del logo dibujado en código.
+# Solo se corre a mano cuando cambia el logo; necesita Pillow.
+
 import os, sys
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

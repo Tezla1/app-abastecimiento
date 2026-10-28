@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Pasos previos a abrir la ventana: evitar una segunda instancia, abrir la base con mensajes claros y ofrecer restaurar un respaldo.
+
 import shutil
 import sqlite3
 from datetime import datetime

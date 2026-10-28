@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Página de Layout y movimientos, con una pestaña por tipo de dato y la vista 2D con cálculo de rutas.
+
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (QComboBox, QDoubleSpinBox, QFrame, QGridLayout, QHBoxLayout, QLabel,
                              QPushButton, QTabWidget, QVBoxLayout, QWidget)

@@ -1,3 +1,7 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Motor de simulación de eventos discretos. Cada pedido se parte en lotes que pasan por las áreas
+# en orden, hacen cola, se procesan y piden transporte. Respeta cierres de área y es repetible con una semilla.
+
 import heapq
 import itertools
 import math

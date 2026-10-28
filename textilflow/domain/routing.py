@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Rutas más cortas sobre la red de pasillos, con filtro por ancho mínimo, conectividad y nodos críticos.
+
 import heapq
 from dataclasses import dataclass
 from typing import Iterable, Optional

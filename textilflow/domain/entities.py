@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Entidades del dominio (taller, estación, conexión, prenda, ruta, pedido, robot, escenario, cierre, inventario, compra) con sus validaciones.
+
 from dataclasses import dataclass
 from typing import Optional
 

@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Perfiles de robot y revisión de si caben por los pasillos del taller.
+
 from ...domain import normativa
 from ...domain.entities import Robot
 from ..dto import CompatibilidadRobot

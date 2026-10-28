@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Pone en español los textos estándar de Qt (botones de diálogos, menús del portapapeles).
+
 from pathlib import Path
 
 from PyQt6.QtCore import QLibraryInfo, QTranslator

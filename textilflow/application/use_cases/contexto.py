@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Carga de una sola vez todo lo que hace falta para simular un taller: estaciones, conexiones, prendas, rutas, pedidos, robots y parámetros.
+
 from ...domain import normativa
 from ..errors import ErrorDeNegocio
 from ..ports import (CierreRepository, ConexionRepository, EstacionRepository, ParametroRepository, PedidoRepository,

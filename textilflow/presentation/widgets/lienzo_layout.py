@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Lienzo 2D del layout: dibuja áreas y pasillos, permite acercar, y resalta la ruta calculada.
+
 from typing import Sequence
 
 from PyQt6.QtCore import QPointF, QRectF, Qt

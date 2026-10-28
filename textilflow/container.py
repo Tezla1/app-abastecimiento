@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Raíz de composición: arma los repositorios, los casos de uso y los respaldos, y los entrega juntos en un Contenedor.
+
 from dataclasses import dataclass
 
 from .application.use_cases.alertas import ObtenerAlertas

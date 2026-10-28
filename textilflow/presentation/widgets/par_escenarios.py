@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Barra con dos listas para elegir el escenario base y el alternativo, y el botón que ejecuta la comparación.
+
 from typing import Sequence
 
 from PyQt6.QtCore import pyqtSignal

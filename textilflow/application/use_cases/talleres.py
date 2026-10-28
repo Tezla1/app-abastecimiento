@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Crear, editar y borrar talleres, y la validación que comparten los demás casos de uso.
+
 from typing import Optional
 
 from ...domain.entities import Taller

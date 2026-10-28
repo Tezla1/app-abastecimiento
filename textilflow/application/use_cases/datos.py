@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Importar y exportar: plantilla y libro de Excel, proyecto .rlr completo y restauración con validación previa.
+
 from datetime import datetime
 
 from ...domain.entities import Taller

@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Controlador del Modelo matemático: muestra variables, fórmulas e indicadores de cada escenario.
+
 from ...domain.calculos import ETIQUETAS
 from ..textos import DECIMALES, FORMULAS
 from ..theme import NARANJA, ROJO, fmt

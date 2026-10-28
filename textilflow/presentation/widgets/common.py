@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Piezas básicas de las páginas: tarjeta de indicador, tabla de datos y la clase base de toda página.
+
 from typing import Optional, Sequence
 
 from PyQt6.QtCore import Qt, pyqtSignal

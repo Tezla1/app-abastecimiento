@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Repositorios SQLite: guardan y leen cada entidad, y vuelcan o restauran todas las tablas para el proyecto .rlr.
+
 import sqlite3
 from dataclasses import fields
 from typing import Generic, Optional, TypeVar

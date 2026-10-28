@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Resumen estadístico de las réplicas: media, desviación, mínimo, máximo e intervalo de confianza al 95 % con t de Student.
+
 import math
 from dataclasses import dataclass
 from typing import Optional, Sequence

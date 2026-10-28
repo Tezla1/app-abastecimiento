@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Revisa el taller contra la normativa de seguridad y los criterios de diseño, usando los parámetros guardados.
+
 import math
 from dataclasses import dataclass
 from typing import Iterable

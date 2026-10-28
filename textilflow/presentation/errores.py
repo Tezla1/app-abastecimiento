@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Ventana de error con lo que pasó, la causa probable y qué hacer. También captura los errores que nadie atrapó.
+
 import sys
 import threading
 import time

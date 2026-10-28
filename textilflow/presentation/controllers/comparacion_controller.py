@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Controlador de Comparación experimental: lleva a pantalla S0 frente a S1 con el color de cada variación.
+
 from ..textos import DECIMALES, FORMULA_VARIACION, MEJOR_SI_BAJA
 from .. import theme
 from ..theme import ROJO, VERDE, fmt

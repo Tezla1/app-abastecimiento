@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Reúne las alertas del taller activo: configuración, normativa, inventario y las que salen de simular cada escenario.
+
 from ...domain import normativa
 from ...domain import analisis
 from ...domain.alertas import Alerta, alertas_estaticas, alertas_prediccion, alertas_stock, ordenar

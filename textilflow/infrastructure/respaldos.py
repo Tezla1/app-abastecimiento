@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Respaldos automáticos (se conservan los últimos 3) y detección de cierres incorrectos de la sesión anterior.
+
 from datetime import datetime
 from pathlib import Path
 from typing import Callable, Optional

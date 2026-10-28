@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Colores, tipografía y hoja de estilo de los temas claro y oscuro, más funciones de formato de números.
+
 PALETAS = {
     "oscuro": dict(BG="#202020", PANEL="#2B2B2B", PANEL_2="#363636", BORDE="#404040", TEXTO="#F3F3F3",
                    LIENZO="#1B1B1B", TRAZO="#7A7A7A", TRAZO_OFF="#4A4A4A", FILA_ALT="#262626", RESALTE="#FFD166",

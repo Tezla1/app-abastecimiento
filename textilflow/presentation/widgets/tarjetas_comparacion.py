@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Rejilla de tarjetas de la comparación: el valor de cada indicador en S0 y S1 y su variación porcentual.
+
 from typing import Sequence
 
 from PyQt6.QtWidgets import QFrame, QGridLayout, QLabel, QVBoxLayout, QWidget

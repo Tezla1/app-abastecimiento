@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Ventana principal: barra lateral, barra superior con alertas, tema y taller activo, y las páginas. Se adapta al tamaño de la pantalla.
+
 from typing import Optional, Sequence
 
 from PyQt6.QtCore import QCoreApplication, QEvent, QSettings, Qt, pyqtSignal

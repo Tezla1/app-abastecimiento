@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Gráfico de estabilidad: por cada indicador muestra el intervalo de confianza de las réplicas para ver qué tan firme es el resultado.
+
 from typing import Sequence
 
 from PyQt6.QtCore import QRectF, Qt

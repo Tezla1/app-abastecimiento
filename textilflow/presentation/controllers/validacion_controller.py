@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Controlador de Validación integral: veredicto y lista de hallazgos.
+
 from ...domain.validacion import FAIL, PASS, WARNING
 from ..theme import COLOR_ESTADO, ESTADO_ES
 from .base import Controlador

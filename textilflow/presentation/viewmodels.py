@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Modelos de vista: estructuras sencillas que los controladores entregan a las vistas, para que no vean las entidades.
+
 from dataclasses import dataclass, field
 
 

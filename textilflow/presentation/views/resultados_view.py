@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Página de Resultados y reportes.
+
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QPlainTextEdit, QPushButton
 

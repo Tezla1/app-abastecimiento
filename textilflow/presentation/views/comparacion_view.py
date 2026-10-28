@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Página de Comparación experimental.
+
 from PyQt6.QtWidgets import QFrame, QLabel, QVBoxLayout
 
 from .. import theme

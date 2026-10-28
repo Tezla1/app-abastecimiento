@@ -1,3 +1,7 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Preparación común de las pruebas: manda los datos y la configuración a carpetas temporales
+# para no tocar los del usuario, y crea la aplicación en memoria con el taller de ejemplo.
+
 import os
 import tempfile
 

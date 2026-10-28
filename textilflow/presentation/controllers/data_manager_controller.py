@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Controlador del Data Manager: importar y exportar Excel, proyecto .rlr, respaldos y datos de ejemplo.
+
 from datetime import datetime
 
 from ... import registro

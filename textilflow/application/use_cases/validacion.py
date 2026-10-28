@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Validación integral: revisa que los datos y el modelo sean coherentes antes de usar los resultados.
+
 from ...domain import normativa
 from ...domain.validacion import ContextoValidacion, Hallazgo, validar
 from ..errors import ErrorDeNegocio

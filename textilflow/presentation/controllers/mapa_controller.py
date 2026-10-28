@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Controlador del Mapa operativo: simula, prepara la animación y la rehace si cambian los cierres.
+
 import time
 
 from ...domain.entities import Estacion

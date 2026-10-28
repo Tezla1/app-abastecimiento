@@ -1,3 +1,7 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Alertas del taller y su posible solución. Cubre configuración, normativa, cierres, inventario y
+# lo que aparece al simular (cuellos de botella, colas, pedidos tarde, flota saturada, pasillos congestionados).
+
 import math
 from dataclasses import dataclass
 from typing import Iterable, Optional

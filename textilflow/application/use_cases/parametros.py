@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Lee, cambia y restaura los parámetros normativos y de diseño.
+
 from ...domain import normativa
 from ...domain.entities import Parametro
 from ..errors import ErrorDeNegocio

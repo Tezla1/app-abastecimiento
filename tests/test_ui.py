@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Pruebas de la interfaz en modo offscreen: abren cada página, simulan clics y revisan lo que se muestra.
+
 import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")

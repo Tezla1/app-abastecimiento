@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Reglas de la validación integral: datos faltantes, rutas inválidas, escenarios sin simular y límites del modelo.
+
 import math
 from dataclasses import dataclass, field
 from typing import Optional

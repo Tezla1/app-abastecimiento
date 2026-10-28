@@ -1,3 +1,13 @@
+# TextilFlow 4.0.7k
+
+## Cabecera de autoría y explicación en cada archivo
+- Todos los archivos `.py` (114, incluidas pruebas y herramientas) empiezan con la frase «Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León» y, debajo, unas líneas que explican qué hace el archivo.
+- `main.py` lleva una explicación más larga porque centraliza el arranque: parámetros, aplicación Qt, idioma, aviso de errores, instancia única, base de datos, recuperación de respaldos, taller de ejemplo y ventana principal.
+- Esas cabeceras son los únicos comentarios del código; una revisión automática confirma que no hay ninguno más.
+- Se corrigió un texto de la pantalla del modelo matemático: «de las traslados» pasa a «de los traslados».
+
+---
+
 # TextilFlow 4.0.7j
 
 ## Código limpio, README con comandos y nombres en español

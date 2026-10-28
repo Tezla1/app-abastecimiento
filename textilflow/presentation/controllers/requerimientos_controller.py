@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Controlador de Requerimientos y normativas: análisis de equipos y viajes, normativa, alertas y cuellos de botella.
+
 from ...domain.normativa import CUMPLE, INCUMPLE
 from .. import theme
 from ..theme import COLOR_NIVEL, NARANJA, ROJO, VERDE, fmt

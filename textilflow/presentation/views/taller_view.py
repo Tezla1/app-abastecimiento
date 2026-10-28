@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Página de Caracterización del taller.
+
 from PyQt6.QtWidgets import QWidget
 
 from .. import theme

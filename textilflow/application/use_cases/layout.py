@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Crear, editar y borrar estaciones y conexiones, y calcular la ruta más corta entre dos áreas.
+
 import math
 from typing import Optional
 

@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Importa y exporta los datos del taller en Excel con openpyxl, con plantilla y validación de cada hoja antes de guardar nada.
+
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 

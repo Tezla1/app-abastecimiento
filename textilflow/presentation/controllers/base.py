@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Clase base de los controladores y funciones comunes: armar la red del layout y la animación del mapa.
+
 from typing import Callable, Optional
 
 from ...application.errors import ErrorDeNegocio

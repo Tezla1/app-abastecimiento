@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Datos sintéticos del taller de ejemplo: áreas, pasillos, prendas, rutas, pedidos, inventario, robot y escenarios.
+
 from .entities import Conexion, Estacion, Pedido, Robot, RutaProceso, TipoPrenda
 
 NOMBRE_TALLER = "Confecciones Andina - Caso Experimental 01"

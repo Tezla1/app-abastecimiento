@@ -1,3 +1,7 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Pruebas de los casos de uso con la base en memoria: simulación, cuellos de botella, requerimientos,
+# alertas, cierres de área, inventario y compras, importación y exportación, y proyecto .rlr.
+
 import os
 import sqlite3
 import zipfile

@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Prendas, rutas de proceso y pedidos del taller, con sus validaciones.
+
 from ...domain.alertas import validar_rutas
 from ...domain.entities import Pedido, RutaProceso, TipoPrenda
 from ..errors import ErrorDeNegocio

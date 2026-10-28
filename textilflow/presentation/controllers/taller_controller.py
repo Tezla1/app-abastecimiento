@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Controlador de Caracterización del taller.
+
 from ...domain.entities import ORIGENES_DATOS, Taller
 from ..theme import fmt
 from .base import Controlador

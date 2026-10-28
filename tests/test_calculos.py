@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Pruebas de las fórmulas de calculos.py con casos hechos a mano: indicadores, variación y comparabilidad.
+
 import pytest
 
 from textilflow.domain import calculos

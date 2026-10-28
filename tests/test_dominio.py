@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Pruebas del dominio sin base de datos ni pantalla: rutas, simulación, análisis, normativa y validaciones.
+
 import math
 
 import pytest

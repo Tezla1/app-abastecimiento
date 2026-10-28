@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Controlador de Layout y movimientos: estaciones, conexiones, prendas, rutas, pedidos, inventario y compras.
+
 from PyQt6.QtWidgets import QApplication
 
 from ...domain.entities import (ESTADOS_COMPRA, FUNCIONES, Conexion, Estacion, Pedido, RutaProceso, SolicitudCompra,

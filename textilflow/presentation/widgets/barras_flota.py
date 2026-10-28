@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Barras de ocupación de la flota para cada cantidad de recursos probada; el color indica si sobran equipos, la carga es adecuada o está saturada.
+
 from typing import Sequence
 
 from PyQt6.QtCore import QRectF, Qt

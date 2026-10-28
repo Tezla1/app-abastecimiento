@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Gráfico de líneas dibujado con Qt, sin librerías externas.
+
 from typing import Optional, Sequence
 
 from PyQt6.QtCore import QPointF, QRectF, Qt

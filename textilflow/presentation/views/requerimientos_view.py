@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Página de Requerimientos y normativas, con pestañas de análisis, normativa, parámetros, alertas y cuellos de botella.
+
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (QComboBox, QDoubleSpinBox, QFrame, QHBoxLayout, QLabel, QPushButton, QSpinBox,
                              QTabWidget, QVBoxLayout, QWidget)

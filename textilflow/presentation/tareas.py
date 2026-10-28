@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Ejecuta las tareas largas en un hilo aparte, con barra de progreso y botón de cancelar, para que la ventana no se congele.
+
 import os
 import sys
 from typing import Callable, Optional

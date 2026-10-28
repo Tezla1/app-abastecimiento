@@ -1,3 +1,7 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Mapa operativo animado. Dibuja áreas, pasillos y lotes en movimiento, el mapa de calor del tránsito y las colas.
+# Se pausa cuando está oculto y usa el reloj real para que la velocidad no dependa del equipo.
+
 import bisect
 from typing import Optional, Sequence
 

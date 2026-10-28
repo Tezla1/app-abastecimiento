@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Controlador de Escenarios y simulación: escenarios, ejecución, réplicas y tablas de alertas.
+
 from ...application.use_cases.analisis import METRICAS
 from ...domain.alertas import TIPO_CUELLO, cuellos_de_botella
 from ...domain.entities import POLITICAS, TIPOS_ESCENARIO, Escenario

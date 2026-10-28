@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Ejecutar la simulación, calcular indicadores, repetirla con varias réplicas y comparar escenarios.
+
 import copy
 from dataclasses import replace
 

@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Carga el taller de ejemplo «Confecciones Andina» con su layout, rutas, pedidos, inventario, robot y escenarios.
+
 from ...domain import datos_demo as D
 from ...domain.entities import Escenario, Pedido, Robot, RutaProceso, Stock, Taller
 from .analisis import EjecutarSimulacion

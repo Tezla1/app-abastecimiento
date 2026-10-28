@@ -1,3 +1,7 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Une la ventana con los controladores. Crea las páginas solo cuando se visitan por primera vez,
+# cambia el tema, guarda al cerrar, hace el respaldo cada 5 minutos y mantiene al día la insignia de alertas.
+
 import os
 from datetime import datetime
 

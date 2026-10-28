@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Controlador del Dashboard: indicadores, mapa de calor y alertas principales.
+
 from ..theme import COLOR_NIVEL, fmt
 from .base import Controlador, construir_red
 

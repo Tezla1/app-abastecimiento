@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Genera los reportes en Excel (resultados y contingencias) y evita que una celda se interprete como fórmula.
+
 import csv
 
 from openpyxl import Workbook

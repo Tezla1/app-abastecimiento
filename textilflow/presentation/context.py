@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Estado compartido entre pantallas: taller activo, cierres vigentes y avisos de que los datos o las alertas cambiaron.
+
 from typing import Optional
 
 from PyQt6.QtCore import QObject, pyqtSignal

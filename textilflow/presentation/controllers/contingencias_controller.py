@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Controlador de Contingencias y cierres: crea cierres, recalcula en segundo plano y genera el informe.
+
 from ... import registro
 from ...application.progreso import Cancelado
 from ...domain.entities import MOTIVOS_CIERRE, Cierre

@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Estructuras simples con los resultados que los casos de uso devuelven a la interfaz (simulación, comparación, réplicas, barridos).
+
 from dataclasses import dataclass, field
 from typing import Optional
 

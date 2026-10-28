@@ -1,3 +1,7 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Registro de eventos y errores. Escribe el archivo textilflow.log en la carpeta de datos del usuario
+# y traduce las excepciones técnicas a un mensaje que se pueda entender. La carpeta se cambia con TEXTILFLOW_HOME.
+
 import logging
 import os
 import platform

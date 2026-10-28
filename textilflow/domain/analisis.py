@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Análisis de lo simulado: carga y utilización por estación, cuello de botella, lead time, pedidos a tiempo y tránsito por pasillo.
+
 import math
 from dataclasses import dataclass, field
 from typing import Iterable, Optional

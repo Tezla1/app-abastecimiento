@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Cierres de área: crearlos y editarlos, medir su impacto con y sin cierre, y exportar el informe de contingencias.
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional

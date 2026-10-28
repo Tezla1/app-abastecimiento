@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Consulta las rutas que siguieron los lotes al pasar por un área, y el tránsito acumulado hasta un minuto dado.
+
 from typing import Optional
 
 from ...domain import analisis

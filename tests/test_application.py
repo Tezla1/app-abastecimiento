@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Prueba que cargar el taller de ejemplo dos veces crea una copia numerada y no lo pisa.
+
 def test_cargar_demo_dos_veces_crea_copia():
     from textilflow.container import construir
     c = construir(":memory:")

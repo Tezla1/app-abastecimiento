@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Cuántos equipos y viajes hacen falta: calcula los viajes por prenda, revisa la normativa y simula flotas de 1 a N recursos para comparar.
+
 import math
 from typing import Optional
 

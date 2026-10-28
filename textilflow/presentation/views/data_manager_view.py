@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Página del Data Manager: tarjetas para importar, exportar, respaldar y cargar el ejemplo.
+
 from pathlib import Path
 
 from PyQt6.QtCore import pyqtSignal

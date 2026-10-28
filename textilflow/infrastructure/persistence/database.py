@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Conexión con SQLite y esquema de tablas. Detecta bases antiguas y las respalda, y lleva la cuenta de cambios sin guardar.
+
 import os
 import shutil
 import sqlite3

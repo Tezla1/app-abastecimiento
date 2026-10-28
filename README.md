@@ -1,4 +1,4 @@
-# TextilFlow 4.0.7j · optimización de procesos industriales e intralogística (PyQt6)
+# TextilFlow 4.0.7k · optimización de procesos industriales e intralogística (PyQt6)
 
 ![Mapa operativo](docs/img/02_mapa_operativo_nodo_B.png)
 
@@ -169,4 +169,4 @@ patrón de arquitectura limpia.
 
 ## Historial de cambios
 
-El detalle de cada versión y cómo funciona cada cambio está en **CAMBIOS_4.0.7j.md** (copia en `docs/`).
+El detalle de cada versión y cómo funciona cada cambio está en **CAMBIOS_4.0.7k.md** (copia en `docs/`).

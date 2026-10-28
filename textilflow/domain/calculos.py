@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Modelo matemático de indicadores de abastecimiento y variación entre escenarios. Se mantiene tal como se definió en el anteproyecto.
+
 import pandas as pd
 
 ETIQUETAS = {

@@ -1,3 +1,7 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Ejercicio práctico del anteproyecto. Simula el taller de ejemplo con varias réplicas, compara el
+# transporte manual contra el robot y deja un informe en docs/EJERCICIO_PRACTICO.md, un CSV y un gráfico.
+
 import argparse
 import csv
 import os

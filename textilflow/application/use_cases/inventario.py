@@ -1,3 +1,6 @@
+# Diseñado y Desarrollado por Jaider Esteban Rodríguez Chiribi y Sebastián González León
+# Unidades en almacén por prenda, avisos de compra y su paso de pendiente a recibida, que suma lo recibido al inventario.
+
 from datetime import datetime
 from typing import Optional
 
